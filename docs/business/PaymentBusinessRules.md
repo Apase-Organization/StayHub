@@ -7,9 +7,9 @@
 | Decision | Đã duyệt | Chưa chốt / gate |
 |---|---|---|
 | PAY-01 | FULL_PREPAY: thu 100% online qua StayHub/VNPay | Fee/tax basis, funding và commercial config: TSK-086/088/109 |
-| PAY-02 | HYBRID_DEPOSIT: deposit online bắt buộc, phần còn lại trả **trực tiếp Host cash/bank tại check-in**; hướng tỷ lệ cấu hình trong khoảng 15–20% | Exact selected rate, base, rounding và coverage theo offer: TSK-109; không mặc định 20% |
+| PAY-02 | HYBRID_DEPOSIT: approved20% postdiscountT HALF_UP VND online; B trực tiếp Host cash/bank tại check-in, O>=Cnet | Numeric product choice086 approved; config artifact/DTO freeze109 pending |
 | PAY-03 | Cả hai instant CONFIRMED sau verified required online amount và active all-item hold; không Host accept/reject | Ghi state matrix/config tại TSK-079; không hỏi lại instant hay lùi hybrid sang Post-MVP |
-| PAY-04 | Host payable chỉ **ELIGIBLE actual check-in +24 giờ** cho entitlement áp dụng, còn subject dispute/reconcile/refund availability/legal | Check-in evidence và all-arrived vs per-room boundary cần PO duyệt tại TSK-090/112; legal/funding tại TSK-086 |
+| PAY-04 | ALLARRIVED max(actualAt)+24h earliest eligibility, subject dispute/refund/reconcile/liquidity/legal | Product086 approved;090/112 evidence delivery pending,095 legal/ops clearance BLOCKED |
 | PAY-05 | Không free unpaid reservation, không thu commission hằng tháng, không StayHub QR pass-through tại chỗ | Không tạo hidden monthly commission receivable; coverage không đủ phải reject/requote/disable offer |
 
 Quyết định user đã duyệt → decision log và inventory → API/ERD/UI projections → task AC/evidence. Legacy chỉ để trace; khi lệch phải sửa cùng contract version trước triển khai. Inventory boundaries có explicit questionnaire approval riêng, frozen **S0-097-v1** tại inventory canonical; không suy từ payment approval và không chứng nhận implementation. Không mặc định escrow hợp pháp/bắt buộc, zero fraud hoặc tỷ lệ rủi ro giả định.
@@ -45,31 +45,34 @@ All mutations require authentication/ownership or dedicated service authority, e
 Tất cả số tiền exact decimal/minor currency units, VND rounding theo policy snapshot; không float. Mỗi fee/tax có tên, scope, inclusion, beneficiary, commission eligibility và refundability. Commission là khoản khấu trừ từ entitlement theo hợp đồng, **không tự cộng thêm lên tổng Guest** hay đếm thêm legacy guest service fee.
 
 ```text
-S = sum(room charges + named scoped fees + named taxes)
-T = S - D >= 0                    # Guest contractual total, discount D allocated once
-Fh = approved funded credit to Host, distinct from Guest cash (may be 0)
-Fp = other approved funded credit to platform (may be 0)
+S = room charges + cleaning + named reviewed taxes   # NO guest service fee
+Cgross = HALF_UP_VND(0.15 * (room charges + cleaning)) # prediscount, tax excluded
+0 <= D <= Cgross                  # platform-funded discount expense, allocated once
+Cnet = Cgross - D >= 0            # net retention before provider expense, not earned revenue
+T = S - D                         # Guest total
 O = dueOnline; B = balanceDueHost; O + B = T
 FULL_PREPAY: O = T; B = 0
-HYBRID_DEPOSIT: O = round(approved deposit base * approved rate); B = T - O
-G = gross Host entitlement after Host-funded adjustments, before commission
-C = contract commission due (earned only per approved earning policy)
-H = G - C                        # total Host net entitlement
-T + Fh + Fp = H + C + named third-party/fee/tax entitlements
+HYBRID_DEPOSIT: O = HALF_UP_VND(0.20 * T); B = T - O; require O >= Cnet
+H = S - Cgross                    # Host entitlement including separately identified tax liability
+platformHeldHostPayable = O - Cnet # full T-Cnet; hybrid O-Cnet
+H = platformHeldHostPayable + B
+T = H + Cnet; S = H + Cgross       # before separate tax disposition, provider expense and adjustments
 ```
 
-Funding split phải balanced theo từng beneficiary; nếu discount do Host chịu thì G giảm, nếu platform tài trợ thì ghi nguồn Fh và contra campaign expense, không bịa cash Guest đã trả. Provider costs là expense/liability riêng với payer được duyệt, không trừ hai lần. `commissionDue`, `commissionEarned`, cash **retained/reserved**, platform-held **hostPayable**, `onlinePaidVerified`, `directPaidAttested`, `directOutstanding` là các đại lượng khác nhau. Deposit là **part payment** áp dụng T, không tự earned revenue và không tự nonrefundable commission.
+**Approved product contract S0-086-v1, 2026-10-23**, user PO questionnaire, not Finance/Legal approval. D is platform-funded, not Host-funded: record gross commission due Cgross, funded discount expense D and net retention Cnet separately. Do not journal Cnet as gross revenue or add D again as Guest cash. Provider fees are platform expense at actual provider contractual amount (not invented); do not deduct them again from Host entitlement or imply post-expense profit nonnegative. Named taxes are not commission base or platform revenue; segregate Host-side tax liability pending reviewed disposition. Tax config remains unset/disabled and paid activation blocked. Numeric choices are approved; machine-readable config/DTO/fixture-wide freeze109 remains pending.
 
-Tại quote/reservation và mọi adjustment/refund: tính lại allocations/entitlements/coverage bằng snapshot. Hybrid chỉ bán khi deposit phân bổ có thể giữ đủ commission hợp đồng sau eligible adjustments cùng liabilities khác, không dựa tiền thu hằng tháng. Nếu coverage không khả thi: reject/requote cần consent hoặc disable **offer/config không hợp lệ**, không disable hybrid khỏi MVP. `O>=0`, `B>=0`, không giữ commission vượt entitlement, không host payable âm. Recompute không mutate lịch sử: append versioned adjustments/reversal; deficit sau payout thành dispute/recovery case, không giả monthly collection.
+At quote/reservation and adjustments, use immutable allocations and **hybrid coverage O>=Cnet, not O>=Cgross**. Reject/requote invalid funding/coverage with consent; never silently increase20%, create debt/monthly commission or remove hybrid from MVP. Append adjustment/reversal for refunds, never rewrite history; post-payout deficit becomes funded recovery case. `commissionDue`, reserved cash, earned revenue, Host held payable and direct attestation remain separate. Until stay COMPLETED and refund/dispute/reconcile obligations resolved, retain liabilities/reserves; any earning recognition still requires documented accounting/contract/legal review. Deposit/IPN/+24h eligibility alone never earns revenue; this is a conservative product reserve guard, not invented legal accounting clearance.
 
-### Fixture máy đọc được — minh họa, không duyệt rates
+### Active S0-086-v1 worked fixtures — approved numeric product choices, not runtime config
 
-Ví dụ không fee/tax/discount/funding/provider cost, G=T=1.000.000 và C=150.000 chỉ để kiểm sổ; 20% ở đây là **fixture**, không config rollout:
+Tax/provider cost0 illustration, room charges1.000.000, cleaning0/D0: Cgross=Cnet150.000, T1.000.000, Host850.000. Both modes below follow approved20%/15%, not permission to activate funds:
 
 ```json
 [
   {"paymentMode":"FULL_PREPAY","total":1000000,"dueOnline":1000000,"balanceDueHost":0,"commissionDue":150000,"platformHeldHostPayable":850000,"hostTotal":850000},
-  {"paymentMode":"HYBRID_DEPOSIT","total":1000000,"dueOnline":200000,"balanceDueHost":800000,"commissionDue":150000,"platformHeldHostPayable":50000,"hostTotal":850000}
+  {"paymentMode":"HYBRID_DEPOSIT","total":1000000,"dueOnline":200000,"balanceDueHost":800000,"commissionDue":150000,"platformHeldHostPayable":50000,"hostTotal":850000},
+  {"paymentMode":"FULL_PREPAY","subtotal":7000000,"discount":200000,"total":6800000,"dueOnline":6800000,"balanceDueHost":0,"commissionDue":1050000,"netRetention":850000,"platformHeldHostPayable":5950000,"hostTotal":5950000},
+  {"paymentMode":"HYBRID_DEPOSIT","subtotal":7000000,"discount":200000,"total":6800000,"dueOnline":1360000,"balanceDueHost":5440000,"commissionDue":1050000,"netRetention":850000,"platformHeldHostPayable":510000,"hostTotal":5950000}
 ]
 ```
 
@@ -77,7 +80,22 @@ Hybrid: Guest 200.000 online +800.000 trực tiếp; deposit phân bổ 150.000 
 
 Rounding edge fixture: eligible charges `[1,1,1]` minor units, discount1; largest remainder/stable ordinals cho allocations `[1,0,0]`, net `[0,1,1]`, sum2 không âm. Base0 chỉ discount0, không chia0. Hybrid illustrative deposit15% củaT1.000.000 =150.000 **không đủ** commissionDue160.000: reject/requote offer, không giữ missing10.000 để thu tháng sau. Đây là boundary arithmetic, không commercial config.
 
-Fixture multi-room xuyên API/DB/UI giữ T=6.900.000 (room7.000.000 +booking fee100.000 −discount200.000). **Chỉ fixture:** fee100.000 là Host entitlement, discount200.000 Host-funded, tax/provider cost0, commission basis adjusted Host entitlement6.900.000 ×15%=1.035.000. Full O6.900.000/B0/held Host5.865.000; hybrid deposit20% O1.380.000/B5.520.000/held Host345.000; Host total5.865.000. Không đồng thời coi fee100.000 là platform revenue. Các tỷ lệ ví dụ không thay approval config.
+**Active multi-room replacement:** S7.000.000, D200.000, Cgross1.050.000, Cnet850.000, T6.800.000. Hybrid O1.360.000/B5.440.000/held Host510.000; full O6.800.000/B0/held Host5.950.000; Host total5.950.000 in both. Gross commission1.050.000 minus funded expense200.000 = retained850.000 before provider costs, not automatic earnings. **LEGACY INVALID for active offers:** old6.900.000 fixture (7m+100k booking/service fee−200k with Host-funded discount/adjusted commission1.035m) is arithmetic history only. API/DB/UI old6.9m projections remain legacy awaiting comprehensive109 replacement; do not use them as active quote/rollout inputs.
+
+### 2a. Operations and clearance — completed PRODUCT CONTRACT, legal clearance BLOCKED
+
+Actual all-arrived baseline: verified arrival for **every booked room**, eligible earliest `max(actualAt) + 24h`, never early per-room payout. Host evidence plus Guest acknowledgment or Admin-verified contested fallback; validate event time/anti-backdating, not acknowledgment timestamp or Host tap alone. Detailed090/112 evidence deliverables remain pending. No-show/partial arrivals require case review, not implicit eligibility. All gates remain dispute/refund reserve, reconciliation, liquidity and contractual/legal authorization; +24h never guarantees transfer.
+
+| Role (not named person) | Approved design responsibility / required evidence |
+|---|---|
+| OperationsFinance | Daily provider/bank/ledger/direct-memo reconciliation; exception owner/amount/source/reference/status; liquidity and refund reserve review, failed-transfer escalation and post-payout recovery |
+| Admin maker | Prepare entitlement-scoped refund/payout with version/key, reconciled balances, reserve and evidence; cannot authorize own payment |
+| Admin checker, different human | Independently recheck gates/beneficiary/amount/proof; authorize manual transfer, record bank reference/proof before PAID; pending/failed is not paid |
+| Host / Guest / Admin case reviewer | Host attests direct cash and actual events, Guest acknowledges/contests; reviewer resolves evidence/disputes, never treats direct as platform cash |
+| Finance/Legal authorized reviewers | Supply actual contracts/permission to collect, hold and transfer; earning/tax/provider terms and reserve/liquidity signoff, not supplied by PO or these docs |
+| Release authority095 | Verify signed human operations assignments, maker/checker separation, authoritative calendar/holiday source, tax/legal/contracts/liquidity and runtime evidence; otherwise NO-GO |
+
+Before payout freeze disputed entitlement/reserves. After payout open immutable recovery case linking original payment/refund, affected source/amount, responsible role, reserve/funding, owner/status/deadline/escalation and resolution evidence. Fund required refund liquidity or escalate manually; no negative pool, automatic bank clawback or monthly commission invoice. Keep recovery unresolved/block further affected payouts until reviewed disposition; do not invent contractual right to debit Host. Maker/checker proof applies to recovery transfers too. **Real money remains LOCKED / TSK-095 BLOCKED** until documented permissions, signed operations, tax/calendar/liquidity and implementation evidence exist; no Finance/Legal signatures or escrow legality inferred.
 
 ## 3. Lifecycle và nguồn xác nhận
 
@@ -119,7 +137,7 @@ Contract cases (not runtime tests): created10:00 → expiry10:15; attempt1 fails
 
 Host có ownership chỉ **attest** tiền cash/bank họ nhận: amount/currency/method, paidAt, recordedAt, actor, reference, evidence handle, idempotency key/body hash, expectedVersion. Không lưu/expose bank credentials hay PII nhạy cảm trong API/logs; evidence private, audited, quyền support tối thiểu. Amount dương, partial receipts cộng dồn tới B; overpayment/conflicting evidence vào case, không xác minh tự động. Correction bằng reversal tham chiếu receipt gốc, không xóa audit. Guest acknowledgment/dispute độc lập; không biến attestation thành VNPay event.
 
-Check-in ghi booking item + roomOrdinal (không yêu cầu PhysicalRoom), actualAt/timezone, actor/evidence/version, guest acknowledgment và contested/admin disposition. **Khuyến nghị chờ PO:** hai bên acknowledge; khi contested cần evidence/admin fallback, không tự tin chỉ vì Host tap. Nhiều phòng đến khác giờ phải lưu riêng. **Decision còn mở:** payout baseline all-arrived (mốc muộn nhất của mọi room đã verified) hay phân entitlement từng room +24h; chưa chốt thì block payout eligibility implementation/rollout, không bịa mốc toàn booking.
+Check-in ghi item/roomOrdinal, actualAt/timezone/actor/evidence/version và Guest acknowledgment hoặc Admin verified-case fallback; validate anti-backdating, không Host tap/calendar-only. ALLARRIVED baseline đã duyệt086: max actualAt mọi booked room+24h, không per-room early payout.090/112 còn evidence-contract/implementation deliverables; partial/no-show/contested không tự eligible,095 clearance vẫn BLOCKED.
 
 ## 5. Refund, dispute và payout
 

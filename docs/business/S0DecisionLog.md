@@ -4,7 +4,7 @@
 
 Approval source: user answered all seven policy questionnaire groups approving the proposals on 2026-10-23. User acts as product owner, not legal counsel or a named Finance/Operations signatory. No signatures or real-money permission are inferred.
 
-Decision approval, completed design deliverable and runtime clearance are separate statuses. TSK-079/097/081/084 delivered; other four questionnaire approvals are provenance, not completed tasks. Their contracts/fixtures will be frozen sequentially.
+Decision approval, completed design deliverable and runtime clearance are separate statuses. TSK-079/097/081/084/086 delivered; other three questionnaire approvals are provenance, not completed tasks. Their contracts/fixtures will be frozen sequentially.086 is completed PRODUCT CONTRACT, NOT legal clearance.
 
 | Task | Decision approval | Deliverable status / version |
 |---|---|---|
@@ -12,10 +12,18 @@ Decision approval, completed design deliverable and runtime clearance are separa
 | TSK-097 | Approved inventory boundaries | Completed policy design, S0-097-v1, 2026-10-23 |
 | TSK-081 | Approved hold/retry/late-payment parameters | Completed policy design, S0-081-v1, 2026-10-23 |
 | TSK-084 | Approved cancellation/refund parameters | Completed policy design, S0-084-v1, 2026-10-23 |
-| TSK-086 | Approved financial/operations design direction, not legal clearance | Pending dedicated deliverable |
+| TSK-086 | Approved financial/operations product contract, not Finance/Legal approval | Completed PRODUCT CONTRACT S0-086-v1, 2026-10-23; real-money095 BLOCKED |
 | TSK-088 | Approved discount/abuse parameters | Pending dedicated deliverable |
 | TSK-090 | Approved time/arrival/completion/review parameters | Pending dedicated deliverable |
 | TSK-109 | Approved numerical choices, not completed config/DTO freeze | Pending dedicated deliverable |
+
+## TSK-086 acceptance evidence — completed PRODUCT CONTRACT, NOT legal clearance
+
+User PO questionnaire approval frozen **S0-086-v1, 2026-10-23**: [Payment](PaymentBusinessRules.md) equations/active1m and6.8m fixtures, [Overview](OverviewBusiness.md) financial projection.15% prediscount room+clean excludingtax, no Guest service fee; D platformexpense<=Cgross, Cnet=Cgross−D; T=S−D, hybrid20%T HALF_UP VND/O>=Cnet, HostS−Cgross, heldO−Cnet (fullT−Cnet). Provider fee actual contract platformexpense, not assumed amount. Gross due/funded expense/netretention/reserve/earned distinct; conservative liabilities until completed/resolved obligations and reviewed earning basis, no deposit revenue/legal-accounting invention. ALLARRIVED max(actualAt)+24h/all gates, no per-room early payout.
+
+OperationsFinance daily reconciliation/reserve/liquidity/recovery; different-human Admin maker/checker/bank proof, Host/Guest/Admin case evidence and post-payout funded recovery responsibilities documented as roles, not fictitious people/signatures. **095 real money LOCKED/BLOCKED**: actual contracts/legal permission to collect/hold/transfer, signedops/makerchecker/calendar/holiday/tax/liquidity/runtime evidence absent. PO approval is not Finance/Legal approval; tax unset/disabled. Config/DTO/fixture-wide109 not completed; old6.9m API/DB/UI examples explicitly legacy pending109, not active offers.
+
+Only086 newly closed:76 checked/38 unchecked; active done5/42, S0 done5/8.088/090/109 unchecked. Validation: `python3 .opencode/verify-dual-payment-docs.py` (explicit docs, active gross/net/funded fixtures plus legacy arithmetic distinguished) and `git diff --check`; results in execution handoff. Runtime/integration/e2e skipped docs-only; no source changes or legal clearance claimed.
 
 ## TSK-079 acceptance evidence
 
