@@ -1,5 +1,9 @@
 # Discounts
 
+**TARGET payment v2:** [Payment rules](../business/PaymentBusinessRules.md) yêu cầu discount/funding/commission allocation snapshot; dueOnline +direct balance = discounted total ở cả hai mode. Coverage deposit sau eligible adjustments/refunds phải đủ retained contract commission và liabilities hoặc reject/requote offer; không monthly invoice. Không coi deposit là earned/nonrefundable revenue. Caps consume một lần khi đủ required online +active hold, không chờ direct B; zero-online exception phải duyệt, không bypass hybrid deposit. Refund recompute exact allocated basis, không âm/rounding drift hay hoàn quá platform online pool.
+
+> **LEGACY single-unit formula bên dưới; TARGET chưa triển khai:** [canonical](../business/PropertyInventoryBusinessRules.md) tính eligible base từ mọi item/night + fees/taxes đúng scope, booking fee một lần; snapshot funding/policy. Reserve/consume/release caps atomic với toàn booking; preview không giữ quyền dùng mã. Phân bổ largest remainder với stable ordinal tie-break, tổng allocations đúng header, base0 không chia0/discount quá charge; zero-total và refund/rounding policy cần duyệt (TSK-088/089/103).
+
 Discounts are applied during booking price calculation and must be revalidated on the backend when creating a payment. The frontend discount preview is only a convenience for the user.
 
 | Column | Type | Constraint | Description |

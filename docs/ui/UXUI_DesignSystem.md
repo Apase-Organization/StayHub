@@ -1,5 +1,56 @@
 # UI/UX DESIGN SYSTEM
 
+## TARGET screen/component contract — chưa triển khai
+
+### Payment v2 — FULL_PREPAY và HYBRID_DEPOSIT đều core MVP
+
+[Payment canonical](../business/PaymentBusinessRules.md) là nguồn chuẩn đã duyệt instant/hai modes; không đưa hybrid sau release. Cards chọn mode theo server allowed modes, không input rate/amount đáng tin. Mỗi card ghi **total stay / due online now / balance trực tiếp Host cash-bank AT CHECK-IN**, required deposit (hướng config15–20%, exact config còn chờ), terms/refund responsibility/timezone trước consent. Full không yêu cầu trả thêm Host. Đổi mode invalid quote/reconsent, coverage invalid là unavailable offer/requote rõ lý do, không âm thầm đổi mode/thu thêm commission.
+
+Fixture cũ6.900.000 phải có mode label: full online6.900.000/direct0; hybrid **20% chỉ fixture** online1.380.000/direct5.520.000. Fee100.000 Host entitlement, discount200.000 Host-funded, tax/provider cost0; commission minh họa15% adjusted entitlement =1.035.000 **host/admin only**, heldHost345.000 hybrid hoặc5.865.000 full. Guest không thấy commission/internal ledger; full/hybrid Host total5.865.000, không đếm fee lần hai.
+
+Guest Trips/payment return: badges booking/online/direct/refund riêng. Hybrid CONFIRMED sau đủ online, label “Đã nhận deposit online; còn trả trực tiếp Host”; không “fully paid” vì attempt SUCCESS. Direct receipts ghi “Host xác nhận đã nhận”, partial/outstanding/contested và acknowledgment/dispute controls, không badge bankverified. Refund view tách totalPolicyRefund/platformRefundable/Host direct responsibility/paid/pending và signed SLA business-days/timezone/holidays cấu hình; không hứa3–5 ngày. Pending/late/extra attempts hiển thị support/reconcile, redirect chỉ poll.
+
+Host ops: per booking-room arrival actualAt/ack/evidence/contested; direct receipt amount/currency/CASH or BANK_TRANSFER/time/reference/private evidence, partial/reversal/dispute/version conflict; không nút “toàn booking verified” hay tap-to-payout. Balance refused/partial không tự release occupied rooms. Payout list ghi platform-held entitlement/commission reserve vs earned/direct paid, earliest **actual check-in+24h** và blocked reasons; all-arrived vs per-room boundary phải PO duyệt, không tự dùng scheduled date.
+
+Admin ops: private evidence/reconciliation/refund split, maker-checker/proof/reference before PAID, dispute holds và post-payout recovery cases, audit/version/idempotency conflict. Manual payout/refund không giả API bank automation; no credentials/sensitive PII. A11y keyboard/mobile labels cho mọi amount/mode/status, terms không giấu tooltip. Acceptance TSK-113/114: cả hai mode happy, stale mode/coverage failure, duplicate IPN, partial receipt/correction/contested arrival, refund pool guard và blocked payout; chưa có runtime evidence.
+
+Visual **Airbnb-like**, inventory **Booking-like** là hai trục độc lập, không copy logo/branding. Giữ tokens StayHub màu/font/radius/grid bên dưới. CPN03/04 single-unit legacy chỉ là nền hình thức; target tại đây có ưu tiên cùng [canonical](../business/PropertyInventoryBusinessRules.md) và [API](../architecture/3_API_Design.md).
+
+### Guest / desktop
+
+- Search pill: destination, dates, guests **và rooms**. Guest picker thu adults, children ages và allocation từng phòng; tổng picker khớp selection, không suy capacity từ tổng khách. Mỗi **cơ sở một card**, ảnh4:3, tên/rating/location/classification, không card riêng mỗi type/plan. From-price phải là eligible combination đáp ứng cả stay/occupancy, ghi room count/nights, total stay và inclusion phí/thuế. Không dates: CTA chọn ngày, giá tham khảo có basis, không badge “còn X phòng”.
+- Detail gallery ảnh chung + title/host/location/reviews; 7/12 nội dung và 5/12 sticky selection sidebar desktop theo grid hiện có. “Chọn phòng” dùng **room-type cards/accordion**, không bắt buộc bảng Booking dày đặc. Card có ảnh type, tên hạng, beds/capacity, tiện nghi riêng tách tiện nghi chung, quantity selector và plan options. Plan ghi breakfast/payment/cancellation/cutoff/timezone và tổng stay, không ngụ ý mỗi plan có pool riêng; không bắt buộc số phòng vật lý.
+- Sidebar tổng hợp mọi items/quantity, allocations, dates/nights, nightly charges, phí/thuế đúng scope, discount, currency/total và terms trước CTA. Fixture: Deluxe2 + Family1, 6 adults/child7, 2 nights → 7.000.000 charges + 100.000 booking fee − 200.000 discount = **6.900.000 VND cả stay**. Đây là minh họa, không policy giá; whole-home4bedrooms quantity1 không selector4phòng.
+- Checkout hiển thị snapshot terms/version, quote expiry và revalidate tất cả items. Đổi dates/guests/allocation/type/plan/quantity/code invalid quote, clear availability cũ và fetch lại; không âm thầm bỏ item/tăng giá. 409 hiển thị khác biệt, alternatives và cần consent quote mới; không partial booking. Chỉ backend booking CONFIRMED mới báo xác nhận; return/poll pending hiển thị “đang xác minh”, late paid có hướng support/refund.
+
+### Mobile / accessibility
+
+Mobile gallery carousel; type cards xếp dọc, controls dễ chạm. Bottom bar ghi total stay + rooms/nights, CTA mở selection/summary sheet; không chỉ giá/đêm. Terms thiết yếu, fee/tax inclusion và cancellation/payment conditions luôn có ở selection/checkout, không chỉ tooltip hay accordion đóng. Sheet có heading/labels, focus trap, Esc/close, trả focus, keyboard thao tác selector/date, aria-live cho result/error; lỗi gắn field, không chỉ màu. Sticky bar có safe-area/padding không che nội dung; gallery có alt và next/prev, không chỉ swipe.
+
+### State matrix nghiệm thu
+
+| State | UI và hành vi |
+|---|---|
+| No dates | Types giới thiệu, quantity=null, CTA chọn ngày; không stock live |
+| Loading | Skeleton/busy label, disable submit; bỏ response cũ khác search key |
+| Available | Quantity min mọi đêm, “còn X cho kỳ ở này”, advisory không guarantee |
+| Sold out / restriction | Disable offer/type đúng phạm vi, lý do an toàn/đổi ngày; không khóa property vì một type hết |
+| Network/server error | Giữ input/retry; không biến error thành soldout/confirmed |
+| Stale quote / stock409 | Revalidate mọi items, diff giá/terms, consent lại; không silently charge |
+| Payment pending/late paid | Booking/payment/refund badges riêng, polling read-only, support/reconcile |
+
+### Host một facility dashboard
+
+Property content/gallery chung; tabs Types & Plans / Calendar / Bookings / Stats, không đăng lại property cho từng phòng. Type CRUD photos/beds/capacity/base quantity; plans giá/policy và shared-stock hint. Calendar theo type/date có total, OOO, held, confirmed, remaining; stop-sale riêng chặn bán mới, OOO giảm usable capacity. Edit absolute/versioned batch, preview/commitments warning; reject giảm dưới holds+confirmed, không cancel âm thầm. Archive giữ future stays/history/support. Stats distinct booking header, rooms/roomnights và ledger, không duplicate join items, không gọi gross là net.
+
+### Verification contract (TSK-101/107, chưa chạy UI/runtime)
+
+Calendar giữ `remaining = total - OOO - held - confirmed >= 0` ngay khi đóng bán, không đổi remaining thành0 để biểu diễn restriction. Type/day stop-sale disable bán mới mọi plan của type; plan/day stop-sale chỉ disable plan đó, các plan khác vẫn chia sẻ remaining. Offer availableQuantity=0 nếu bị restriction, không đồng nghĩa capacity bằng0. Không release holds/confirmed hoặc chặn conversion hợp lệ của hold cũ chỉ vì stop-sale mới; reject capacity update nếu `total - OOO < held + confirmed`.
+
+Desktop/mobile/keyboard: happy fixture3rooms total6.900.000; edge Family đêm2 hết → conflict toàn selection không partial booking. Kiểm no-dates không stock, stale-response khi đổi search, booking fee một lần, plans share pool, whole-home1, pending redirect không confirmed. Docs review không đóng business tasks.
+
+## BASELINE visual tokens / legacy single-unit components
+
 ## 1. Color Palette
 | Tên Style | Alias | Hex Code | Ứng dụng |
 | :--- | :--- | :--- | :--- |

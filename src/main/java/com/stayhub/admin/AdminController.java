@@ -45,5 +45,5 @@ public class AdminController {
         model.addAttribute("userPage", userService.getUsers(page, size));
         return "admin/users";
     }
-    
+  }
 }

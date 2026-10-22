@@ -52,7 +52,7 @@ StayHub/
 
 - [x] **TSK-005** `[FE_Core]` Setup `tailwind.config.js` build pipeline (npm/CLI), output CSS vào `static/css/`. *(Estimate: 1h · Priority: High)*
 
-- [x] **TSK-006** `[BE_Core]` Package `common/response`: tạo `ApiResponse<T>` chuẩn theo `rules.md` mục 4. *(Estimate: 0.5h · Priority: Urgent · Blocking)*
+- [x] **TSK-006** `[BE_Core]` Package `common/response`: tạo `ApiResponse<T>` chuẩn theo `docs/contributors/Rules.md` mục 4. *(Estimate: 0.5h · Priority: Urgent · Blocking)*
 
 - [x] **TSK-007** `[BE_Core]` Package `common/exception`: tách `ApiExceptionHandler` (`@RestControllerAdvice`) và `MvcExceptionHandler` (`@ControllerAdvice`) + các exception dùng chung. *(Estimate: 1h · Priority: Urgent · Blocking)*
 
@@ -112,7 +112,7 @@ StayHub/
 
 - [x] **TSK-024** `[BE_Property]` `Property`, `PropertyImage`, `Amenity`, enums và Property/Image/Amenity DTOs. *(Estimate: 2h · Priority: Urgent)*
 
-- [x] **TSK-025** `[BE_Property]` `PropertyRepository`, `PropertyService`, `PropertyMapper` (entity ↔ dto, tránh trả Entity trực tiếp theo `rules.md`). *(Estimate: 2h · Priority: Urgent)*
+- [x] **TSK-025** `[BE_Property]` `PropertyRepository`, `PropertyService`, `PropertyMapper` (entity ↔ dto, tránh trả Entity trực tiếp theo `docs/contributors/Rules.md`). *(Estimate: 2h · Priority: Urgent)*
 
 - [x] **TSK-026** `[BE_Storage]` `storage/StorageService.java` (interface) + `LocalStorageService.java` (lưu đĩa cục bộ trước, dùng khi dev). *(Estimate: 2h · Priority: High)*
 
@@ -146,17 +146,17 @@ StayHub/
 
 - [x] **TSK-039** `[BE_Booking]` `BookingController.java`: `GET /properties/{id}/book` → `booking.html`, `POST /bookings` (tạo booking + gọi Payment). *(Estimate: 2h · Priority: Urgent)*
 
-- [x] **TSK-040** `[FE_Booking]` `templates/booking/booking.html` + `payment.html`: Your booking, Guest details, Price summary, nút "Confirm & Pay" theo `flow.md`. *(Estimate: 3h · Priority: Urgent)*
+- [x] **TSK-040** `[FE_Booking]` `templates/booking/booking.html` + `payment.html`: Your booking, Guest details, Price summary, nút "Confirm & Pay" theo `docs/business/OverviewBusiness.md`. *(Estimate: 3h · Priority: Urgent)*
 
 - [x] **TSK-041** `[BE_Payment]` `payment/Payment.java`, `PaymentStatus.java`, `PaymentMethod.java` + Migration `V8__create_payments.sql`. *(Estimate: 1h · Priority: Urgent)*
 
 - [x] **TSK-042** `[BE_Payment]` `payment/MockPaymentService.java` (implements `PaymentService`): set `payment_method = MOCK`, `status = SUCCESS` ngay lập tức. *(Estimate: 1.5h · Priority: Urgent)*
 
-- [x] **TSK-043** `[BE_Booking]` Flow `Confirm & Pay → Payment Success → Create Booking (PENDING)` đúng sơ đồ `flow.md`; expose API cho Dev B lấy "booking requests theo host" (phục vụ TSK-034). *(Estimate: 2h · Priority: Urgent · Blocking cho Dev B)*
+- [x] **TSK-043** `[BE_Booking]` Flow `Confirm & Pay → Payment Success → Create Booking (PENDING)` đúng sơ đồ `docs/business/OverviewBusiness.md`; expose API cho Dev B lấy "booking requests theo host" (phục vụ TSK-034). *(Estimate: 2h · Priority: Urgent · Blocking cho Dev B)*
 
 - [x] **TSK-044** `[BE_Booking]` API accept/reject cho host (`PENDING → CONFIRMED/REJECTED`) + kiểm tra state transition hợp lệ, cancel cho guest (`PENDING/CONFIRMED → CANCELLED`). *(Estimate: 2h · Priority: Urgent)*
 
-- [x] **TSK-045** `[FE_Booking]` `templates/booking/booking-detail.html` + trang "My Bookings" (tabs Upcoming/Pending/Completed/Cancelled) theo `flow.md`. *(Estimate: 3h · Priority: High)*
+- [x] **TSK-045** `[FE_Booking]` `templates/booking/booking-detail.html` + trang "My Bookings" (tabs Upcoming/Pending/Completed/Cancelled) theo `docs/business/OverviewBusiness.md`. *(Estimate: 3h · Priority: High)*
 
 - [x] **TSK-046** `[DB]` Migration `V9__create_reviews.sql`: bảng `reviews` (id, booking_id UNIQUE, property_id, guest_id, rating SMALLINT CHECK 1-5, comment, created_at, updated_at) — theo thiết kế database. *(Estimate: 0.5h · Priority: Medium)*
 
@@ -168,13 +168,13 @@ StayHub/
 
 # INTEGRATION & DEPLOY
 
-- [ ] **TSK-049** `[Testing]` Test end-to-end flow hiện tại: Search → Property Detail → Check Availability → Booking → Mock Payment → PENDING → Host Accept → CONFIRMED → My Bookings → Review. *(Estimate: 2h · Priority: Urgent)*
+- [ ] **TSK-049** `[Testing]` Nghiệm thu E2E scope mới: search/multi-room → all-item hold → FULL_PREPAY và HYBRID_DEPOSIT → verified dueOnline/instant CONFIRMED → direct receipt/actual check-in/refund/payout gates → guarded completion/review. Mock→PENDING→Host Accept chỉ baseline preflight lịch sử, không đóng task này. *(Legacy estimate: 2h · Priority: Urgent; không là cam kết capacity scope mới)*
 
 - [ ] **TSK-050** `[Infra]` Verify `docker compose up -d --build` chạy full stack (app + db) không lỗi, dùng `application-docker.yml`. *(Estimate: 1.5h · Priority: High)*
 
-- [ ] **TSK-051** `[Testing]` Review chéo giữa 3 track: kiểm tra không có entity nào bị trả trực tiếp ra view/API (đúng `rules.md` mục 5), không có `catch (Exception e) {}` rỗng. *(Estimate: 1.5h · Priority: High)*
+- [ ] **TSK-051** `[Testing]` Review chéo scope mới giữa hai agent: DTO/no entity leak/no empty catch, ownership/CSRF/private evidence, shared transaction/financial guards và cả hai payment modes; review không đồng thời edit file của owner. *(Legacy estimate: 1.5h · Priority: High)*
 
-- [ ] **TSK-052** `[Docs]` Cập nhật README + screenshots, đánh dấu lại task đã hoàn thành trong `task-list.md`. *(Estimate: 1h · Priority: Medium)*
+- [ ] **TSK-052** `[Docs]` Final README/screenshots/evidence scope mới, cả hai modes; Agent A single writer cập nhật `docs/tasklist/TaskList.md` chỉ theo bằng chứng đã accepted, không tick vì viết docs. *(Legacy estimate: 1h · Priority: Medium)*
 
 ## NEXT FEATURE — DISCOUNT · VNPAY PAYMENT
 
@@ -204,23 +204,219 @@ StayHub/
 
 - [x] **TSK-075** `[FE_Booking]` Cập nhật booking page: promo code input, apply button, discount line, nút `Pay with VNPay`, hiển thị VND. *(Estimate: 2h · Priority: Medium)*
 
-- [ ] **TSK-076** `[Notification]` Gửi email booking confirmed sau VNPay IPN success, không gửi dựa trên return URL. *(Estimate: 1h · Priority: Medium)*
+- [ ] **TSK-076** `[Notification · P1 · pending]` Email theo transition đã commit, không theo return URL; phân biệt online paid/direct outstanding/CONFIRMED/refund/payout và SLA business-days cấu hình, chống trùng/retry giới hạn/lỗi SMTP không rollback tiền. **AC:** mỗi business event một notification sau commit, retry/duplicate evidence TSK-077; không hứa3–5 ngày chưa duyệt. **Ref:** TSK-048/061, `notification/EmailNotificationService`.
 
-- [ ] **TSK-077** `[Testing]` Unit/integration tests cho discount valid/expired/usage limit, VNPay signature, IPN success duplicate, wrong amount, invalid checksum. *(Estimate: 3h · Priority: High)*
+- [ ] **TSK-077** `[Testing · P0 · pending]` Tổng hợp remediation evidence matrix **cả hai modes**, không thay thế implementation hay duplicate TSK-114. **AC:** signature/dueOnline/merchant/currency/envelope/auth, read-only return, duplicate/out-of-order/late/extra attempts, expiry/DB race, discount/caps/rounding/zero, self-booking/lock/completion/no-show/review/email, receipt/refund/payout/recovery đều có command/environment/result/duration/artifact/skipped; mock external không mock invariant, concurrency DB thật trong integration riêng khi được phép. **Ref:** TSK-070–074, TSK-114; docs hiện chưa là runtime evidence.
 
-- [ ] **TSK-078** `[Docs]` Sau implement, cập nhật `.env.example`, API docs, DB docs, screenshots/README nếu có thay đổi UI. *(Estimate: 1h · Priority: Medium)*
+- [ ] **TSK-078** `[Docs · P1 · pending]` Agent A chốt bộ canonical version/decision log sau triển khai, đồng bộ business/API/DB/UI/Rules/config docs/README/tracker theo evidence. **AC:** mỗi state/endpoint/policy có version/approval/evidence link; revalidate TSK-071–073, sandbox khác production, cả hai modes không bị ghi proposal thành implemented. Agent B chỉ gửi review/report, không cùng edit docs. **Ref:** TSK-062/063; cập nhật backlog không đóng task.
+
+---
+
+# BUSINESS REMEDIATION — BA + CHECKER
+
+**Nguồn/phạm vi:** baseline `9fee7a06029736292a71548383465d06e39bd4dc`; kế thừa BA review và quyết định user mới nhất, đồng bộ docs/business/API/DB/UI/sprint tracker. Không source/migration changes hay xác minh runtime trong lần cập nhật này. Các tham chiếu class/dòng dưới là **evidence source từ review trước**, không phải test mới; không thay thế contracts/evidence cần accepted tại TSK-078.
+
+**Cần tái xác minh TSK-071–073:** giữ nguyên checkbox lịch sử, không coi là đã đáp ứng canonical flow. `MockPaymentService:97–105` success đặt booking `PENDING`, không `CONFIRMED`; `PaymentController:27–33` return gọi `handleVnpayIpn`. Verifier signature/amount đã tồn tại (`MockPaymentService:73–87`), không kết luận query giả bất kỳ thành công. `BookingServiceImpl:148–165,223–232` chỉ host sở hữu được accept/reject `PENDING`, không phải reject `CONFIRMED`; create `59–65` chưa loại self-owner; complete `170–175` do host/manual, chưa guard ngày. Email hiện xử lý CONFIRMED/REJECTED/CANCELLED, bỏ qua PENDING. DB đã có exclusion constraint: cần test invariant, **không khẳng định đã chứng minh overbooking**.
+
+Quy ước: P0 chặn tiền thật; P1 MVP; P2 tùy chọn. `needs PO approval` chỉ các quyết định còn mở; `approved policy / pending deliverable` không có nghĩa đã triển khai; `pending` bao gồm thiết kế/evidence chưa accepted. Instant/cả hai modes/actual-check-in+24h eligibility **đã duyệt** theo [PaymentBusinessRules](../business/PaymentBusinessRules.md), không reopen. Exact deposit config trong hướng15–20%, fee/commission/tax/funding/legal/check-in evidence boundary/hold/cutoff/review/refund còn phải chốt. Không giả escrow/automatic payout, không bịa số ngày/rates.
+
+| Phạm vi | P0 | P1 | P2 | needs PO approval | pending | Hoàn tất |
+|---|---:|---:|---:|---:|---:|---:|
+| TSK-076–114 (39 task; 1 approved-policy/pending-deliverable ngoài hai cột status) | 22 | 16 | 1 | 6 | 32 | 0 |
+
+**TARGET core MVP:** [Inventory](../business/PropertyInventoryBusinessRules.md) và [Payment v2](../business/PaymentBusinessRules.md), chưa triển khai. Multi-room/full/hybrid bắt buộc; exclusive sale mode/pooled/whole-place quantity1/một property-date-currency/hủy toàn booking vẫn là **đề xuất chờ TSK-097/084**, không tự được duyệt. Checked TSK-023–040/046–048/063–075 giữ lịch sử và revalidation. Tổng **114 IDs: 71 checked lịch sử, 43 unchecked; 42 active MVP, 1 optional096; active done0/42**. Không claim capacity/days từ estimate lịch sử.
+
+**Một nguồn dependency duy nhất:** các trường `Deps` ở bảng lịch sprint bên dưới; không còn inline/override competing edges. Mỗi ID unchecked có đúng một hàng, một Sprint/Agent/rank. Deps chỉ explicit IDs (không range); Ref/AC/coverage mentions không tạo edge. Checked history không thêm edge redesign. Cùng sprint chỉ bắt đầu dependent sau accepted handoff của deps; rank là thứ tự topological gate, không bắt buộc tuần tự các task độc lập.
+
+- [ ] **TSK-079** `[P0 · approved policy / pending deliverable]` Ghi decision/state matrix **instant đã duyệt**, FULL_PREPAY và HYBRID_DEPOSIT core MVP, required online vs total/direct balance/actor/config states; không hỏi lại host approval. **AC:** ký version matrix, no host accept/reject, no monthly commission/no onsite StayHub QR pass-through, không tick implementation; unresolved config tách109/086. **Ref:** Payment canonical, TSK-043/044/071–073 revalidation.
+- [ ] **TSK-080** `[P0 · pending]` Đồng bộ transition/read-only status adapters theo approved instant. **AC:** return/poll không mutation; online attempt SUCCESS không đồng nghĩa fully paid/direct verified; CONFIRMED chỉ server state, no Host accept/reject. Core transaction thuộc A/082, B chỉ đọc/projection. **Ref:** TSK-071–075 revalidation.
+- [ ] **TSK-081** `[P0 · needs PO approval]` Chốt hold/expiry/callback muộn. **AC:** state giữ lịch, TTL TBD, retry attempts/release/paid-after-expiry/đã bán; không tự hồi sinh booking, refund/reconcile disposition có owner.
+- [ ] **TSK-082** `[P0 · pending]` Harden IPN/lifecycle hold. **AC:** verify signature/merchant/currency/ref/envelope/result và **attempt dueOnline**, không T; unique event/credit/replay/out-of-order, serialize expiry +all-item conversion +caps/ledger/outbox. Late/extra paid ghi reconcile/refund, không double charge/confirm. **Ref:** TSK-070/072/074.
+- [ ] **TSK-083** `[P0 · pending]` Chứng minh invariant inventory dưới concurrency. **AC:** giữ baseline exclusion tới capacity protection/backfill reconcile; same-property different type, last-room/shared-plan, expiry/IPN và all-item rollback bằng DB thật. Không kết luận constraint cũ sai hay an toàn từ mocks. **Ref:** inventory canonical mục3/7/8.
+- [ ] **TSK-084** `[P0 · needs PO approval]` Duyệt cancellation/refund policy hai modes. **AC:** matrix guest/host/admin, trước/sau arrival, no-show/sự cố, legacy host rejection compensation; cutoff/timezone/rates/fees/discount/funding/refund responsibility. Deposit không tự nonrefundable; split totalPolicyRefund/platform pool/Host direct, policy vs paid khác nhau; granularity cùng097.
+- [ ] **TSK-085** `[P0 · pending]` Refund lifecycle độc lập trên ledger primitives110. **AC:** policy allocations +commission recompute; reserve atomically không quá online verified−paid−reserved và policy remaining, liquidity sau payout; Host direct responsibility riêng. Request/approved/processing/paid/failed, idempotent retry/reversal, manual email/admin proof/reference/audit/maker-checker khác người, signed configurable business-days SLA/timezone/holidays; không paid từ CANCELLED, không claim auto gateway refund.
+- [ ] **TSK-086** `[P0 · needs PO approval]` Ghi **actual check-in+24h eligibility đã duyệt**, chốt phần legal/funding/fee/commission earning còn mở. **AC:** xác định bên được thu/giữ/chuyển theo hợp đồng/pháp lý, funding/costs/liquidity/reserves/reconcile/chargeback/recovery. Không reopen24h, không scheduled date/automatic guaranteed transfer/escrow assumption; evidence boundary090/112 và exact config109 là blockers riêng.
+- [ ] **TSK-087** `[P0 · pending]` Payout execution/reconciliation và revenue thật trên110/112. **AC:** gross/commission due/reserved/earned/payable/direct/refunds/funding không đếm đôi; chỉ platform-held eligible entitlement, exclude direct B, recheck dispute/refund/legal/liquidity dưới lock; manual proof/audit/maker-checker/idempotent retries/failed/recovery. Admin bỏ mock, không automatic bank automation. Không tái implement journal primitive110.
+- [ ] **TSK-088** `[P0 · needs PO approval]` Chốt self-booking/discount abuse. **AC:** self-owner, global/per-user caps/reserve/consume/release/refund, stacking/funding/rounding/VND/zero-online exception; không bypass hybrid mandatory deposit; exact limits TBD.
+- [ ] **TSK-089** `[P0 · pending]` Enforce booking/discount invariants. **AC:** self-owner/caps atomic, duplicate IPN không consume hai lần, release đúng lifecycle, rounding/base0/zero exception không gateway sai amount; exact breakdown/funding/commission coverage sau adjustment, preview không reserve quyền mã. **Ref:** TSK-064–068/072.
+- [ ] **TSK-090** `[P1 · needs PO approval]` Chốt thời gian/inventory/completion/review và check-in evidence. **AC:** timezone/check-in/out/lead/min-max stay/blackout/child ages, actor/evidence/no-show/review window/moderation; PO chọn acknowledgment hai bên hoặc evidence/admin contested fallback, all-arrived baseline vs per-room payout entitlement boundary. Không reopen +24h, không coi calendar completion là actual arrival.
+- [ ] **TSK-091** `[P1 · pending]` Enforce date/blackout/availability nhất quán read-only adapters. **AC:** search/detail/create cùng accepted engine/policy, past dates/capacity guards A102/083, sửa lịch không phá paid bookings; adjacency/timezone boundary tests. B không edit transaction core.
+- [ ] **TSK-092** `[P1 · pending]` Guard completion/no-show/review. **AC:** actor/date/actual evidence theo090/112, no early completion/Host tap, eligible guest một review/window, moderation/host reply đúng scope; direct receipt/online SUCCESS không tự mở review.
+- [ ] **TSK-093** `[P1 · pending]` Onboarding/lock/paid future stays. **AC:** PO duyệt rights/lock/session/checkout/IPN/future stay matrix rồi A enforce config/SecurityConfig; không mất callback/refund/support, direct evidence private/no bank credentials. Evidence lock trái quyền và callback vẫn xử lý.
+- [ ] **TSK-094** `[P1 · pending]` Snapshot terms/archive. **AC:** policy/price/fee/discount/mode/funding/consent/version +listing snapshots; sửa/archive không đổi lịch sử/future rights; guest/support access, retention/private evidence policy, không delete audit.
+- [ ] **TSK-095** `[P1 · pending]` Ký final release gates **sau108**, không là input077/078. **AC:** cả multi-room và FULL_PREPAY/HYBRID_DEPOSIT cùng accepted; toàn P0/evidence077/107/114 và approvals/Finance/Legal/Operations đạt, docs078/final049–052 và cutover108 đạt. Sandbox nhãn test funds không production-ready; chưa đạt core thì no-go, không hybrid flag deferral.
+- [ ] **TSK-096** `[P2 · pending]` Optional **sau MVP**: chỉ đánh giá review hai chiều, go/no-go/double-blind/moderation/privacy và task riêng nếu chọn; không trì hoãn inventory hoặc payment core.
+
+# CORE MVP — PROPERTY / ROOM-TYPE INVENTORY (TARGET, NOT IMPLEMENTED)
+
+**Docs inputs không đóng task:**097 domain/decision log,099 schema/protocol,100–102 selection/hold contracts,098/101 host/guest,106 additive cutover,107 inventory evidence;109–114 thêm hai financial modes. Fixture3rooms total6.900.000 full/hybrid và edge Family đêm2 hết rollback dùng cùng version. Agent A single writer mọi shared docs; ownership task là trách nhiệm deliverable, không permission cùng edit tài liệu.
+
+- [ ] **TSK-097** `[P1 · pending]` Domain/contracts và PO decision log. **AC:** multi-room core đã xác nhận; exclusive mode/whole-place quantity1/pooled vs physical/shared stock/một property-date-currency/cancellation granularity cùng084 còn cần PO. Version canonical/contracts/AC và boundaries; không reopen core hay tự duyệt mọi domain assumption.
+- [ ] **TSK-098** `[P1 · pending]` Host types/plans/calendars: A sở hữu mutation/entities/DTO/ownership/CSRF/version/OOO/capacity guards, không template. **AC:** một property nhiều types, plans share stock, allowed payment modes hợp lệ, reductions không phá holds/confirmed, archive giữ future rights. B host UI thuộc113, không cùng sửa PropertyServiceImpl.
+- [ ] **TSK-099** `[P0 · pending]` Additive inventory schema/capacity protection. **AC:** FK type-plan-property, nonnegative stock, stable lock order/transaction proof; plan không stock riêng; migration/rollback reviewed, không bỏ exclusion trước reconcile. Reserve version theo latest/claim, không hardcode V14.
+- [ ] **TSK-100** `[P1 · pending]` Read-only eligible offer search theo accepted repository/DTO. **AC:** một property/card, min stock mọi đêm/per-room occupancy, total basis rõ, no dates không live stock, shared plans không duplicate. A shared repository/entities boundary, B adapters/controllers chỉ theo manifest accepted.
+- [ ] **TSK-101** `[P1 · pending]` Guest detail/select quantities/checkout inventory UX. **AC:** dates/rooms/adults/child ages/per-room allocations, fee/tax total stay, soldout/alternatives/stale409/reconsent, whole-place1 theo approved boundary. Payment-specific cards/receipts/admin thuộc113, không duplicate scope.
+- [ ] **TSK-102** `[P0 · pending]` Header/items và atomic holds. **AC:** approved property-date-currency boundary, nightly/allocation/policy/mode snapshots; all items/nights or rollback, stable locks/idempotent submit, shared-plan/continuity/adjacency/expiry, cancellation granularity theo097/084.
+- [ ] **TSK-103** `[P0 · pending]` Booking-level dual-mode quote/allocation/lifecycle composition. **AC:** exact item/room/night/discount/fee/tax/funding sums, dueOnline+B=T, commission coverage/zero/base0/rounding, server mode/plan validation và frozen snapshots; insufficient coverage reject/requote, no monthly receivable. Dùng110 primitives, IPN security/attempt credit thuộc082, refund execution085, không duplicate implementation.
+- [ ] **TSK-104** `[P1 · pending]` Review/email/snapshot projection cross-impact. **AC:** một review/completed booking không theo quantity, optional type context, item email payload sau commit, archive giữ rights/support. TSK-076 sở hữu retry/send;092 guard core A, B chỉ projections/tests/docs handoff.
+- [ ] **TSK-105** `[P1 · pending]` Read-only host/admin metrics đúng grain. **AC:** distinct header, rooms/roomnights/sellable denominator, gross/online/direct-attested/commission reserved-earned/refund/payable không duplicate join items; reconcile ledger/property/type, không tự implement payout core.
+- [ ] **TSK-106** `[P0 · pending]` Additive backfill/reconcile/cutover rehearsal. **AC:** property default type1/plan/items, IDs/snapshots preserved, unknown provenance không bịa giá/mode/payment history; no auto address merge; counts/totals/commitments/online-direct-ledger reconcile. Capacity protection trước exclusion replacement, rollback giữ bookings mới; planned manifest/version claim A only.
+- [ ] **TSK-107** `[P0 · pending]` Inventory runtime evidence matrix. **AC:** canonical happy Deluxe5/Family2/3rooms total6.900.000 và Family đêm2 hết rollback; DB-real last-room/shared-plan/expiry/late IPN/all-night/continuity/child/adjacency/zero/rounding/migration/metrics, mock external only, command/env/duration/artifacts/skipped. Không suy concurrency từ mocks.
+- [ ] **TSK-108** `[P1 · pending]` Cutover/rollout readiness gate, không production authorization095. **AC:** shadow reconcile/write coordination/pilot/runbook/monitoring/rollback owner, all inventory097–107 và full/hybrid109–114/evidence/docs/final acceptance đạt. Flags chỉ phối hợp cutover, không defer hybrid hay multi-room khỏi MVP; activation tiền thật còn cần095, không dependency ngược095.
+
+# CORE MVP — DUAL PAYMENT DELIVERABLES (NEW, NOT IMPLEMENTED)
+
+- [ ] **TSK-109** `[P0 · needs PO approval]` Payment mode/contract/config freeze. **Substeps:** (1) ghi approved direction079, allowed plans/mode/config version; (2) PO/Finance chọn exact deposit rate trong hướng15–20%, base/rounding/commission earning/basis/fee-tax/funding/refund SLA/zero exception; (3) worked full/hybrid quotes +coverage infeasible reject/requote; (4) freeze guest/host/admin DTO projections/errors/policy consent và fixture version. **AC/evidence:** signed config/state/amount matrix, dueOnline+B=T và entitlements balanced, no guest commission leak/double legacy service fee/no monthly invoice/no StayHub onsite QR. **Không gồm:** schema/core/UI, không reopen approved modes/instant/+24h.
+- [ ] **TSK-110** `[P0 · pending]` Balanced ledger/attempt/settlement **primitives**, single A editor. **Substeps:** (1) additive conceptual records099/ERD → reserved migration manifest/entities/DTO; (2) immutable journals/lines, unique event/ref/key/hash, currency debit=credit, source/direction/method; (3) separate online clearing, commission due/reserve/earned, Host held payable, funding/cost/tax/refund reserves, direct memo-only; (4) append adjustment/reversal/recovery linkage, lock order/atomic pool/version checks; (5) publish frozen primitives/schema/test manifest. **AC/tests:** fixture full1m→850k/150k; hybrid200k→50k held +800k direct/150k, duplicate event posts once, unbalanced journal/negative pool/wrong currency reject, rounding exact. Mock external not ledger; isolated happy+critical edge evidence before handoff. **Không gồm:** payout/refund execution087/085, receipt/check-in111/112 hay UI.
+- [ ] **TSK-111** `[P0 · pending]` Direct balance receipts/reconciliation. **Substeps:** (1) Host ownership/CSRF and append attestation amount/currency/method/actor/paidAt/recordedAt/ref/private evidence/key/hash/version; (2) partial accumulation/outstanding, refused/disputed states, no providerVerified flag; (3) Guest acknowledge/contest, admin disposition/correction reversal original, private evidence/access audit; (4) link direct refund responsibility/reconcile memorandum, no platform cash credit; (5) handoff endpoint/errors/fixture to113. **AC/tests:** partial300k+500k clears B800k attested only; duplicate retry once, stale version/changed-body/cross-owner/overpayment reject or explicit case, reversal restores outstanding, PII not returned. **Không gồm:** bank verification/credentials/onsite StayHub QR/payment automation/monthly invoice/UI.
+- [ ] **TSK-112** `[P0 · pending]` Actual check-in/disputes/payout **eligibility**, not transfer. **Substeps:** (1) obtain090 PO evidence/two-party or contested admin fallback/boundary decision; (2) append per-item-room actualAt/timezone/actor/evidence/ack/version/key, partial arrivals tracked; (3) evaluate actual+24h applicable entitlement, dispute/refund/reconcile/liquidity/legal blocks, no Host-tap/calendar-only eligibility; (4) before/after payout case freeze/reserve/clawback/manual recovery owner/disposition; (5) publish frozen eligibility/read model to087/113. **AC/tests:** acknowledged actual arrival boundary +24h eligible only with all gates, partial/contested/duplicate/out-of-order timestamps blocked; scheduled date alone never eligible, post-payout dispute opens recovery not monthly commission. **Không gồm:** payout execution087/automatic bank transfer/PhysicalRoom assignment; unresolved boundary blocks delivery.
+- [ ] **TSK-113** `[P1 · pending]` Dual-mode guest/host/admin UI atop accepted contracts. **Substeps:** (1) mode cards/quote invalidation/total-O-B/refund responsibility/mobile accessible; (2) online/provider vs direct/attested badges, partial/reversal/ack/dispute; (3) host arrival evidence by room and payout eligibility blocked reasons; (4) admin proof/maker-checker/refund split/recovery screens, version/idempotency conflicts; (5) integrate fixtures→real adapters only after accepted handoff. **AC/tests:** full/hybrid6.900.000 fixture consistent, no commission leak to Guest/false fully paid/automatic payout claim, happy both +stale quote/contested edge, desktop/mobile/keyboard artifacts. **Không gồm:** core/shared DTO/security/entity edits or duplicated101 inventory selection work.
+- [ ] **TSK-114** `[P0 · pending]` Dual-mode financial test execution +operations runbook, evidence consumer077. **Substeps:** (1) implement isolated production-behavior happy/critical cases per mode; (2) approved integration DB races/attempt duplicates/late-extra paid/coverage/refund-pool/post-payout recovery, mock external; (3) fixture arithmetic/source distinction/UI privacy/actual-check-in+24h/manual proof-maker-checker; (4) runbook signed SLA/email, reconciliation/payout/refund failure/recovery owners/alerts/rollback; (5) report exact command/env/result/duration/artifacts/skipped, no evidence substitution. **AC:** both modes required; refund pool200k−50k paid−20k reserved allows130k rejects130001, partial arrival/disputed no eligibility; no real-money claim from sandbox. **Không gồm:** inventory-specific execution107/aggregate evidence077/release approval095; do not rerun unchanged passing checks without doubt.
+
+# AUTHORITATIVE TWO-AGENT LOGICAL SPRINT PLAN
+
+Sprint labels below replace old track headings **only for unchecked work**; checked history remains unchanged. Logical groups, not calendar promises or invented capacity. Agent A/B are recommended roles, not automatic assignment to external sessions. A is integrator/single shared-doc writer; B reviews through report, not concurrent editor. A bottleneck is deliberate. Deps are the only canonical dependency fields for all unchecked IDs; `none` means no redesign prerequisite.
+
+| Task | Sprint | Agent | Rank | Deps | Phase / scope / accepted handoff and evidence |
+|---|---|---|---:|---|---|
+| TSK-079 | S0 | A | 1 | none | Approved decision/state matrix; business/API docs; signed version not implementation |
+| TSK-097 | S0 | A | 2 | none | Inventory boundary approval; business/ERD contract; unresolved assumptions explicit |
+| TSK-081 | S0 | A | 3 | TSK-079, TSK-097 | Hold/attempt/expiry policy; documented late-paid disposition |
+| TSK-084 | S0 | A | 4 | TSK-079, TSK-097 | Refund/cancellation signed matrix; platform/direct split |
+| TSK-086 | S0 | A | 5 | TSK-084 | +24h record/legal/funding/earning approvals; no auto payout |
+| TSK-088 | S0 | A | 6 | TSK-079, TSK-086 | Discount/self-booking/zero policy signed |
+| TSK-090 | S0 | A | 7 | TSK-079, TSK-084, TSK-097 | Time/children/completion/check-in boundary approval |
+| TSK-109 | S0 | A | 8 | TSK-079, TSK-084, TSK-086, TSK-088, TSK-090 | Both-mode config/DTO/errors/fixture freeze |
+| TSK-099 | S1 | A | 1 | TSK-097, TSK-109 | resources/db/migration +property/booking entities/shared DTO; additive schema protocol proof |
+| TSK-110 | S1 | A | 2 | TSK-099, TSK-109 | payment/booking primitives +migrations; balanced schema/API/test manifest |
+| TSK-098 | S2 | A | 1 | TSK-097, TSK-099, TSK-109 | property mutation core/DTO; types/plans/calendar ownership/version tests |
+| TSK-100 | S2 | B | 2 | TSK-099, TSK-098 | property read-only adapters/controllers +templates/property; eligible offers fixture→accepted API |
+| TSK-101 | S2 | B | 3 | TSK-100, TSK-109 | templates/property,booking +static; inventory selection UI happy/soldout/stale evidence |
+| TSK-102 | S2 | A | 4 | TSK-099, TSK-081, TSK-110, TSK-098 | booking core/items/DTO/holds; DB all-item rollback/expiry protocol |
+| TSK-083 | S3 | A | 1 | TSK-079, TSK-081, TSK-099, TSK-102 | booking/property DB invariant cases; capacity proof, no premature exclusion drop |
+| TSK-091 | S3 | B | 2 | TSK-090, TSK-083, TSK-100, TSK-101 | read-only property adapters/templates; shared date engine boundary evidence |
+| TSK-103 | S3 | A | 3 | TSK-102, TSK-084, TSK-088, TSK-109, TSK-110 | booking/payment pricing+DTO; both modes exact allocations/coverage fixture |
+| TSK-082 | S3 | A | 4 | TSK-079, TSK-081, TSK-099, TSK-103, TSK-110 | payment/booking transaction core +config callback exemption; verified O/attempt/race evidence |
+| TSK-089 | S3 | A | 5 | TSK-088, TSK-082, TSK-103 | discount/booking atomic caps/funding tests; no double consume |
+| TSK-080 | S3 | B | 6 | TSK-079, TSK-082, TSK-103 | read-only payment adapters/templates/payment,booking; status source distinction evidence |
+| TSK-111 | S4 | A | 1 | TSK-103, TSK-110, TSK-082 | payment/booking +config ownership; direct receipts/reversals/dispute API contract +isolated tests |
+| TSK-112 | S4 | A | 2 | TSK-090, TSK-086, TSK-102, TSK-110, TSK-111 | booking/payment/admin core; arrival/eligibility/dispute read model and proof |
+| TSK-085 | S4 | A | 3 | TSK-082, TSK-084, TSK-103, TSK-110, TSK-111, TSK-112 | payment/admin refund execution; pool guard/manual proof/funding evidence |
+| TSK-104 | S5 | B | 1 | TSK-102, TSK-080 | review/notification read projections +template payloads; frozen A guard API only |
+| TSK-076 | S5 | B | 2 | TSK-079, TSK-080, TSK-082, TSK-104, TSK-085 | notification +templates; dedupe/retry/SMTP-failure evidence |
+| TSK-092 | S5 | A | 3 | TSK-090, TSK-104, TSK-112 | booking/review guard core; early completion/no-show/review tests |
+| TSK-093 | S5 | A | 4 | TSK-079, TSK-084, TSK-086, TSK-098, TSK-111 | config/SecurityConfig +auth/user/property; rights/lock callback/refund matrix evidence |
+| TSK-094 | S5 | A | 5 | TSK-084, TSK-088, TSK-090, TSK-102, TSK-104, TSK-109 | booking/property snapshot/archive core; historical rights/retention evidence |
+| TSK-105 | S5 | B | 6 | TSK-103, TSK-110, TSK-085 | admin/property read-only metrics adapters; no editing dirty AdminController until explicit handover |
+| TSK-087 | S5 | A | 7 | TSK-085, TSK-086, TSK-105, TSK-110, TSK-111, TSK-112 | payment/admin payout execution; ledger reconcile/manual proof/no direct doublepay |
+| TSK-113 | S5 | B | 8 | TSK-080, TSK-101, TSK-111, TSK-112, TSK-085, TSK-087, TSK-093, TSK-098 | templates/host,admin,booking,payment +static; accepted backend→dual-mode accessible UI evidence |
+| TSK-106 | S6 | A | 1 | TSK-099, TSK-102, TSK-103, TSK-110, TSK-111, TSK-112, TSK-094 | reserved additive migrations/backfill/reconcile/rollback rehearsal; no unknown-history invention |
+| TSK-107 | S6 | B | 2 | TSK-098, TSK-100, TSK-101, TSK-102, TSK-103, TSK-104, TSK-105, TSK-106, TSK-083, TSK-091, TSK-092 | src/test/.../property,booking,support; inventory matrix command/artifacts; shared tests serialized |
+| TSK-114 | S6 | B | 3 | TSK-076, TSK-085, TSK-087, TSK-089, TSK-093, TSK-094, TSK-109, TSK-110, TSK-111, TSK-112, TSK-113, TSK-106 | src/test/.../payment,booking,config,notification,discount,support; financial matrix/runbook report to A |
+| TSK-049 | S7 | B | 1 | TSK-107, TSK-114 | final both-mode/multi-room E2E acceptance evidence, baseline preflight cannot close |
+| TSK-050 | S7 | A | 2 | TSK-049, TSK-106 | docker-compose.yml/application-docker.yml/pom.xml if approved; exact full-stack validation manifest |
+| TSK-051 | S7 | B | 3 | TSK-049, TSK-050 | cross-review supplied diff/test evidence; no concurrent source editing |
+| TSK-077 | S7 | B | 4 | TSK-076, TSK-080, TSK-081, TSK-082, TSK-083, TSK-084, TSK-085, TSK-086, TSK-087, TSK-088, TSK-089, TSK-090, TSK-091, TSK-092, TSK-093, TSK-094, TSK-107, TSK-114, TSK-049, TSK-050, TSK-051 | evidence matrix report; A publishes canonical shared docs, no095 edge |
+| TSK-078 | S7 | A | 5 | TSK-079, TSK-077, TSK-106, TSK-113 | final shared business/API/ERD/UI/Rules/config docs version +approval/evidence links |
+| TSK-052 | S7 | A | 6 | TSK-049, TSK-050, TSK-051, TSK-078 | final README/screenshots/TaskList evidence reconciliation; no false early closure |
+| TSK-108 | S8 | A | 1 | TSK-107, TSK-077, TSK-078, TSK-114, TSK-052 | cutover readiness/pilot/shadow/rollback owner; release authorization separate095 |
+| TSK-095 | S8 | A | 2 | TSK-108, TSK-077, TSK-078, TSK-049, TSK-050, TSK-051, TSK-052, TSK-109, TSK-110, TSK-111, TSK-112, TSK-113, TSK-114 | final signed MVP release gates both modes/all P0/config/legal; no-go if any core unmet |
+| TSK-096 | POST | A | 1 | TSK-090, TSK-095 | optional two-way-review evaluation only after MVP; not active coverage |
+
+## Substep/handoff recipe cho các ID tái dùng
+
+Mỗi hàng thực hiện **1→2→3**, chỉ trong scope/path ở bảng sprint; owner/sprint/deps không lặp lại ở đây. Task policy: evidence là signed decision/version; task implementation: isolated happy+critical edge RED→GREEN rồi review, không tick từ docs. **Out-of-scope chung:** không thay quyết định core đã duyệt, không triển khai task downstream thay owner, không file ngoài acknowledged manifest, không automated bank transfer/monthly commission/new provider; các exclusions cụ thể trong AC vẫn áp dụng.
+
+| Task | 1. Prepare | 2. Deliver | 3. Accepted handoff / evidence |
+|---|---|---|---|
+| TSK-076 | Freeze committed event/payload with104 | Dedupe send/retry/error observability | SMTP mock success/failure/retry report; no transaction rollback |
+| TSK-077 | Import107/114/final acceptance manifests | Map every remediation AC→case→result/skipped | Aggregate signed evidence index, no code changes or095 prerequisite |
+| TSK-078 | Compare accepted contracts to delivered behavior/evidence | Integrator updates canonical versions/decisions/config docs | Cross-doc link/status review; no runtime evidence invented |
+| TSK-079 | Record approved instant/full/hybrid/+24h decisions | State×actor×collection matrix, unresolved fields separated | Signed contract version to109; no reopen approval flow |
+| TSK-080 | Accept082 status/return DTO/error contract | Read-only adapters/result UI without financial mutation | Poll/return and false-fully-paid edge evidence to113 |
+| TSK-081 | Enumerate hold/attempt/expiry races | PO selects TTL/retry/late-paid disposition | Signed lifecycle table to102/082; no inferred TTL |
+| TSK-082 | Freeze provider envelope/attempt and lock protocol | Verified dueOnline credit +all-hold/cap/ledger/outbox transaction | Happy/wrong amount/duplicate/expiry/late proof; schema unchanged outside A manifest |
+| TSK-083 | Review099/102 capacity/locking invariant | DB-real same-property/last-room/race cases | Transaction trace/case evidence to091/107; no premature exclusion removal |
+| TSK-084 | Enumerate cancellation/refund actors/bases/direct vs online | PO selects cutoff/rates/refund responsibility/granularity | Signed worked policy matrix to085/109; no automatic deposit forfeiture |
+| TSK-085 | Accept110 pool primitives/111 receipts/112 dispute blocks | Request/reserve/manual proof/checker/paid/retry/reversal | Happy refund +over-pool/retry/no-proof cases; no direct Host funds claimed as platform cash |
+| TSK-086 | Record approved eligibility +24h, list legal/cost/funding gaps | Obtain Finance/Legal signing/earning/recovery responsibilities | Signed legal/funding matrix to109/112/087; not actual transfer |
+| TSK-087 | Reconcile eligible entitlement/105 metrics and112 gates | Manual payout approval/proof/paid/failure/recovery | Balanced journal and duplicate/blocked payout evidence; no doublepay direct B |
+| TSK-088 | Enumerate self-owner/caps/funding/zero risks | PO chooses limits/rounding/stacking/zero exception | Versioned numeric policy to109/089, not implementation |
+| TSK-089 | Freeze quote/cap lifecycle/allocation fixture | Enforce self-owner/reserve/consume/release/coverage | Happy+duplicate/refund/zero/base0/rounding test manifest |
+| TSK-090 | Enumerate time/child/arrival/completion/review boundaries | PO signs evidence fallback and all-arrived vs per-room boundary | Versioned policy to112/091/092; scheduled date not actual proof |
+| TSK-091 | Accept A date/availability engine API | Align search/detail/read projections/conflict UI | Timezone/adjacency/stale evidence, core mutations remain A |
+| TSK-092 | Accept090/112 actual evidence and104 projection | Enforce actor/date/no-show/review guards | Early completion/unauthorized/repeated review edge evidence |
+| TSK-093 | PO approves rights/lock/session/callback/refund matrix | A enforces exact SecurityConfig/auth/user boundaries | Locked guest/host negative +legitimate callback/refund cases |
+| TSK-094 | Freeze retention/consent/mode/policy snapshot schema | Snapshot and archive without losing future rights | Archive/edit/history/privacy evidence to106/114 |
+| TSK-095 | Gather108 readiness/all core evidence and approvals | Release lead checks both modes/all P0/no-go reasons | Signed authorization or explicit blocked status, no sandbox-only claim |
+| TSK-096 | After095 only, frame optional two-way review | Assess privacy/moderation/double-blind | PO go/no-go and separate future scope; no MVP dependency |
+| TSK-097 | Separate approved core from inventory design proposals | Obtain per-boundary PO decisions/version cross-domain AC | Domain contract freeze to099/084, not blanket approval |
+| TSK-098 | Accept099/109 type-plan-policy schema | Host mutation/calendar/ownership/version guards | DTO/symbol/error manifest and capacity/OOO edge tests to100/102/113 |
+| TSK-099 | Review composite FK/day locks/migration reservations | Additive schema +capacity transaction primitives | Schema/rollback/constraint test manifest to110/098; old exclusion retained |
+| TSK-100 | Accept shared repository/DTO/query limits | Eligible offers/read-only controller projections | All-night/occupancy/no-dates fixture to101; no shared service edits |
+| TSK-101 | Accept100 selection/quote/error schema | Inventory guest controls/allocation/stale reconsent UI | Happy/soldout/stale/keyboard report to113; payment cards separate |
+| TSK-102 | Accept schema/hold policy/ledger-mode contracts | All-item transaction/idempotency/snapshots/expiry | Happy/Family-night2 rollback/duplicate/adjacency tests to083/103 |
+| TSK-103 | Accept109 config/110 primitives/102 held snapshots | Both-mode quote/amount/funding/commission allocations | Full/hybrid/coverage rejection/rounding test fixture to082/111 |
+| TSK-104 | Accept102 snapshots/080 status DTO | Review/email payload/read projection updates | Grain/history/payload schema tests to076/092/094, not shared guard edits |
+| TSK-105 | Accept ledger/financial metrics definitions | Read-only distinct-header/rooms/payable projections | Reconcile totals/join-duplication evidence to087/113 |
+| TSK-106 | Freeze latest migration manifest/provenance baseline | Rehearse additive backfill/reconcile/shadow/rollback | Counts/totals/commitments/financial audit report before107/114 |
+| TSK-107 | Freeze106 schema and inventory matrix inputs | Execute approved isolated/integration inventory cases | Exact command/env/duration/artifacts/skips to077, not financial duplication |
+| TSK-108 | Import107/077/078/114/052 accepted evidence | Rehearse cutover/pilot/write coordination/monitoring/rollback | Readiness decision to095; activation still blocked until authorization |
+
+Final049: accept matrices→execute both-mode scope→E2E evidence;050: freeze final environment→Compose validation→environment/log/artifact summary;051: inspect supplied diff/evidence→resolve scoped doubts→review verdict;052: reconcile accepted evidence→publish final README/screenshots/tracker→status audit. Những steps này chỉ là kế hoạch, không phải commands đã chạy trong đợt docs.
+
+## Sprint entry/exit, demo và safe parallel
+
+Mỗi sprint entry = deps accepted +claim/files acknowledged +frozen contract version. Exit = tất cả deliverables sprint có AC evidence/reviewer accepted; task blocked giữ unchecked, không invent config hay tiến độ. B có thể chuẩn bị fixture/test/report độc lập ngoài acceptance rank nhưng không claim integrated trước contract/gate. Không chạy suite/integration tự động từ plan; execution cần request hoặc mandatory project policy tại thời điểm triển khai.
+
+| Sprint | Active tasks | Entry / ordered vertical demo / exit | Safe parallel / no-go |
+|---|---:|---|---|
+| S0 Policy/contracts | 8 | 079→097→081/084→086→088/090→109; signed decisions +both quote fixtures/config/errors; freeze path manifest | A docs/config contracts; B review fixture/accessibility report only. Block on unresolved policy, not reopen modes |
+| S1 Additive foundation | 2 | 099 schema before110 financial primitives; demo preserved IDs/capacity +balanced full/hybrid journals | B may mock frozen DTO tests; no shared entities/DTO/migration edits, no schema-dependent API before handoff |
+| S2 Host/search/holds | 4 | 098 accepted before100→101 and102; demo one facility/types/eligible search/all-item hold/rollback | B read/UI after098; A booking core102, disjoint exact manifest; no shared PropertyService/DTO/repository writes |
+| S3 Both-mode online payment | 6 | 083→091;103→082→089→080 accepted; demo both modes verified O instant, race/late/duplicate and caps | B091 while A103 only on frozen read API; B080 after082; never both PaymentService/BookingService/SecurityConfig |
+| S4 Direct receipts/check-in/refund | 3 | 111→112→085; partial receipt/correction/contested arrival/+24h blocked gate/refund pool demo | A deliberately serialized; B fixture UI/test preparation only, no bank verification/actual payout claim |
+| S5 Complete operations/UI | 8 | 104→076/092/094;093 access;105→087→113; guest-host-admin full/hybrid end-to-end ops demo | B notification/read metrics while A guards only after payload freeze; disjoint manifests, no simultaneous review/core/shared docs edits |
+| S6 Migration +evidence | 3 | 106 before107/114; DB reconciliation/rollback and inventory/financial evidence consumed by077 | B tests only after A migration freeze; no simultaneous mutation of test DB/shared fixtures; record skipped/blockers |
+| S7 Final acceptance/docs | 6 | 049→050→051→077→078→052; both modes E2E/Compose/review/evidence/docs accepted | Baseline preflight not closure; B review/report, A integrator publishes shared docs; no077/078 dependency on095 |
+| S8 Cutover/release | 2 | 108 readiness→095 authorization, both modes/all core/all P0 signed; no-go if missing | Single integrator A, B evidence reviewer not editor; flags cannot defer hybrid/multi-room |
+
+## Exact-path ownership và claim protocol (freeze lại ở S0)
+
+Prefix Java `src/main/java/com/stayhub/`; resource `src/main/resources/`; tests `src/test/java/com/stayhub/`. Paths dưới là đã xác minh theo listing, **không phải source audit**; exact-file allowed manifest phải acknowledged trước edit. Models/entities và DTO **feature-local**, không có root entities/dto/security package. Existing target tree phía đầu tài liệu không override actual path map này.
+
+| Actual paths / planned exception | Single writer / coordination |
+|---|---|
+| `src/main/resources/db/migration/` | A only; inspect latest version at execution, reserve filename/version in claim, never blindly reserve V14 or edit applied migration |
+| `booking/` incl `BookingServiceImpl.java`, `BookingService.java`, `BookingPriceService.java`; `payment/` incl `PaymentService.java`, `VnpayPaymentService.java`, `MockPaymentService.java` | A transaction/entities/repositories/shared DTO writer. B read-only adapters only exact non-core files explicitly delegated/frozen; no same-file editing |
+| `property/` incl `PropertyServiceImpl.java`, `PropertyService.java`, feature-local models/repositories/dto; `discount/`, `review/` guard core | A shared/mutation writer; B read-only projections/controllers only separately frozen manifest, no inferred package-wide permission |
+| `config/SecurityConfig.java`, `auth/`, `user/`; root `pom.xml`, `mvnw`, `mvnw.cmd`, `docker-compose.yml`; resources `application.yml`, `application-local.yml`, `application-docker.yml` | A only shared security/config/build writer; B tests/review requests via report, no concurrent edits |
+| `admin/AdminController.java`, `admin/AdminRestController.java` | A shared admin integration after explicit handover. **AdminController preexisting dirty: protected, do not overwrite**; B metrics adapters only exact disjoint approved files, never this controller by default |
+| `docs/tasklist/TaskList.md`, `docs/business/`, `docs/architecture/3_API_Design.md`, `docs/database/`, `docs/ui/`, `docs/contributors/Rules.md` and named supporting architecture docs | A only integrator writer; B sends report/diff suggestion, not simultaneous editor; README/config doc manifest freeze before078/052 |
+| `src/main/resources/templates/{admin,auth,booking,host,payment,property,user,home,error,fragments}/`, `src/main/resources/static/` incl `css/tailwind.css` | B UI single writer after contracts; generated CSS/build ownership/command agreed before edit. A does not patch templates concurrently |
+| `notification/`, templates email payloads | B send/retry/presentation writer after A outbox/payload contract; A shared event/DTO only, exact separate files acknowledged |
+| `src/test/java/com/stayhub/{booking,config,notification,payment,property,auth,discount,review,storage,support}/`; app tests; `src/test/resources/application-test.yml` | A core isolated tests while implementing, B evidence/integration tests after handoff; exact-file/time reservation for shared directories/DB/fixtures, config A only; directory does not grant simultaneous same-file edits |
+| i18n/messages, fixture directories | No existing messages/i18n or tests/fixtures path established. Any new path explicitly **planned**, e.g. `src/test/resources/payment-fixtures/`, must be S0 manifest-approved; do not claim existing files |
+| `.opencode/reports/task-<ID>-agent-<A-or-B>-<unique>.md` | Planned per-agent append/new report, never overwrite another actor; shared-doc progress published sequentially by A only |
+
+1. Before edit: `git status`/scoped diff baseline, preserve dirty files; claim task/Agent/exact files/base commit/time/state (`proposed→acknowledged→editing→handoff→accepted`), migration version if any. S0 allowed-path checklist names core/shared exceptions and protected dirty files. Other actor acknowledges **before** edit; contested path pause and ask, no silent ownership takeover.
+2. Prefer separate worktree/branch **optional user-manual setup**. Same tree: no reset/checkout/clean/stash/branch switch of others' changes; no shared index/parallel commit. No commits without user request. Do not mark prior edits as yours or overwrite them.
+3. Handoff frozen version includes symbols/DTO fields/errors/schema/migration manifest/amount-policy fixture/test command+manifest/results/duration/skips and compatibility notes. Changed contract means pause/rebase dependent work **sequentially**, no parallel shared DTO fixes.
+4. A integrates sequentially and updates dependencies/TaskList/business/API/ERD only after accepted contract/evidence. B reviews supplied diff/evidence, not simultaneous editor; run new tests only for changed inputs/unresolved doubt. Each feature implementation needs isolated happy+critical edge RED→GREEN, mocks external only; filename-limited runner verified. No task close without actual evidence; docs-only validation does not stand in for runtime.
 
 ---
 
 # Project Done Checklist
 
+- [ ] Core multi-room TSK-097–108 **và cả full/hybrid TSK-109–114** có evidence, migration reconcile/capacity protection đạt; toàn P0/approvals/gates095 đạt trước tiền thật. Docs không đóng implementation task.
+
 - [ ] Chạy được app bằng `./mvnw spring-boot:run -Dspring-boot.run.profiles=local` sau `docker compose up -d db`.
 - [ ] Đăng ký / đăng nhập / phân quyền GUEST-HOST-ADMIN hoạt động (`SecurityConfig`).
 - [ ] Search property theo địa điểm + ngày + số khách, có filter/sort/pagination.
 - [ ] Xem property detail, check availability theo ngày trước khi đặt.
-- [ ] Flow hiện tại: Đặt phòng → mock payment SUCCESS → booking status PENDING.
-- [ ] Flow mục tiêu VNPay: Đặt phòng → apply discount optional → VNPay payment SUCCESS → booking status CONFIRMED → redirect My Bookings.
-- [ ] Host xem được booking request, accept/reject.
+- [ ] Sandbox: ghi nhận baseline paid → PENDING/host approval là hành vi lịch sử, không dùng làm chuẩn nghiệm thu canonical (TSK-079/095).
+- [ ] Canonical **instant đã duyệt, pending delivery**: both modes quote/config → all-item hold → verified dueOnline → CONFIRMED; return chỉ đọc. Hybrid balance trực tiếp Host tại check-in không chặn confirmation; exact config109 còn phải ký.
+- [ ] Host không accept/reject TARGET; direct receipt Host-attested không provider event, actual per-room check-in evidence và +24h eligibility có dispute/refund/reconcile/legal gates, không automatic payout; manual proof/maker-checker đạt.
 - [ ] User xem My Bookings, cancel được booking.
 - [ ] Sau COMPLETED, user viết được review, hiển thị trên property detail.
 - [ ] Admin xem được dashboard tổng quan + danh sách booking toàn hệ thống.
@@ -231,7 +427,7 @@ StayHub/
 
 # Post-MVP (Optional)
 
-- [ ] Tích hợp thanh toán thật VNPay/Momo (thay `MockPaymentService`).
+- [ ] VNPay sandbox không đồng nghĩa sẵn sàng tiền thật: đóng gate TSK-095 và toàn bộ P0 trước production, không đẩy an toàn refund/payout sang optional. Momo/provider bổ sung mới là Post-MVP tùy chọn.
 - [ ] Wishlist (lưu property yêu thích).
 - [ ] Cache rating trung bình thay vì tính lại mỗi lần load property.
 - [ ] Export báo cáo (CSV/PDF) cho Admin.

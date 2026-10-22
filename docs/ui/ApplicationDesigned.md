@@ -1,3 +1,24 @@
+# Screen references and TARGET contracts
+
+**Các ảnh bên dưới là LEGACY minh họa**, không phải screenshot target đã triển khai hay evidence runtime. Giữ để trace visual direction; [TARGET DesignSystem](UXUI_DesignSystem.md) và [canonical](../business/PropertyInventoryBusinessRules.md) có ưu tiên hơn hình.
+
+| Screen TARGET | Nội dung bắt buộc (chưa implemented) |
+|---|---|
+| Home/Search | Dates + rooms/adults/child ages/allocation; một card/property, total-stay basis, no-dates/loading/error/soldout riêng |
+| Detail | Gallery lớn, type cards/accordion ảnh/capacity/beds/amenities riêng; plans/quantity; sticky selection desktop, bottom sheet mobile |
+| Checkout | Allocation từng phòng, expiry/consent version, all-item fee/tax totals; stale409 không partial booking/charge tự động |
+| Payment/Trips | Header/items/nightly/policy snapshots; booking/payment/refund riêng; pending return không confirmed; cancel toàn booking theo policy |
+| Host | Một facility Types/Plans/Calendar/Bookings/Stats, shared pool, absolute/version calendar, OOO khác stop-sale, commitments warning |
+| Admin | Distinct booking counts, roomnights, ledger gross/refund/net/payable; audit/lock support future paid stays |
+
+Fixture3rooms/2nights total6.900.000 và edge Family soldout rollback toàn bộ là acceptance tương lai, không phải đã render trong ảnh. Terms thiết yếu phải accessible mobile, không giấu sau tooltip.
+
+## TARGET payment v2 screen acceptance — chưa có screenshots triển khai
+
+[Payment rules](../business/PaymentBusinessRules.md) và [DesignSystem](UXUI_DesignSystem.md) bổ sung **cả full/hybrid core MVP**. Checkout có hai mode cards theo server plan/quote, total/dueOnline/balanceDirect/refund responsibility và consent version. Fixture6.900.000: full online6.900.000/direct0, hybrid online1.380.000/direct5.520.000 (20% fixture, không approved config). Host-only commission1.035.000, heldHost345.000 hybrid/5.865.000 full theo cùng funding basis canonical; Guest không lộ internal settlement.
+
+Payment/Trips phân biệt online provider-verified với direct Host-attested, CONFIRMED không đồng nghĩa fully paid. Host screen nhập partial receipt/reversal/evidence và check-in từng booked room có acknowledgment/contested case. Admin screen refund platform pool vs Host direct responsibility, audit/proof/maker-checker, payout eligibility actual check-in+24h subject dispute/reconcile/liquidity/legal, post-payout recovery. Không payout theo ngày lịch/Host tap, không StayHub QR pass-through onsite, không monthly commission. TSK-113/114 phải có desktop/mobile/keyboard evidence cả hai modes, không dùng ảnh legacy bên dưới làm bằng chứng.
+
 [Stitch Design Demo](https://stitch.withgoogle.com/projects/324901507144460965)
 
 #### Logo
@@ -23,4 +44,3 @@
 
 #### Host Dashboard
 <img width="1280" height="795" alt="host_dashboard" src="https://github.com/user-attachments/assets/3940f447-3ae0-444d-9679-8d4fef7b7589" />
-

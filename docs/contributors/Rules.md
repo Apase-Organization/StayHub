@@ -1,6 +1,10 @@
 # QUY CHUẨN LÀM VIỆC CHUNG CỦA DỰ ÁN STAYHUB (PROJECT RULES & CONVENTIONS)
 
 ## 1. GIT WORKFLOW & BRANCHING
+
+**Two-agent safety override cho MVP redesign:** [TaskList](../tasklist/TaskList.md) giữ single-writer ownership/claim protocol. Không chạy git checkout/reset/clean/stash/branch switch trên working tree có thay đổi của người khác; các bước Git minh họa dưới chỉ dùng trong workspace cá nhân sạch, không phải permission commit/push tự động. Separate branches/worktrees là tùy chọn do user tự tạo; không shared-index parallel commit, stage đúng files khi được yêu cầu. Giữ preexisting edits, reviewer không đồng thời editor.
+
+**Payment precedence v2:** [PaymentBusinessRules](../business/PaymentBusinessRules.md) duyệt cả FULL_PREPAY/HYBRID_DEPOSIT core MVP +instant, không reopen host approval hay featureflag hybrid sang later. Required online amount khác booking total; server snapshot allowed mode/config/fee/commission/funding, verify attempt dueOnline. Deposit không earned/nonrefundable commission; no double guest service fee, no monthly invoice. Direct Host-attested receipt không provider event; actual per-room check-in evidence+24h chỉ eligibility có dispute/refund/reconcile/legal gates, không guaranteed transfer. Private evidence/proof/maker-checker/version/idempotency bắt buộc financial mutations. Config chưa duyệt block dependent work, không bịa giá trị. Docs/sandbox pass không đóng task implementation hay production gate.
 Dự án áp dụng Branching Model cơ bản của Github Flow:
 *   **`main` branch:** Source code sạch tuyệt đối để Deploy lên Server Thật (Production). Chỉ Leader/PM mới được phép nhấn nút Merge vào nhánh này.
 *   **`dev` branch:** Nhánh môi trường STAGING. Tất cả anh em dev sẽ ghép code vào đây để review chéo và test tổng thể trước khi release. Cấm push thẳng (direct push) vào nhánh này.
@@ -44,11 +48,15 @@ git push -u origin feature/TSK-010
 
 ## 4. REST API STANDARDS (BACKEND)
 
+**TARGET precedence:** [canonical decisions](../business/PropertyInventoryBusinessRules.md) → [API contracts](../architecture/3_API_Design.md), [ERD](../database/3_CoreERD.md), [UI](../ui/UXUI_DesignSystem.md) → [tasks/evidence](../tasklist/TaskList.md). Không triển khai theo demo legacy khi mâu thuẫn. Classification, sale/access mode và stock là khái niệm riêng; không dùng property overlap để khóa toàn bộ types. Docs target không chứng minh source đã hỗ trợ.
+
+ApiResponse chỉ áp dụng API nội bộ; provider IPN giữ envelope giao thức riêng, verify signature/merchant/reference/amount/currency/result, không yêu cầu guest session/CSRF. Chỉ miễn CSRF đúng callback đã xác minh, không miễn `/api/**`. Server lỗi trả message an toàn + correlation ID, không stack trace/SQL/secret/PII hay dữ liệu booking khác.
+
 > Lưu ý: StayHub là ứng dụng **Monolith render server-side bằng Thymeleaf**, nên phần lớn luồng chính (xem trang chủ, search, chi tiết property, booking...) sẽ đi qua **Controller trả về View (`.html`)**, không phải REST API JSON. Chuẩn REST bên dưới áp dụng cho các endpoint **AJAX nội bộ** (gọi từ Alpine.js/htmx trong trang, ví dụ: lọc property theo giá, check ngày trống, autocomplete địa điểm...) và cho các API phục vụ app mobile/admin export dữ liệu (nếu có sau này).
 
 ### Cấu trúc JSON Response (Chuẩn 1 chiều)
   - Tất cả API response (dù thành công hay thất bại) phải được bọc vào một class DTO duy nhất (`ApiResponse<T>`) để Frontend (Alpine.js/htmx) dễ dàng parse JSON.
-```json
+```jsonc
 {
   "success": true, // true | false
   "message": "Lấy danh sách property thành công",
@@ -105,6 +113,7 @@ git push -u origin feature/TSK-010
   - **Email identity:** Email user phải được trim và lowercase bằng `Locale.ROOT` trước khi lưu hoặc lookup; database migration bảo vệ canonical format.
 
 ### Đối với Frontend (Thymeleaf + Tailwind CSS + Alpine.js/htmx)
+   - TARGET chọn quantity/type/plan và allocation từng phòng, không nhập amount đáng tin; invalidation quote khi đổi dates/guests/items/code. Hiển thị total stay/điều khoản và conflict cần consent mới, không silently charge; redirect không phải confirmation. Giữ tokens StayHub, không sao chép branding Airbnb/Booking.
   - **Tên file template:** `kebab-case`, đặt tên theo trang/chức năng (vd: `property-detail.html`, `booking-payment.html`, `host-dashboard.html`).
   - **Fragment dùng chung** (header, footer, navbar...) đặt trong thư mục `fragments/` (vd: `fragments/navbar.html`), gọi bằng `th:replace` hoặc `th:insert`.
   - **Biến trong Thymeleaf (`th:*`):** Dùng `camelCase`, đồng bộ tên với field trong DTO/Model phía Java (vd: model có `pricePerNight` thì template dùng `${property.pricePerNight}`).
@@ -113,6 +122,7 @@ git push -u origin feature/TSK-010
   - Không được để sót `console.log()` trong code khi tạo Pull Request.
 
 ### Đối với Database (PostgreSQL)
+   - TARGET additive/backfill giữ IDs/snapshots, không auto-merge property trùng địa chỉ. Capacity protection type/date phải có hiệu lực và reconcile trước bỏ property exclusion. Plans chia sẻ stock, hold→confirmed không trừ hai lần; mọi nights/items atomic. Thiết kế docs không được xem là migration đã apply.
   - **Tên Bảng (Table) và Cột (Column):** Dùng `snake_case` chữ thường (vd: `properties`, `bookings`, `check_in_date`, `price_per_night`, `host_id`).
   - **Khoá ngoại (Foreign key):** Đặt tên theo mẫu `<bảng_số_ít>_id` (vd: `property_id`, `guest_id`, `host_id`).
   - **Migration:** Mọi thay đổi schema phải đi qua file Flyway trong `src/main/resources/db/migration/`, đặt tên theo chuẩn `V{version}__{mo_ta_ngan}.sql` (vd: `V5__add_status_column_to_bookings.sql`). **Không** sửa trực tiếp DB production bằng tay.

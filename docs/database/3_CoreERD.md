@@ -1,3 +1,214 @@
+# Core ERD
+
+## TARGET — conceptual fields, chưa có schema/migration
+
+Theo [canonical](../business/PropertyInventoryBusinessRules.md); names dưới là đề xuất DB review TSK-099, không map tự động sang entity hiện tại. `type_day_inventory` là tên thống nhất cho type/date inventory (canonical từng gọi `type_date_inventory`).
+
+```mermaid
+erDiagram
+    PROPERTIES ||--o{ ROOM_TYPES : owns
+    ROOM_TYPES ||--o{ RATE_PLANS : offers
+    ROOM_TYPES ||--o{ TYPE_DAY_INVENTORY : calendar
+    PROPERTIES ||--o{ BOOKINGS : receives
+    BOOKINGS ||--|{ BOOKING_ITEMS : contains
+    ROOM_TYPES ||--o{ BOOKING_ITEMS : selected
+    RATE_PLANS ||--o{ BOOKING_ITEMS : priced
+    BOOKING_ITEMS ||--|{ ROOM_ALLOCATIONS : allocates
+    ROOM_ALLOCATIONS ||--|{ NIGHTLY_SNAPSHOTS : snapshots
+    BOOKING_ITEMS ||--o{ INVENTORY_COMMITMENTS : reserves
+    TYPE_DAY_INVENTORY ||--o{ INVENTORY_COMMITMENTS : accounts
+    BOOKINGS ||--o{ PAYMENT_ATTEMPTS : attempts
+    BOOKINGS ||--o{ DIRECT_RECEIPTS : host_attests
+    ROOM_ALLOCATIONS ||--o{ CHECKIN_EVENTS : arrives
+    BOOKINGS ||--o{ LEDGER_JOURNALS : accounts
+    LEDGER_JOURNALS ||--|{ LEDGER_LINES : balances
+    BOOKINGS ||--o{ REFUNDS : refunds
+    BOOKINGS ||--o{ PAYOUTS : pays_host
+    BOOKINGS ||--o{ DISPUTE_CASES : disputes
+    BOOKINGS ||--o| REVIEWS : reviews
+    PROPERTIES {
+        bigint id PK
+        bigint host_id FK
+        string classification
+        string sale_mode
+        string timezone
+        string metadata
+    }
+    ROOM_TYPES {
+        bigint id PK
+        bigint property_id FK
+        string name
+        int base_quantity
+        int max_adults
+        int max_occupants
+        json beds_photos_amenities
+        string status
+    }
+    RATE_PLANS {
+        bigint id PK
+        bigint property_id FK
+        bigint room_type_id FK
+        string currency
+        string policy_version
+        json pricing_restrictions
+        json allowed_payment_modes
+        string payment_policy_version
+    }
+    TYPE_DAY_INVENTORY {
+        bigint room_type_id PK,FK
+        date stay_date PK
+        int total
+        int out_of_order
+        boolean stop_sale
+        bigint version
+    }
+    BOOKINGS {
+        bigint id PK
+        bigint property_id FK
+        bigint guest_id FK
+        date check_in
+        date check_out
+        string currency
+        string status
+        decimal subtotal
+        decimal discount
+        decimal total
+        string payment_mode
+        decimal due_online
+        decimal balance_due_host
+        json payment_commission_funding_snapshot
+        bigint version
+        json booking_fees_policy_snapshot
+        string idempotency_body_hash
+    }
+    BOOKING_ITEMS {
+        bigint id PK
+        bigint booking_id FK
+        bigint property_id FK
+        bigint room_type_id FK
+        bigint rate_plan_id FK
+        int quantity
+        json type_plan_policy_snapshot
+    }
+    ROOM_ALLOCATIONS {
+        bigint item_id PK,FK
+        int room_ordinal PK
+        int adults
+        json children_ages
+    }
+    NIGHTLY_SNAPSHOTS {
+        bigint item_id PK,FK
+        int room_ordinal PK,FK
+        date stay_date PK
+        decimal room_charge
+        decimal fees
+        decimal taxes
+        decimal discount_allocation
+        json policy_snapshot
+    }
+    INVENTORY_COMMITMENTS {
+        bigint item_id PK,FK
+        date stay_date PK,FK
+        bigint room_type_id FK
+        int quantity
+        string state
+        datetime expires_at
+    }
+    PAYMENT_ATTEMPTS {
+        bigint id PK
+        bigint booking_id FK
+        decimal expected_amount
+        string currency
+        string provider_txn_ref UK
+        string provider_event_key UK
+        string status
+        json provider_config_snapshot
+    }
+    DIRECT_RECEIPTS {
+        bigint id PK
+        bigint booking_id FK
+        decimal amount
+        string currency_method
+        string source_HOST_ATTESTED
+        datetime paid_at
+        datetime recorded_at
+        bigint actor_id FK
+        string reference_evidence_handle
+        string acknowledgment_dispute_state
+        string idempotency_hash
+        bigint version
+        bigint reversal_of FK
+    }
+    CHECKIN_EVENTS {
+        bigint id PK
+        bigint item_id FK
+        int room_ordinal FK
+        datetime actual_at
+        string timezone
+        bigint actor_id FK
+        string evidence_ack_disposition
+        bigint version
+    }
+    LEDGER_JOURNALS {
+        bigint id PK
+        bigint booking_id FK
+        string business_event_key UK
+        string currency
+        bigint reversal_of FK
+    }
+    LEDGER_LINES {
+        bigint id PK
+        bigint journal_id FK
+        string account_beneficiary
+        decimal debit
+        decimal credit
+    }
+    REFUNDS {
+        bigint id PK
+        bigint booking_id FK
+        decimal policy_amount
+        decimal platform_amount
+        decimal host_direct_responsibility
+        string status_direction_method
+        string proof_reference_key
+        bigint maker_id FK
+        bigint checker_id FK
+        bigint version
+    }
+    PAYOUTS {
+        bigint id PK
+        bigint booking_id FK
+        json entitlement_boundary_snapshot
+        datetime eligible_at
+        decimal platform_held_host_amount
+        string status_blocked_reasons
+        string proof_reference_key
+        bigint version
+    }
+    DISPUTE_CASES {
+        bigint id PK
+        bigint booking_id FK
+        string evidence_scope_owner
+        string recovery_status_disposition
+        decimal reserved_or_recovery_amount
+    }
+```
+
+**Payment TARGET v2:** fields above are conceptual, not exhaustive migrations. [Payment data contract](8_Payment.md) specifies collection direction/method/source, timestamps/idempotency/proof/maker-checker and protected evidence for these records. Many attempts per booking; direct receipt never provider-verified/platform cash; all check-in events reference allocation(item,ordinal). Ledger debit=credit per journal/currency, event uniqueness, immutable reversals, commission reserve distinct earned revenue, deposit excess Host payable. Refund/payout reserve checks atomic with booking lock; actual check-in+24h eligibility not automatic scheduled transfer. All-arrived vs per-room entitlement boundary, commercial config and evidence policy must be approved. Full and hybrid are both MVP, no monthly commission receivable; legacy 1:1 payment below is archive only.
+
+**Accounting choisi:** commitments là nguồn chuẩn duy nhất, mỗi item/night một row `HELD/CONFIRMED/RELEASED`, không có counters held/confirmed độc lập. Sum active HELD và CONFIRMED dưới khóa day row. Expired hold chỉ được bỏ khỏi sum sau transition RELEASED serialized; trước khi bán phải release expired trong transaction. `blocked = out_of_order`; stop-sale là sales restriction (không xóa commitments), không trừ cả total lần nữa. `remaining = total - out_of_order - held - confirmed`; `availableQuantity = 0` khi stop-sale, ngược lại min remaining toàn stay. Stop-sale chặn bán mới, OOO giảm capacity; cả hai không hủy booking/hold cũ.
+
+**Integrity đề xuất:** UNIQUE(type_id, property_id), UNIQUE(plan_id, type_id, property_id), composite FK item→booking(id,property_id), item→type và plan cùng property/type; commitment→item(id,type_id) và day(type_id,date); snapshot→allocation(item_id,ordinal). Quantity>0, checkIn<checkOut; ordinal count=quantity, dates chính xác mọi đêm. Ràng buộc nhiều row dùng transaction/constraint trigger được DB review, không giả CHECK một row đủ bảo vệ. Monetary precision theo currency; sum nightly + scoped fees − discount = header, snapshot tên và policy không cascade mất khi archive.
+
+**Transaction protocol:** khóa booking/lifecycle row trước (khi đã tồn tại), rồi mọi day row theo `(room_type_id, stay_date)` tăng dần; tạo day rows thiếu bằng unique key trước lock, không coi missing row là unlimited. Capacity update, hold, expiry, IPN, cancel cùng protocol. Create revalidate tất cả selection/caps rồi insert toàn items/commitments hoặc rollback. IPN khóa cùng booking, kiểm expiry và trạng thái, đổi HELD→CONFIRMED trên chính rows trong cùng commit payment, không insert thêm confirmation/decrement stock lần2. Expiry/cancel đổi RELEASED đúng một lần; late paid ghi ledger/refund reconciliation, không hồi sinh. Lock discount caps theo thứ tự toàn cục được review cùng protocol để tránh deadlock. Không có exclusivity theo type toàn booking; nhiều bookings dùng chung pool hợp lệ.
+
+**Rollout:** additive types/plans/day/items/allocation/snapshots; backfill default type quantity1 và plan, giữ IDs, historical unknown có provenance. Không merge theo địa chỉ. Reconcile totals/active future commitments, shadow read/write coordination và capacity protection trước thay exclusion property. Rollback bảo toàn mới phát sinh; chi tiết canonical mục7. Physical rooms không bắt buộc schema này.
+
+**Stop-sale scope:** `TYPE_DAY_INVENTORY.stop_sale` chặn bán mới mọi plan của type/ngày; plan/day stop-sale thuộc `RATE_PLANS.pricing_restrictions`, chỉ chặn plan đó. Offer quantity bằng min remaining toàn stay chỉ khi cả type và plan đủ điều kiện, ngược lại0; remaining không bị reset/trừ bởi stop-sale. Luôn enforce `0 <= out_of_order <= total` và `held + confirmed <= total - out_of_order`, kể cả đóng bán. Không release hoặc ngăn conversion hợp lệ của hold cũ chỉ vì stop-sale mới; mọi plans vẫn dùng cùng pool.
+
+## CURRENT/LEGACY conceptual archive
+
+Các entity/payment/state legacy dưới đây giữ nguyên để đối chiếu, không chứng minh target đã tồn tại.
 
 ```mermaid
 erDiagram
