@@ -1,3 +1,105 @@
+# Domain class projections
+
+## TARGET — conceptual, không phải Java classes đã có
+
+```mermaid
+classDiagram
+    Property "1" --> "0..*" RoomType : owns
+    RoomType "1" --> "0..*" RatePlan : offers
+    RoomType "1" --> "0..*" TypeDayInventory : stock
+    Property "1" --> "0..*" Booking : receives
+    Booking "1" *-- "1..*" BookingItem
+    BookingItem "0..*" --> "1" RoomType
+    BookingItem "0..*" --> "1" RatePlan
+    BookingItem "1" *-- "1..*" RoomAllocation
+    RoomAllocation "1" *-- "1..*" NightlySnapshot
+    BookingItem "1" --> "0..*" InventoryCommitment
+    InventoryCommitment "0..*" --> "1" TypeDayInventory
+    Booking "1" --> "0..*" PaymentAttempt
+    Booking "1" --> "0..*" DirectReceipt
+    RoomAllocation "1" --> "0..*" CheckInEvent
+    Booking "1" --> "0..*" LedgerJournal
+    LedgerJournal "1" *-- "1..*" LedgerLine
+    Booking "1" --> "0..*" Refund
+    Booking "1" --> "0..*" Payout
+    Booking "1" --> "0..*" DisputeCase
+    Booking "1" --> "0..1" Review
+    class RoomType {
+        +int baseQuantity
+        +int maxAdults
+        +int maxOccupants
+    }
+    class Booking {
+        +String paymentMode
+        +Money dueOnline
+        +Money balanceDueHost
+        +Snapshot paymentCommissionFundingPolicy
+        +long version
+    }
+    class PaymentAttempt {
+        +Money expectedOnlineAmount
+        +String uniqueProviderReference
+        +String providerVerifiedStatus
+    }
+    class DirectReceipt {
+        +Money amount
+        +String methodSourceHostAttested
+        +Instant paidAt
+        +String actorEvidenceReference
+        +long version
+    }
+    class CheckInEvent {
+        +Instant actualAt
+        +String acknowledgmentEvidenceDisposition
+    }
+    class LedgerJournal {
+        +String uniqueBusinessEvent
+        +String currency
+    }
+    class LedgerLine {
+        +String accountBeneficiary
+        +Money debit
+        +Money credit
+    }
+    class RatePlan {
+        +String policyVersion
+        +Money pricing
+    }
+    class TypeDayInventory {
+        +Date stayDate
+        +int total
+        +int outOfOrder
+        +boolean stopSale
+        +long version
+    }
+    class BookingItem {
+        +int quantity
+        +Snapshot typePlanPolicy
+    }
+    class RoomAllocation {
+        +int roomOrdinal
+        +int adults
+        +List childrenAges
+    }
+    class NightlySnapshot {
+        +Date stayDate
+        +Money roomCharge
+        +Money feesTaxesDiscount
+    }
+    class InventoryCommitment {
+        +Date stayDate
+        +int quantity
+        +String state
+        +Instant expiresAt
+    }
+```
+
+Associations không hàm ý cascade delete; snapshot phải giữ khi archive. Shared stock và protocol giao dịch theo [ERD](3_CoreERD.md), không gọi từng item confirm độc lập. Service boundary target gồm quote/revalidate, reserveAll, convertAll, releaseAll; financial refund riêng cancellation.
+
+Payment v2 boundary: [Payment rules](../business/PaymentBusinessRules.md) / [data fields](8_Payment.md). Cả full/hybrid; reserve commission không phải earned revenue, direct receipt không provider event. Append reversals và balanced journal; refund/payout proof/maker-checker/private evidence/idempotency/version. Eligibility service đọc actual per-room check-in+24h/dispute/reconcile/legal, không calendar hoặc Host tap. Proposed classes không phải file Java hiện hữu.
+
+## CURRENT/LEGACY conceptual archive
+
 ```mermaid
 classDiagram
 

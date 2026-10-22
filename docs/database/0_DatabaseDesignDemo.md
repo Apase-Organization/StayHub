@@ -1,5 +1,7 @@
 # StayHub MVP — Database Design & Diagrams
 
+> **CURRENT/LEGACY design archive, không phải schema đầy đủ đã xác minh hay TARGET.** SQL/overlap/search/1:1-payment/full-total/migration list bên dưới là lịch sử, không chạy như migration hay dùng để reserve version tiếp theo. [Inventory](../business/PropertyInventoryBusinessRules.md), [Payment v2](../business/PaymentBusinessRules.md), [ERD](3_CoreERD.md) thay thế target. Full/hybrid cùng core MVP, instant đã duyệt, nhiều attempts/direct receipts/per-room actual check-in/balanced ledger/refund/payout/disputes tại [Payment data](8_Payment.md), không Post-MVP. Exclusion giữ tới additive backfill/capacity protection/reconcile. Không schema/source change trong lần soạn docs này.
+
 > **Purpose:** Database and domain design proposal for the StayHub MVP, based on the project's planned modules: `user`, `property`, `booking`, `payment`, `review`, `host`, `admin`, `storage`, and `notification`.
 >
 > **Database:** PostgreSQL  

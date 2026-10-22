@@ -1,3 +1,37 @@
+# Relational projections
+
+## TARGET — proposed, chưa migration
+
+```mermaid
+flowchart LR
+    U[users] -->|host 1:N| P[properties]
+    P -->|1:N| T[room_types]
+    T -->|1:N shared stock| R[rate_plans]
+    T -->|1:N| D[type_day_inventory]
+    P -->|1:N| B[bookings]
+    U -->|guest 1:N| B
+    B -->|1:N| I[booking_items]
+    T -->|1:N| I
+    R -->|1:N| I
+    I -->|1:N| A[room_allocations]
+    A -->|1:N| S[nightly_snapshots]
+    I -->|1:N| C[inventory_commitments]
+    D -->|1:N| C
+    B -->|1:N| Pay[payment_attempts]
+    B -->|1:N| DR[direct_receipts]
+    A -->|1:N actual evidence| CI[checkin_events]
+    B -->|1:N| LJ[ledger_journals]
+    LJ -->|1:N balanced| LL[ledger_lines]
+    B -->|1:N| RF[refunds]
+    B -->|1:N| PO[payouts]
+    B -->|1:N| DC[dispute_cases]
+    B -->|1:0..1| Rev[reviews]
+```
+
+Cardinalities cho draft có thể 0 children; submit phải >=1 item. [CoreERD](3_CoreERD.md) và [Payment v2](8_Payment.md) giữ keys/atomicity: nhiều online attempts, unique event/ref/journal, versioned Host-attested direct receipts/reversals, per-room actual check-in, balanced ledger/refund/payout/disputes. Booking snapshot mode/required online/direct split/policy/funding; zero-online exception phải duyệt, không bypass hybrid deposit. Both modes core MVP; legacy1:1 bên dưới không còn là target.
+
+## CURRENT/LEGACY conceptual archive — không phải target
+
 ```mermaid
 flowchart LR
 

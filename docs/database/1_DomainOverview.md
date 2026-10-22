@@ -1,3 +1,9 @@
+> **CURRENT/LEGACY conceptual overview, không phải TARGET đã triển khai.** [Canonical target](../business/PropertyInventoryBusinessRules.md): Property → RoomTypes → shared-inventory RatePlans; type/date inventory; Booking → Items → per-room allocations/nightly snapshots. Một booking vẫn một property/currency/date range. Mọi delta cần TSK-097–108 và reconciliation trước release.
+
+## TARGET financial domain v2 (pending delivery)
+
+[Payment rules](../business/PaymentBusinessRules.md): FULL_PREPAY và HYBRID_DEPOSIT cùng core MVP; Booking snapshot mode/dueOnline/direct balance/policy/commission/funding. Nhiều online PaymentAttempts (provider-verified), direct Host-attested receipts/reversals, actual per-room CheckInEvents, balanced ledger/refunds/payout/disputes là domain riêng theo [ERD](3_CoreERD.md). Instant confirm sau đủ online +active hold, không chờ direct balance. Commission due/reserved/earned khác nhau; payout chỉ eligible actual check-in+24h có gates. One-payment relationship bên dưới chỉ legacy.
+
 ```mermaid
 flowchart TB
     U[User & Authentication]

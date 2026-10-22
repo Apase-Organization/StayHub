@@ -2,6 +2,12 @@
 
 ## 1. Mục tiêu & Tầm nhìn
 
+> **Phân lớp tài liệu:** [inventory TARGET](../business/PropertyInventoryBusinessRules.md) và [Payment v2](../business/PaymentBusinessRules.md) → API/ERD/UI → TaskList/evidence. User đã duyệt instant và **cả FULL_PREPAY/HYBRID_DEPOSIT core MVP**, không Host accept/reject. Phần flow/module single-unit bên dưới là baseline/design lịch sử chưa tái xác minh runtime, không override quyết định mới.
+
+TARGET financial boundaries: required dueOnline snapshot (full100% hoặc configurable deposit hướng15–20%)/direct Host balance tại check-in; online attempts provider-verified khác direct receipts Host-attested. Booking atomic confirm sau đủ online, không chờ balance; actual per-room check-in evidence khác calendar completion. Balanced ledger/commission reserve-earned/funding/refund split/payout/disputes riêng; eligible actual check-in+24h có gates, không auto transfer/monthly commission/StayHub onsite QR pass-through. Both modes phải đạt evidence/rollout TSK-109–114/077/078/108 trước095, config/legal unresolved block dependents.
+
+TARGET giữ monolith nhưng tách Property(content/ownership/classification), RoomType(capacity/beds/photos/amenities), RatePlan(price/policy/restrictions), type/date stock, Booking(items/allocation/nightly snapshots). Search/detail/quote/checkout dùng cùng engine availability. Visual Airbnb-like không quyết định inventory Booking-like; physical-room assignment không bắt buộc MVP. Financial state, booking state và refund state độc lập; outbox sau transaction, callback không phụ thuộc session guest.
+
 StayHub là một nền tảng trung gian (marketplace) hai chiều, kết nối:
 
 - **Host** (chủ nhà cho thuê chỗ ở)
@@ -91,7 +97,7 @@ flowchart TD
     N --> O[Guest viết Review]
 ```
 
-Chi tiết từng bước đã được mô tả trong `flow.md`.
+Sơ đồ trên là instant proposal lịch sử, không phải target triển khai. Chi tiết target tại [canonical](../business/PropertyInventoryBusinessRules.md); màn hình demo tại [DemoSystem](0_DemoSystem.md).
 
 ## 6. Các module chính (High-level Modules)
 

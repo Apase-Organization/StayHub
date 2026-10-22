@@ -1,5 +1,9 @@
 # Properties
 
+**TARGET payment v2:** RatePlan allowedPaymentModes/paymentPolicyVersion server-validated; selected mode frozen tại quote/booking, không sinh stock riêng. Full và hybrid bắt buộc trong release MVP; invalid coverage offer bị reject/requote chứ không đẩy hybrid sang later. Actual check-in theo booking room allocation, không cần PhysicalRoom schema; payout gate không lấy ngày property calendar làm evidence. Xem [Payment rules](../business/PaymentBusinessRules.md).
+
+> **CURRENT/LEGACY single-unit tables/diagrams bên dưới, không phải target multi-room.** [TARGET canonical](../business/PropertyInventoryBusinessRules.md): classification tách WHOLE_PLACE/ROOM_BASED; Property có RoomTypes (whole-place quantity1), mỗi type capacity/ảnh/tiện nghi và RatePlans dùng chung stock. Type/date total, blocked, held, confirmed và remaining không âm; OOO không phá commitments. Bedrooms không phải quantity. PhysicalRoom assignment future; pool phải bảo đảm continuity. Đây là conceptual delta, chưa có migration.
+
 | Column | Type | Constraint | Description |
 |---|---|---|---|
 | `id` | BIGINT | PK | Property identifier |

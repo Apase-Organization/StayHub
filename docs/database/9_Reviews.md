@@ -1,5 +1,9 @@
 # Reviews
 
+**TARGET payment/check-in v2:** [Payment rules](../business/PaymentBusinessRules.md) tách actual per-room check-in evidence, guarded completion/no-show và financial collection. Host-attested receipt/online SUCCESS/calendar date không tự mở review hay payout; +24h eligibility dựa actual arrival boundary đã duyệt. Một review/eligible booking cho cả full/hybrid, không nhân theo rooms/receipts.
+
+> **TARGET delta chưa triển khai:** [canonical](../business/PropertyInventoryBusinessRules.md) giữ một review/completed booking, aggregate property bất kể quantity/items, optional booked-type context snapshot; không sinh review mỗi phòng. Guard actor/ngày/window theo TSK-090/092, review hai chiều chỉ optional TSK-096. Bảng dưới là baseline, không bằng chứng runtime guard.
+
 
 | Column | Type | Constraint | Description |
 |---|---|---|---|

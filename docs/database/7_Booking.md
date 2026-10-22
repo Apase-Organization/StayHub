@@ -1,5 +1,9 @@
 # Bookings
 
+> **LEGACY single-unit schema và flow proposal bên dưới, không xác nhận runtime.** [TARGET](../business/PropertyInventoryBusinessRules.md): header một property/currency/date range `[checkIn,checkOut)`; items roomType/ratePlan/quantity, guest allocation từng phòng, nightly price/fee/tax/policy snapshots. Atomic tất cả items/nights hoặc rollback, shared-plan stock, expiry/IPN serialize; proposed MVP cancellation toàn booking còn cần duyệt boundary. Thay exclusion property chỉ sau backfill và capacity protection/reconciliation. Instant đã duyệt cho cả full/hybrid, đủ dueOnline +active hold mới confirm; không hồi sinh late paid.
+
+**TARGET v2 financial snapshot:** paymentMode/allowed modes/config/deposit rate/base/commission/funding/policy version, total/dueOnline/balanceDueHost, item-room-night allocations, consent/version. Multiple attempts/receipt/check-in/ledger/refund/payout/dispute records tại [Payment](8_Payment.md). Online SUCCESS không đồng nghĩa direct balance paid; hybrid confirm không chờ direct B. Actual check-in per allocation +evidence/ack/admin contested fallback theo policy cần duyệt, completion không tự chứng minh arrival. Balance unpaid không tự release occupied inventory; payout +24h là eligibility có gates, không automatic transfer. Approval restoration note bên dưới chỉ legacy, không phải target được duyệt.
+
 | Column | Type | Constraint | Description |
 |---|---|---|---|
 | `id` | BIGINT | PK | Booking identifier |

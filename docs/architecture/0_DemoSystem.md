@@ -1,3 +1,5 @@
+> **LEGACY/demo archive:** toàn bộ wireframes, full-total/single-payment và property-boolean availability bên dưới là lịch sử, không chứng nhận runtime. [Inventory](../business/PropertyInventoryBusinessRules.md), [Payment v2](../business/PaymentBusinessRules.md) và [screens](../ui/ApplicationDesigned.md) có ưu tiên. User đã duyệt cả FULL_PREPAY/HYBRID_DEPOSIT core MVP, instant sau verified dueOnline +active all-item hold, không Host accept/reject. Hybrid balance trực tiếp Host lúc actual check-in, không chờ balance để confirm. Return/poll chỉ đọc; payout chỉ eligible actual-check-in+24h có dispute/reconcile/refund/legal gates, không automatic transfer. TSK-095 phải có evidence cả hai mode; legacy hình bên dưới không dùng làm target acceptance.
+
 ### Flow
 ```
 User truy cập website
