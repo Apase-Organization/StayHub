@@ -4,7 +4,7 @@
 
 Approval source: user answered all seven policy questionnaire groups approving the proposals on 2026-10-23. User acts as product owner, not legal counsel or a named Finance/Operations signatory. No signatures or real-money permission are inferred.
 
-Decision approval, completed design deliverable and runtime clearance are separate statuses. TSK-079/097/081/084/086 delivered; other three questionnaire approvals are provenance, not completed tasks. Their contracts/fixtures will be frozen sequentially.086 is completed PRODUCT CONTRACT, NOT legal clearance.
+Decision approval, completed design deliverable and runtime clearance are separate statuses. TSK-079/097/081/084/086/088 delivered;090/109 approvals are provenance, not completed tasks.086 is completed PRODUCT CONTRACT, NOT legal clearance.
 
 | Task | Decision approval | Deliverable status / version |
 |---|---|---|
@@ -13,9 +13,15 @@ Decision approval, completed design deliverable and runtime clearance are separa
 | TSK-081 | Approved hold/retry/late-payment parameters | Completed policy design, S0-081-v1, 2026-10-23 |
 | TSK-084 | Approved cancellation/refund parameters | Completed policy design, S0-084-v1, 2026-10-23 |
 | TSK-086 | Approved financial/operations product contract, not Finance/Legal approval | Completed PRODUCT CONTRACT S0-086-v1, 2026-10-23; real-money095 BLOCKED |
-| TSK-088 | Approved discount/abuse parameters | Pending dedicated deliverable |
+| TSK-088 | Approved discount/abuse parameters | Completed policy design S0-088-v1, 2026-10-23 |
 | TSK-090 | Approved time/arrival/completion/review parameters | Pending dedicated deliverable |
 | TSK-109 | Approved numerical choices, not completed config/DTO freeze | Pending dedicated deliverable |
+
+## TSK-088 acceptance evidence
+
+User PO questionnaire approval frozen **S0-088-v1, 2026-10-23**, [Payment2b](PaymentBusinessRules.md), [Discount TARGET](../database/10_Discounts.md), [API preview/error projection](../architecture/3_API_Design.md). Self-owner blocked, one code/no stacking, per-user/code1 online consumption, mandatory finite positive campaignquota publication input (no invented unlimited/default value). Atomic global/user reservation with15min original hold; attempt retry failure retains, guarded final-fail/expiry releases, accepted online consumes once, consumed cancellation/refund never restores. DirectB cannot bypass. HALF_UP wholeVND/stable largest remainder, no zeroT/O exception; platformD<=Cgross/Cnet>=0/O>=Cnet, no Guest fee/tax invention. Old15%/zero-exception wording removed or explicitly invalid legacy.
+
+Design examples include last campaign slot/user reservation conflict, duplicate/retry/expiry/consumed cancellation and rounding/zero/funding rejection. Runtime DB concurrency not claimed;089/082/102/110 implementation and109 config/DTO freeze pending. Only088 newly closed:77 checked/37 unchecked, active done6/42, S0 done6/8.090/109 unchecked; real-money095 remains BLOCKED. Validation `python3 .opencode/verify-dual-payment-docs.py`, `git diff --check`; exact results/duration in execution handoff. Full/integration/e2e skipped docs-only, no source changes or fabricated clearance.
 
 ## TSK-086 acceptance evidence — completed PRODUCT CONTRACT, NOT legal clearance
 

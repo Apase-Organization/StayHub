@@ -78,7 +78,7 @@ Tax/provider cost0 illustration, room charges1.000.000, cleaning0/D0: Cgross=Cne
 
 Hybrid: Guest 200.000 online +800.000 trực tiếp; deposit phân bổ 150.000 commission reserve +50.000 host payable. Host net 800.000+50.000=850.000; platform commission 150.000 **trước refund/provider costs**, không phải toàn deposit. Full: Host850.000/platform150.000, không thu thêm800.000 trực tiếp.
 
-Rounding edge fixture: eligible charges `[1,1,1]` minor units, discount1; largest remainder/stable ordinals cho allocations `[1,0,0]`, net `[0,1,1]`, sum2 không âm. Base0 chỉ discount0, không chia0. Hybrid illustrative deposit15% củaT1.000.000 =150.000 **không đủ** commissionDue160.000: reject/requote offer, không giữ missing10.000 để thu tháng sau. Đây là boundary arithmetic, không commercial config.
+Allocation-only edge (not bookable offer): charges `[1,1,1]`, D1 → stable largest remainder `[1,0,0]`, net `[0,1,1]`. Zero base never divides by0, coded checkout rejects. **LEGACY INVALID config:** old15% deposit/160k commission-on-1m illustration is not active policy. Approved20%/15%, D<=Cgross and O>=Cnet apply; invalid coverage/funding rejects without debt/rate increase.
 
 **Active multi-room replacement:** S7.000.000, D200.000, Cgross1.050.000, Cnet850.000, T6.800.000. Hybrid O1.360.000/B5.440.000/held Host510.000; full O6.800.000/B0/held Host5.950.000; Host total5.950.000 in both. Gross commission1.050.000 minus funded expense200.000 = retained850.000 before provider costs, not automatic earnings. **LEGACY INVALID for active offers:** old6.900.000 fixture (7m+100k booking/service fee−200k with Host-funded discount/adjusted commission1.035m) is arithmetic history only. API/DB/UI old6.9m projections remain legacy awaiting comprehensive109 replacement; do not use them as active quote/rollout inputs.
 
@@ -97,6 +97,20 @@ Actual all-arrived baseline: verified arrival for **every booked room**, eligibl
 
 Before payout freeze disputed entitlement/reserves. After payout open immutable recovery case linking original payment/refund, affected source/amount, responsible role, reserve/funding, owner/status/deadline/escalation and resolution evidence. Fund required refund liquidity or escalate manually; no negative pool, automatic bank clawback or monthly commission invoice. Keep recovery unresolved/block further affected payouts until reviewed disposition; do not invent contractual right to debit Host. Maker/checker proof applies to recovery transfers too. **Real money remains LOCKED / TSK-095 BLOCKED** until documented permissions, signed operations, tax/calendar/liquidity and implementation evidence exist; no Finance/Legal signatures or escrow legality inferred.
 
+### 2b. Approved abuse / discount — S0-088-v1
+
+User PO questionnaire approval frozen **2026-10-23**. Server blocks `guestId == property.hostId` regardless of role/mode/code/direct receipt. Zero or one code per booking, **no stacking**. Per authenticated user per code **one accepted online consumption**, not per room/item/attempt or direct B. Campaign publication requires explicit positive finite integer quota Q and valid numeric type/value/base/window configuration; no invented quota or NULL=unlimited. Tax config remains unset/disabled/release-blocked, no invented tax eligibility/value.
+
+Under booking/campaign/user locks and unique reservation/consumption constraints enforce `consumedGlobal + activeReservedGlobal <= Q` and `consumedUser + activeReservedUser <= 1`. Preview is read-only, reserves nothing. Checkout revalidates then reserves cap with all-item hold or rolls back all. Reservation booking+code+user expires at original createdAt+15min, retries reuse/no extension; same key/body replay no new reservation, changed body conflicts. Expired cap reusable only after serialized RELEASED transition, not read-clock subtraction. Concurrent last-slot requests cannot both win; same user cannot reserve same code on competing bookings.
+
+RESERVED→CONSUMED only with first accepted exact online collection +active hold/CONFIRMED transaction, decrement reserved/increment consumed once. Single attempt failure retains reservation for081 retry; guarded booking final failure/expiry/pre-consumption cancellation releases once. Duplicate/late/extra IPN never consumes again/revives release. CONSUMED quota/user eligibility **not restored on booking cancellation/refund**. Direct B receipt never consumes or unlocks code; usage reversals preserve audit, not silent counter reset.
+
+Compute eligible booking-wide D once in exact decimal, HALF_UP to whole VND, apply configured percent campaign cap before funding validation. Require D<=eligible base and D<=Cgross, Cnet=Cgross−D>=0; platform-funded only, no Guest fee. Reject misfit, never silently clamp to commission or shift funder to Host. T=S−D, hybridO=HALF_UP(20%T); reject **T<=0 or O<=0**, no free/internal-settlement exception or gateway0. Require O>=Cnet. Allocate rounded D by largest remainder with stable item/room/night/charge ordinal ties, exact sumD/no negative charge; base0 rejects coded checkout, never division0. Snapshot amount/base/funder/algorithm/config version and immutable allocations.
+
+Validation semantics preview/submit:400 `ERR_SELF_BOOKING`, `ERR_DISCOUNT_STACKING`, `ERR_DISCOUNT_INVALID` (unknown/inactive/window/minimum/base/value), `ERR_NONPOSITIVE_BOOKING_AMOUNT` (T/O<=0).409 `ERR_DISCOUNT_QUOTA_EXHAUSTED`, `ERR_DISCOUNT_USER_LIMIT`, `ERR_DISCOUNT_FUNDING` (D>base/Cgross or Cnet<0), `ERR_DISCOUNT_CONFIG` (missing/nonfinite quota or invalid publish config), `ERR_DEPOSIT_COVERAGE` (O<Cnet), `ERR_QUOTE_STALE` and existing version/idempotency errors. No stock/cap/charge side effects on rejection; race loser receives conflict, not preview reservation promise. Runtime concurrency remains089/082/102/110 and DTO/config freeze109 pending.
+
+Design cases, not runtime evidence: illustrative campaignQ1 → one of two simultaneous reservations wins; same user's competing booking cannot bypass held/consumed slot. Attempt1 fail retains; worker expiry releases; online accepted consumes once and cancellation does not restore. HALF_UP0.5→1VND; equal remainder ties lowest ordinal. T1VND hybridO0 rejects before gateway; D>Cgross rejects with positiveT; O<Cnet independently rejects.
+
 ## 3. Lifecycle và nguồn xác nhận
 
 | Event | Booking / collection / inventory |
@@ -109,7 +123,7 @@ Before payout freeze disputed entitlement/reserves. After payout open immutable 
 | Balance partial/refused/disputed | Outstanding và case/support rõ; không auto-release occupied rooms, không host button đánh dấu cả booking fully verified |
 | Completion/no-show/cancel | Guard actor/date/evidence theo policy riêng. Không suy no-show deposit nonrefundable; cancellation không đồng nghĩa refund paid |
 
-Mỗi online attempt có ID/reference/expected O/currency/config snapshot riêng, retry checkout không tạo nhiều live collectible attempts không kiểm soát. Serialize booking amount-credit: accept đúng một required collection; extra verified receipts vẫn ghi tiền thực và case hoàn/đối soát, không silently drop. Attempt success không overwrite cancelled booking. Zero-online/zero-total cần policy được duyệt tại TSK-088, không là bypass mandatory hybrid deposit hoặc tạo gateway amount0.
+Online attempts bind reference/expected O/currency/config; serialize one accepted booking collection, extra real money reconcile/refund, no cancelled-booking overwrite. **S0-088-v1 rejects zero-total/zero-online**, no free/internal-settlement exception or gateway amount0; mandatory hybrid deposit cannot be bypassed.
 
 ### 3a. Approved hold / retry / expiry — S0-081-v1
 
