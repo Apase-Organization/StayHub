@@ -4,13 +4,13 @@
 
 Approval source: user answered all seven policy questionnaire groups approving the proposals on 2026-10-23. User acts as product owner, not legal counsel or a named Finance/Operations signatory. No signatures or real-money permission are inferred.
 
-Decision approval, completed design deliverable and runtime clearance are separate statuses. TSK-079 and TSK-097 are delivered here. Other six questionnaire approvals are preserved as provenance, not completed tasks; their detailed contracts/fixtures will be frozen sequentially.
+Decision approval, completed design deliverable and runtime clearance are separate statuses. TSK-079/097/081 delivered; other five questionnaire approvals are provenance, not completed tasks. Their contracts/fixtures will be frozen sequentially.
 
 | Task | Decision approval | Deliverable status / version |
 |---|---|---|
 | TSK-079 | Approved instant, both required modes, required-online authority and exclusions | Completed policy design, S0-079-v1, 2026-10-23 |
 | TSK-097 | Approved inventory boundaries | Completed policy design, S0-097-v1, 2026-10-23 |
-| TSK-081 | Approved hold/retry/late-payment parameters | Pending dedicated deliverable |
+| TSK-081 | Approved hold/retry/late-payment parameters | Completed policy design, S0-081-v1, 2026-10-23 |
 | TSK-084 | Approved cancellation/refund parameters | Pending dedicated deliverable |
 | TSK-086 | Approved financial/operations design direction, not legal clearance | Pending dedicated deliverable |
 | TSK-088 | Approved discount/abuse parameters | Pending dedicated deliverable |
@@ -32,3 +32,9 @@ User PO questionnaire approval frozen on 2026-10-23 as **S0-097-v1** in [canonic
 Only097 newly completed; cumulative policy designs079/097, S0 done2/8, active done2/42, 73 checked/41 unchecked across114 IDs. No schema/source/runtime/capacity or migration correctness claimed. Existing financial fixture replacement remains staged for109, not changed or commercially approved by097. Remaining downstream protections require099/102/106/107 and release095.
 
 Checks: `python3 .opencode/verify-dual-payment-docs.py` PASS (2026-10-23, 0.341s): 114 IDs/73 checked/41 unchecked, policy done2, DAG/ranks/retained S0 history, S0-097-v1 projections, 21 documents/11 JSON/1 JSONC/84 links and illustrative financial boundaries. `git diff --check` PASS. Validator uses an explicit document manifest, no suite-wide runner; ignored local validator incrementally updated. Payment precedence wording also updated to reference the independent inventory approval, without changing financial policy. Runtime/integration/e2e skipped for docs-only scope; no dummy RED/GREEN. No business approval blocker for097; implementation and real-money gates remain blocked independently.
+
+## TSK-081 acceptance evidence
+
+User PO questionnaire approval frozen **S0-081-v1**, 2026-10-23, in canonical Payment section3a and Inventory/API projections. Approved15min original-created deadline, max3 creations inclusivefirst, no extension, active strictly before expiry. Failure callback updates attempt only; retry within window/count, count3 pending can settle; worker alone early-finalizes all3 terminal unsuccessful/no credit or finalizes expiry. Allocation/IPN/worker serialize, single required booking credit and atomic all-item/cap convert/release. Late/extra real money retained in ledger/reconcile/refund case owned OperationsFinance, Admin maker/checker proof execution, no stock resurrection/automatic refund PAID.
+
+Contract review examples cover retry success, exact expiry rejection, pending third attempt, all-terminal final failure and duplicate/extra receipts. These are design examples, not runtime tests. Only081 newly closed: 74 checked/40 unchecked, active done3/42, S0 done3/8. Numeric081 policy is approved, no outstanding PO blocker. Runtime082/083/102/110/114 and release095 remain blocked independently. Checks: `python3 .opencode/verify-dual-payment-docs.py`, `git diff --check`; execution result/duration in handoff. Full/integration/e2e skipped for docs-only scope; no dummy RED/GREEN.

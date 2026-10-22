@@ -71,7 +71,7 @@ Guest tìm property duy nhất → nhập dates/adults/children ages/rooms → x
 |---|---|---|
 | Guest submit hợp lệ | PENDING_PAYMENT / PENDING | Transaction khóa type/date theo thứ tự ổn định; revalidate mọi item/giá/policy/caps; giữ **tất cả** nights/items hoặc rollback toàn bộ, idempotency key chống double submit |
 | IPN verified đủ dueOnline theo attempt/mode, hold còn hiệu lực | CONFIRMED / online attempt SUCCESS, instant đã duyệt | Atomic collection + convert toàn bộ hold + consume discount; hybrid không chờ balance trực tiếp hay giữ hold tới stay; outbox/email sau commit, dedupe |
-| Expiry/payment fail | expired/cancelled theo state matrix đã duyệt | Release mọi hold/cap đúng một lần; race với IPN được serialize |
+| Attempt failure / worker finalization | S0-081-v1: callback updates its attempt only, no booking cancellation | Hold original createdAt+15min, max3 creations inclusivefirst, no extension; guarded worker final-failure/expiry releases all holds/caps once |
 | IPN duplicate/out-of-order | Không lặp side effect | Verify signature, amount, currency, merchant/reference/envelope; audit/reconcile |
 | Late paid sau release | Không tự hồi sinh confirmation | Ghi nhận tiền đã nhận, luồng refund/reconciliation được duyệt; không chiếm stock đã bán |
 | Guest/host/admin cancellation hợp lệ | CANCELLED; refund lifecycle độc lập | MVP hủy **toàn booking** atomically; release đúng commitments, refund theo snapshot |
@@ -80,6 +80,8 @@ Guest tìm property duy nhất → nhập dates/adults/children ages/rooms → x
 Return URL/poll chỉ đọc; instant sau đủ required online amount và cả hai modes đã duyệt tại payment canonical. Direct balance unpaid/refused/disputed không tự release occupied rooms, Host receipt không thành provider verification. S0-097-v1 đã duyệt loại khỏi MVP: partial item/quantity cancellation, mixed dates/currencies/properties và linked whole+room sale. Partial financial refund không thay đổi boundary hủy toàn booking; refund eligibility/amount/source vẫn thuộc TSK-084.
 
 ## 6. Cross-business review matrix
+
+**S0-081-v1 approved:** active only `t < expiresAt`, at/after expiry no confirmation even before worker runs. Count3 with pending attempt can settle within original window; early worker final-failure requires all three terminal unsuccessful/no credit. Callback cannot kill another pending attempt. Serialized expiry/IPN converts or releases all items/caps once; late/extra money reconciles/refunds, never resurrects released/resold stock. Hold TTL/retry approval supersedes old pending wording in section9; other policy deliverables remain separate.
 
 Tất cả hàng dưới là **TARGET pending implementation**, không phải kiểm chứng runtime. Boundaries đã duyệt tại097;079 ghi instant/hai modes đã duyệt; thời gian/children/check-in evidence tại090/112, Finance/Legal084/086/088/109 vẫn là deliverables riêng. Owner/sprint theo TaskList; policy docs không đóng implementation tasks.
 
@@ -129,4 +131,4 @@ QA phải chứng minh happy + critical edge bằng test nghiệp vụ/DB thật
 
 **S0-097-v1 — toàn bộ inventory boundaries đã được user/PO phê duyệt:** whole-place một type quantity1 (bedrooms mô tả); exclusive WHOLE_PLACE/ROOM_BASED, không linked sale; pooled interchangeable types, PhysicalRoom assignment tương lai; shared-plan stock; một property/date range/VND mỗi booking; all-booking cancellation, không partial item/quantity cancellation. API/ERD là projections của freeze này, không evidence schema đã tồn tại. TSK-084 còn phải freeze refund policy, không reopen cancellation granularity.
 
-Instant/hai modes/online collection và actual-check-in+24h eligibility đã duyệt; không mở lại. PO/BA/Finance/Legal còn ký: hold TTL/late-paid compensation; timezone/check-in/out/lead/min-max stay; child ages/extra beds; fee/tax/commission bases/rates/funding; exact deposit config trong hướng15–20%; coverage/rounding/zero exception; cancellation/no-show/refund; caps/stacking; completion/review; check-in evidence/contested fallback và all-arrived vs per-room entitlement boundary; legal/liquidity/dispute recovery. Core scope không được lùi P2 vì config chưa duyệt; block dependent work/release thay vì bịa config.
+Instant/hai modes/online collection/+24h và S0-081-v1 hold15min/max3/no-extension/late-extra reconciliation đã duyệt. Các deliverables timezone/children/financial config/refund/discount/check-in/review và legal/liquidity/recovery vẫn thuộc tasks riêng; không reopen081 hay lùi core scope P2. Source/runtime/release evidence chưa hoàn tất.

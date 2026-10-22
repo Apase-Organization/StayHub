@@ -30,7 +30,7 @@ Both modes are required MVP. Guest selects only server-allowed plan/mode; Host m
 | New → PENDING_PAYMENT | Authenticated Guest for own booking; valid server quote and atomic all-item hold | ONLINE_DUE; no confirmation from submit |
 | PENDING_PAYMENT → CONFIRMED | Verified provider IPN service only: signature, merchant, reference, currency, envelope/result and exact attempt O; active hold under serialized expiry/credit transaction | ONLINE_PAID_VERIFIED; convert all holds once; full B=0, hybrid DIRECT_OUTSTANDING |
 | Return / polling, any state | Authorized Guest/Host/support read scope; browser signature is not collection authority | Read-only; no booking/ledger mutation |
-| PENDING_PAYMENT → CANCELLED on expiry/final failure | Expiry worker / verified callback under lifecycle guards; retry/final-failure details owned by TSK-081 | Release once; failed attempt alone is not unconditionally whole-booking failure |
+| PENDING_PAYMENT → CANCELLED on expiry/final failure | Expiry worker under approved S0-081-v1 guards; failure callback updates attempt only | Release once; never kill another pending attempt |
 | Duplicate / late / extra success | Verified IPN service, unique event/attempt and booking credit guard | Reconcile/refund real received money; no second credit or resurrection of CANCELLED/COMPLETED |
 | CONFIRMED, direct receipt / arrival | Owning Host attests receipt/evidence; Guest independently acknowledges or contests; Admin resolves evidenced case | DIRECT_PARTIAL_ATTESTED / DIRECT_PAID_ATTESTED remain distinct from provider verification; no automatic completion/payout |
 | PENDING_PAYMENT / CONFIRMED → CANCELLED | Guest owns booking within policy; Host inability is an evidenced support/Admin case, not Host reject; Admin scoped authority and audit | Cancellation does not imply refund PAID; responsibility follows actual collection source; detailed matrix TSK-084 |
@@ -92,6 +92,28 @@ Fixture multi-room xuyên API/DB/UI giữ T=6.900.000 (room7.000.000 +booking fe
 | Completion/no-show/cancel | Guard actor/date/evidence theo policy riêng. Không suy no-show deposit nonrefundable; cancellation không đồng nghĩa refund paid |
 
 Mỗi online attempt có ID/reference/expected O/currency/config snapshot riêng, retry checkout không tạo nhiều live collectible attempts không kiểm soát. Serialize booking amount-credit: accept đúng một required collection; extra verified receipts vẫn ghi tiền thực và case hoàn/đối soát, không silently drop. Attempt success không overwrite cancelled booking. Zero-online/zero-total cần policy được duyệt tại TSK-088, không là bypass mandatory hybrid deposit hoặc tạo gateway amount0.
+
+### 3a. Approved hold / retry / expiry — S0-081-v1
+
+User PO questionnaire approval frozen **2026-10-23**, provenance [S0DecisionLog](S0DecisionLog.md). Numeric policy is approved, not TBD: `expiresAt = original booking createdAt + 15 minutes`; active only `t < expiresAt`. Evaluate authoritative transaction time after lifecycle lock acquisition, not browser/provider paidAt or earlier callback arrival. At `t >= expiresAt`, confirmation is forbidden even before worker runs. One deadline covers all items/nights/cap reservations; refresh/retry/provider timeout never extends it.
+
+**Maximum 3 checkout-creation attempts inclusive of the first.** Allocate ordinal1..3 atomically before provider request; allocated creation failure/timeout still counts. Same operation/key/body retry returns same attempt/outcome, no new ordinal/deadline; concurrent new keys cannot allocate ordinal4. Bind immutable exact server expected O/currency/merchant/reference/config/deadline. No partial-online installment aggregation; wrong/short amount is reconciliation-only.
+
+| Event / guard | Attempt / booking / hold disposition |
+|---|---|
+| Attempt FAILED/CANCELLED, count<3, t<expiresAt | Callback updates its attempt only; preserve PENDING_PAYMENT and all holds/caps; Guest may create next attempt within original window |
+| count=3, any allocated attempt pending, t<expiresAt | No new creation; existing pending attempt may settle before original expiry; count limit is not cancellation |
+| count=3, all allocated attempts terminal unsuccessful, no accepted collection | Expiry worker alone may finalize FINAL_PAYMENT_FAILURE early after rechecking all attempts under lock; CANCELLED, release every hold/cap once. Failure callback never kills another pending attempt |
+| t>=expiresAt, no accepted collection | Worker finalizes HOLD_EXPIRED/CANCELLED and atomic release once regardless of count; mutating IPN enforces same expiry guard before credit/stock reuse |
+| Verified exact O, t<expiresAt, PENDING_PAYMENT, all holds active, no prior booking credit | First qualifying success wins atomic booking credit +all-item conversion +cap consume +outbox, CONFIRMED in both modes |
+| Duplicate/out-of-order failure after winner | Audit idempotently; never downgrade SUCCESS/CONFIRMED or release converted stock |
+| Late success after expiry/final failure/cancellation, distinct extra success after winner | Persist unique real-money receipt and reconcile/refund case; no required-collection credit, cap consume, confirmation email or resurrection |
+
+Serialize allocation, IPN, worker finalization and cancellation on same booking/lifecycle lock then stable inventory/cap locks. Failure callbacks update only their attempt, never finalize booking failure; this overrides the broader callback wording in section1a. Success winning before deadline makes expiry a no-op for confirmed stock; finalization winning makes later success reconciliation-only. Unique provider transaction/event prevents duplicate receipt posting; one accepted booking collection prevents alternate retry references double-crediting O. Conflicting terminal provider events are retained/audited and actual money reconciled, not silently dropped or success overwritten.
+
+OperationsFinance owns daily late/extra/mismatched receipt reconciliation and refund-case routing with amount/source/reference/owner/status/audit; Admin maker/checker handles execution under084/085 pool/proof guards. No automatic reversal or refund PAID from request. Resold stock is never reclaimed; new booking needs new quote/consent, not resurrection/extension. Implementation/race evidence remains082/083/102/110/114.
+
+Contract cases (not runtime tests): created10:00 → expiry10:15; attempt1 fails10:02 → attempt2 allowed with unchanged deadline; exact O at10:14:59 can confirm, at10:15:00 reconciles only. Three creations with attempt3 pending cannot final-fail; all three terminal unsuccessful permit worker finalization once. Duplicate winner posts once; distinct second success records extra money/case, not second credit.
 
 ## 4. Direct receipt và actual check-in evidence
 
