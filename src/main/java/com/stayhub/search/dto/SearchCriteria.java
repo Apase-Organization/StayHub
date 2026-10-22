@@ -12,6 +12,7 @@ public class SearchCriteria {
     private LocalDate checkIn;
     private LocalDate checkOut;
     private Integer guests;
+    private Integer rooms;
     private BigDecimal minPrice;
     private BigDecimal maxPrice;
     private List<PropertyType> type;

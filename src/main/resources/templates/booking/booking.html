@@ -70,11 +70,41 @@
                     <p class="mt-4 text-sm text-text-gray">Booking uses your account contact details. Profile editing can refine this later.</p>
                 </section>
 
+                <!-- TSK-101 / TSK-113: Dual Payment Mode Selection -->
+                <section class="rounded-3xl border border-border bg-white p-5 shadow-sm">
+                    <h2 class="text-lg font-black text-text-900">Phương thức thanh toán</h2>
+                    <p class="mt-1 text-xs text-text-gray">Lựa chọn cách thức thanh toán phù hợp với bạn.</p>
+
+                    <div class="mt-4 grid gap-3 sm:grid-cols-2">
+                        <!-- Option 1: FULL_PREPAY -->
+                        <label id="card-full-prepay" class="relative flex cursor-pointer flex-col rounded-2xl border-2 border-primary-500 bg-primary-50/20 p-4 transition-all">
+                            <div class="flex items-center justify-between">
+                                <span class="font-bold text-text-900">Thanh toán 100%</span>
+                                <input type="radio" name="paymentMode" value="FULL_PREPAY" checked class="h-4 w-4 text-primary-500 focus:ring-primary-500">
+                            </div>
+                            <span class="mt-2 text-xs text-text-gray">Thanh toán toàn bộ trực tuyến qua VNPay. Xác nhận phòng tức thì.</span>
+                            <span class="mt-3 text-xs font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded w-fit border border-emerald-200">Khuyên dùng</span>
+                        </label>
+
+                        <!-- Option 2: HYBRID_DEPOSIT -->
+                        <label id="card-hybrid-deposit" class="relative flex cursor-pointer flex-col rounded-2xl border-2 border-slate-200 bg-white p-4 transition-all hover:border-slate-300">
+                            <div class="flex items-center justify-between">
+                                <span class="font-bold text-text-900">Đặt cọc 20%</span>
+                                <input type="radio" name="paymentMode" value="HYBRID_DEPOSIT" class="h-4 w-4 text-primary-500 focus:ring-primary-500">
+                            </div>
+                            <span class="mt-2 text-xs text-text-gray">Cọc 20% online qua VNPay giữ chỗ, 80% còn lại trả trực tiếp cho Host khi nhận phòng.</span>
+                            <span class="mt-3 text-xs font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded w-fit border border-blue-200">Linh hoạt</span>
+                        </label>
+                    </div>
+                </section>
+
                 <div id="availability-result" class="hidden rounded-2xl px-4 py-3 text-sm font-semibold"></div>
 
                 <div class="flex flex-col gap-3 sm:flex-row">
                     <button type="button" id="check-availability-button" class="rounded-2xl border border-text-900 px-6 py-4 font-bold hover:bg-text-900 hover:text-white">Check availability</button>
-                    <button type="submit" th:disabled="${priceQuote == null}" class="rounded-2xl bg-primary-500 px-6 py-4 font-bold text-white hover:bg-primary-600 disabled:cursor-not-allowed disabled:bg-slate-300">Pay with VNPay</button>
+                    <button type="submit" id="submit-booking-button" th:disabled="${priceQuote == null}" class="rounded-2xl bg-primary-500 px-6 py-4 font-bold text-white hover:bg-primary-600 disabled:cursor-not-allowed disabled:bg-slate-300">
+                        <span id="submit-button-text">Pay with VNPay</span>
+                    </button>
                 </div>
             </form>
         </section>
@@ -107,10 +137,18 @@
                         <span>Discount</span>
                         <strong>-<span id="discount-amount">0</span> VND</strong>
                     </div>
-                    <div class="border-t border-border pt-4">
-                        <div class="flex justify-between gap-4 text-lg">
-                            <span class="font-black">Total</span>
+                    <div class="border-t border-border pt-4 space-y-2">
+                        <div class="flex justify-between gap-4 text-base">
+                            <span class="font-bold text-text-900">Total stay</span>
                             <strong><span id="total-price" th:text="${#numbers.formatDecimal(priceQuote.totalPrice, 0, 'COMMA', 0, 'POINT')}">0</span> VND</strong>
+                        </div>
+                        <div class="flex justify-between gap-4 text-sm font-semibold text-primary-700 bg-primary-50/60 p-2.5 rounded-xl border border-primary-100">
+                            <span>Due online now:</span>
+                            <strong><span id="due-online" th:text="${#numbers.formatDecimal(priceQuote.totalPrice, 0, 'COMMA', 0, 'POINT')}">0</span> VND</strong>
+                        </div>
+                        <div id="balance-line" class="hidden justify-between gap-4 text-sm font-semibold text-slate-700 bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                            <span>Pay host at check-in:</span>
+                            <strong><span id="balance-due-host">0</span> VND</strong>
                         </div>
                     </div>
                 </div>
@@ -134,10 +172,81 @@
     const discountLine = document.getElementById('discount-line');
     const discountAmount = document.getElementById('discount-amount');
     const totalPrice = document.getElementById('total-price');
+    const dueOnlineElem = document.getElementById('due-online');
+    const balanceDueHostElem = document.getElementById('balance-due-host');
+    const balanceLine = document.getElementById('balance-line');
+    const submitButtonText = document.getElementById('submit-button-text');
+    const cardFullPrepay = document.getElementById('card-full-prepay');
+    const cardHybridDeposit = document.getElementById('card-hybrid-deposit');
+    const paymentModeRadios = document.querySelectorAll('input[name="paymentMode"]');
+
+    let baseTotalPrice = /*[[${priceQuote != null ? priceQuote.totalPrice : 0}]]*/ 0;
+    let currentTotal = Number(baseTotalPrice) || 0;
 
     function formatVnd(value) {
         return Number(value).toLocaleString('en-US', {maximumFractionDigits: 0});
     }
+
+    function getSelectedPaymentMode() {
+        const checked = document.querySelector('input[name="paymentMode"]:checked');
+        return checked ? checked.value : 'FULL_PREPAY';
+    }
+
+    function updatePaymentBreakdown() {
+        const mode = getSelectedPaymentMode();
+        let dueOnline = currentTotal;
+        let balanceDue = 0;
+
+        if (mode === 'HYBRID_DEPOSIT') {
+            dueOnline = Math.round(currentTotal * 0.20);
+            balanceDue = currentTotal - dueOnline;
+
+            if (balanceLine) {
+                balanceLine.classList.remove('hidden');
+                balanceLine.classList.add('flex');
+            }
+            if (cardHybridDeposit) {
+                cardHybridDeposit.classList.add('border-primary-500', 'bg-primary-50/20');
+                cardHybridDeposit.classList.remove('border-slate-200', 'bg-white');
+            }
+            if (cardFullPrepay) {
+                cardFullPrepay.classList.remove('border-primary-500', 'bg-primary-50/20');
+                cardFullPrepay.classList.add('border-slate-200', 'bg-white');
+            }
+            if (submitButtonText) {
+                submitButtonText.textContent = `Đặt cọc 20% qua VNPay (${formatVnd(dueOnline)} VND)`;
+            }
+        } else {
+            dueOnline = currentTotal;
+            balanceDue = 0;
+
+            if (balanceLine) {
+                balanceLine.classList.add('hidden');
+                balanceLine.classList.remove('flex');
+            }
+            if (cardFullPrepay) {
+                cardFullPrepay.classList.add('border-primary-500', 'bg-primary-50/20');
+                cardFullPrepay.classList.remove('border-slate-200', 'bg-white');
+            }
+            if (cardHybridDeposit) {
+                cardHybridDeposit.classList.remove('border-primary-500', 'bg-primary-50/20');
+                cardHybridDeposit.classList.add('border-slate-200', 'bg-white');
+            }
+            if (submitButtonText) {
+                submitButtonText.textContent = `Thanh toán 100% qua VNPay (${formatVnd(dueOnline)} VND)`;
+            }
+        }
+
+        if (dueOnlineElem) dueOnlineElem.textContent = formatVnd(dueOnline);
+        if (balanceDueHostElem) balanceDueHostElem.textContent = formatVnd(balanceDue);
+    }
+
+    paymentModeRadios.forEach(radio => {
+        radio.addEventListener('change', updatePaymentBreakdown);
+    });
+
+    // Initialize display on load
+    updatePaymentBreakdown();
 
     document.getElementById('check-availability-button').addEventListener('click', async () => {
         result.className = 'rounded-2xl bg-bg-light px-4 py-3 text-sm font-semibold text-text-gray';
@@ -205,7 +314,9 @@
             }
             discountCodeHidden.value = payload.data.code;
             discountAmount.textContent = formatVnd(payload.data.discountAmount);
-            totalPrice.textContent = formatVnd(payload.data.totalPrice);
+            currentTotal = Number(payload.data.totalPrice);
+            totalPrice.textContent = formatVnd(currentTotal);
+            updatePaymentBreakdown();
             discountLine.classList.remove('hidden');
             discountLine.classList.add('flex');
             discountMessage.className = 'mt-2 text-xs font-semibold text-green-700';

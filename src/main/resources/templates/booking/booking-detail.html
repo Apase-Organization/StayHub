@@ -58,20 +58,23 @@
                 </section>
 
                 <section class="mt-8 rounded-3xl bg-bg-light p-5">
-                    <h2 class="text-xl font-black">Payment</h2>
+                    <h2 class="text-xl font-black">Payment details</h2>
                     <div class="mt-4 grid gap-4 sm:grid-cols-3">
                         <div>
-                            <p class="text-sm font-bold text-text-gray">Method</p>
-                            <p class="mt-1 font-semibold" th:text="${booking.paymentMethod != null ? booking.paymentMethod : 'N/A'}">MOCK</p>
+                            <p class="text-sm font-bold text-text-gray">Payment mode</p>
+                            <p class="mt-1 font-semibold text-primary-600" th:text="${booking.paymentMode == 'HYBRID_DEPOSIT' ? 'Deposit 20% + Check-in' : 'Prepay 100%'}">Prepay 100%</p>
                         </div>
                         <div>
-                            <p class="text-sm font-bold text-text-gray">Status</p>
-                            <p class="mt-1 font-semibold" th:text="${booking.paymentStatus != null ? booking.paymentStatus : 'N/A'}">SUCCESS</p>
+                            <p class="text-sm font-bold text-text-gray">Online payment status</p>
+                            <p class="mt-1 font-semibold" th:text="${booking.paymentStatus != null ? booking.paymentStatus : 'PENDING'}">SUCCESS</p>
                         </div>
                         <div>
-                            <p class="text-sm font-bold text-text-gray">Transaction</p>
+                            <p class="text-sm font-bold text-text-gray">Transaction ID</p>
                             <p class="mt-1 truncate font-semibold" th:text="${booking.transactionId != null ? booking.transactionId : 'N/A'}">MOCK</p>
                         </div>
+                    </div>
+                    <div th:if="${booking.balanceDueHost != null and booking.balanceDueHost.signum() > 0}" class="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-xs font-semibold text-amber-800">
+                        Notice: Remaining balance of <strong th:text="|${#numbers.formatDecimal(booking.balanceDueHost, 0, 'COMMA', 0, 'POINT')} VND|">0 VND</strong> is due directly to the host upon check-in.
                     </div>
                 </section>
 

@@ -2,6 +2,8 @@
 
 ## TARGET — conceptual, không phải Java classes đã có
 
+**S0-109-v1 FROZEN_DESIGN** [typed API](../business/contracts/s0-api-v1.json) is field authority; Money integer wholeVND, immutable policyVersion/fixtureVersion/quoteHash/consent and selections/amounts, quoteExpiresAt distinct original900s/max3 hold. Cgross15% room+clean/platformD/Cnet coverageO>=Cnet, noGuestfee/zeroT/O. ALLARRIVED090 evidence/gates frozen, runtime/095clearance blocked; conceptual class names are not new authorized source files.
+
 ```mermaid
 classDiagram
     Property "1" --> "0..*" RoomType : owns

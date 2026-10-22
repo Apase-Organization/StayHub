@@ -21,4 +21,6 @@ public class PropertySummary {
     private PropertyType propertyType;
     private PropertyStatus status;
     private String coverImageUrl;
+    private Integer nights;
+    private BigDecimal totalStay;
 }
