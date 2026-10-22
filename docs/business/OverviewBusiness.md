@@ -4,7 +4,7 @@
 
 ## 1. StayHub là gì?
 
-**Định vị TARGET:** phong cách thị giác Airbnb (gallery/card, khoảng trắng, sidebar chọn phòng) + nghiệp vụ inventory Booking-like (một cơ sở có nhiều hạng/quantity, plans chia sẻ stock). Không đồng nhất giao diện với schema hay chính sách nền tảng khác. Mọi mặc định MVP tại canonical vẫn chờ PO; onboarding Host cũng chưa được suy ra từ việc user đăng ký.
+**Định vị TARGET:** phong cách thị giác Airbnb (gallery/card, khoảng trắng, sidebar chọn phòng) + nghiệp vụ inventory Booking-like (một cơ sở có nhiều hạng/quantity, plans chia sẻ stock). Không đồng nhất giao diện với schema hay chính sách nền tảng khác. Inventory boundaries đã được PO duyệt tại canonical **S0-097-v1**: exclusive WHOLE_PLACE/ROOM_BASED, interchangeable pool/shared plans, whole-place quantity1, một property/date range/VND và hủy toàn booking; không linked sale/partial cancellation. Onboarding Host không được suy ra từ việc user đăng ký.
 
 StayHub là một **nền tảng trung gian (marketplace) hai chiều**, kết nối:
 
@@ -105,7 +105,7 @@ Payment ghi online attempts và provider-verified collection riêng direct Host-
 
 ## 6. Vai trò của Host trong vận hành (instant đã duyệt, pending delivery)
 
-Trong TARGET đã duyệt, Host vận hành property/types/plans/calendar, theo dõi booking, attest direct receipts và actual arrivals với evidence. Không khẳng định đây là flow đã chạy; các đề xuất inventory boundaries vẫn chờ TSK-097.
+Trong TARGET đã duyệt, Host vận hành property/types/plans/calendar, theo dõi booking, attest direct receipts và actual arrivals với evidence. Inventory boundaries frozen S0-097-v1, không khẳng định flow/source đã chạy; các implementation và financial-policy gates vẫn độc lập.
 
 - Booking mới bắt đầu ở trạng thái **PENDING_PAYMENT** trong lúc chờ VNPay xác nhận.
 - Sau IPN verified đủ dueOnline và active hold, booking chuyển thẳng **CONFIRMED** ở cả hai mode, không phụ thuộc direct balance.

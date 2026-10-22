@@ -1,6 +1,6 @@
-# Property inventory — canonical TARGET v1
+# Property inventory — canonical TARGET S0-097-v1
 
-Ngày rà soát: **2026-10-23**. Đây là **thiết kế mục tiêu, chưa triển khai**; không phải chứng nhận schema/source/runtime. Multi-room và **cả FULL_PREPAY/HYBRID_DEPOSIT** là core MVP. [PaymentBusinessRules](PaymentBusinessRules.md) v2 giữ quyết định instant/collection/actual-check-in+24h và financial invariants; không tự duyệt các inventory boundaries còn mở tại đây. TSK-097–114 và remediation TSK-076–095 là gates liên quan.
+Ngày phê duyệt thiết kế: **2026-10-23**, version **S0-097-v1**, user as PO qua questionnaire, provenance tại [S0DecisionLog](S0DecisionLog.md). Đây là **thiết kế mục tiêu đã duyệt, chưa triển khai**; không chứng nhận schema/source/runtime. Multi-room và **cả FULL_PREPAY/HYBRID_DEPOSIT** là core MVP. [PaymentBusinessRules](PaymentBusinessRules.md) giữ contract tài chính riêng; TSK-097 không đóng implementation hay release gates.
 
 ## 1. Cơ sở nghiên cứu và giới hạn
 
@@ -8,28 +8,28 @@ Các nguồn chính thức đã truy cập thành công (ngày trên là ngày r
 
 - https://developers.booking.com/connectivity/docs/ari — inventory là số lượng phòng; availability phụ thuộc ngày/occupancy; room, rate plan, restriction và pricing là các khái niệm riêng. Có nhiều mô hình giá (standard/derived/occupancy/LOS), không phải yêu cầu StayHub triển khai tất cả.
 - https://www.airbnb.com/help/article/5 — entire place, private room, hotel room, shared room; nhiều bedroom trong entire place không có nghĩa mỗi bedroom là một inventory bán riêng.
-- https://www.airbnb.com/help/article/289 — các phòng bán riêng tại cùng địa điểm có listing/calendar riêng; calendar linking có thể tránh trùng giữa nguyên căn và phòng bên trong. Đề xuất mặc định StayHub MVP chưa triển khai mô hình bán liên kết này, chờ PO duyệt.
+- https://www.airbnb.com/help/article/289 — các phòng bán riêng tại cùng địa điểm có listing/calendar riêng; calendar linking có thể tránh trùng giữa nguyên căn và phòng bên trong. StayHub MVP đã chọn không hỗ trợ linked whole+room sale.
 
-Không suy diễn Booking và Airbnb có cùng schema hoặc policy. Screenshot các dòng là room type/offer, không chứng minh có số phòng vật lý công khai hay tồn kho trực tiếp trước khi chọn ngày. Các quy tắc bên dưới là thiết kế đề xuất cho StayHub, không phải chính sách phổ quát của thị trường hay quyết định đã được user/PO duyệt.
+Không suy diễn Booking và Airbnb có cùng schema hoặc policy. Screenshot các dòng là room type/offer, không chứng minh có số phòng vật lý công khai hay tồn kho trực tiếp trước khi chọn ngày. Inventory boundaries dưới đây là quyết định StayHub đã được user/PO duyệt, không phải chính sách phổ quát của thị trường; chi tiết triển khai vẫn cần validation riêng.
 
 ## 2. Từ điển và ranh giới aggregate
 
 **Định vị user đã xác nhận:** giao diện lấy cảm hứng Airbnb (ảnh lớn, khoảng trắng, card/gallery, selection sidebar), nghiệp vụ inventory theo hướng Booking.com (property → types → offers, quantity theo ngày). Đây là hai trục độc lập; không sao chép thương hiệu và không suy diễn schema nội bộ của nền tảng nào. Room type là hạng phòng (Deluxe), room allocation là một phòng được mua trong item; không phải số phòng vật lý (101).
 
-**User đã xác nhận:** multi-room là core; nhóm các phòng/types thuộc cùng property và liệt kê phòng/types khả dụng. **Các ranh giới triển khai dưới đây là đề xuất mặc định MVP, cần PO phê duyệt tại TSK-097**, không suy ra từ việc user chọn multi-room: exclusive sale mode, pooled inventory (thay vì bắt buộc quản lý từng physical room), whole-place quantity1, một property/date range/currency mỗi booking và hủy toàn booking. Các mục 3–8 dùng nhất quán bộ mặc định này để thiết kế có thể review; chúng không tự tạo approval. Nếu PO chọn phương án khác, phải đồng bộ invariants, flows, contracts, AC và backlog trước triển khai.
+**User/PO đã duyệt từng boundary tại S0-097-v1:** multi-room core; nhóm types theo property; exclusive sale mode; pooled truly interchangeable inventory; shared-plan stock; whole-place quantity1; một property/date range/**VND** mỗi booking; hủy toàn booking, không partial item/quantity cancellation. Đây là explicit questionnaire approval, không suy ra từ yêu cầu multi-room. Thay đổi boundary sau freeze cần version mới và đồng bộ contracts/AC trước triển khai.
 
 | Khái niệm | TARGET |
 |---|---|
 | Property | Cơ sở: host, địa chỉ, nội dung, ảnh chung, đánh giá và thống kê tổng hợp; một kết quả tìm kiếm duy nhất |
 | Classification | Loại cơ sở (villa/hotel/homestay...), độc lập với sale mode |
-| Sale mode | Đề xuất: `WHOLE_PLACE` hoặc `ROOM_BASED`, loại trừ nhau trong MVP; không đồng thời bán nguyên căn và phòng con; chờ PO duyệt |
+| Sale mode | Đã duyệt: `WHOLE_PLACE` hoặc `ROOM_BASED`, loại trừ nhau trong MVP; không linked whole+room sale |
 | RoomType / AccommodationType | Hạng bán được: ảnh, giường, capacity, tiện nghi, quantity; whole place có một type quantity=1 |
 | Bedrooms | Thông tin mô tả, không tự sinh số đơn vị bán |
 | PhysicalRoom | Số phòng/assignment vận hành là mở rộng tương lai, không bắt buộc công khai |
 | RatePlan | Giá và điều khoản ăn sáng/hủy/thanh toán; mọi plan của cùng type **chia sẻ inventory**; MVP được dùng một plan/type |
-| Booking / Item | Đề xuất: header một property, currency, khoảng ngày; items type + plan + quantity, allocation từng phòng và snapshots; chờ PO duyệt |
+| Booking / Item | Đã duyệt: header một property, một khoảng ngày, currency VND; items type + plan + quantity, allocation từng phòng và snapshots |
 
-Đề xuất mặc định dùng pooled inventory, chưa được PO duyệt và không phải yêu cầu pooled-only từ user. Nếu dùng pool, chỉ gồm phòng thực sự thay thế được, bảo đảm khách ở xuyên suốt không bị ép đổi phòng. Phòng khác biệt phải tách type; nếu muốn gộp cần continuity-aware allocation trước khi bán, không chỉ cộng số lượng mỗi đêm. Phương án quản lý inventory từng physical room vẫn cần được PO cân nhắc tại TSK-097.
+MVP đã chọn pooled inventory: chỉ gồm phòng thực sự thay thế được, bảo đảm khách ở xuyên suốt không bị ép đổi phòng. Phòng khác biệt phải tách type; không cộng số lượng mỗi đêm để che thiếu continuity. PhysicalRoom/assignment là mở rộng tương lai, không phải prerequisite hay endpoint bắt buộc của MVP. Mọi RatePlan cùng type dùng một pool; plan không sở hữu stock riêng.
 
 ## 3. Invariant inventory và khách
 
@@ -77,11 +77,11 @@ Guest tìm property duy nhất → nhập dates/adults/children ages/rooms → x
 | Guest/host/admin cancellation hợp lệ | CANCELLED; refund lifecycle độc lập | MVP hủy **toàn booking** atomically; release đúng commitments, refund theo snapshot |
 | Actual arrival / sau stay đủ điều kiện | Per-room check-in evidence; COMPLETED/no-show riêng | Guard ngày/actor/acknowledgment/contested fallback theo policy; partial arrival lưu từng room, một review cho booking; không tự suy check-in từ calendar completion |
 
-Return URL/poll chỉ đọc; instant sau đủ required online amount và cả hai modes đã duyệt tại payment canonical, TSK-079 ghi state matrix chứ không hỏi lại approval. Direct balance unpaid/refused/disputed không tự release occupied rooms, Host receipt không thành provider verification. Theo mặc định đề xuất chờ PO duyệt, partial item/quantity cancellation, mixed dates/currencies/properties và linked whole+room sale được để ngoài MVP; đây không phải các giới hạn user đã phê duyệt.
+Return URL/poll chỉ đọc; instant sau đủ required online amount và cả hai modes đã duyệt tại payment canonical. Direct balance unpaid/refused/disputed không tự release occupied rooms, Host receipt không thành provider verification. S0-097-v1 đã duyệt loại khỏi MVP: partial item/quantity cancellation, mixed dates/currencies/properties và linked whole+room sale. Partial financial refund không thay đổi boundary hủy toàn booking; refund eligibility/amount/source vẫn thuộc TSK-084.
 
 ## 6. Cross-business review matrix
 
-Tất cả hàng dưới là **TARGET pending delivery**, không phải kiểm chứng runtime. BA/PO duyệt boundaries tại097;079 ghi instant/hai modes đã duyệt; thời gian/children/check-in evidence tại090/112, Finance/Legal084/086/088/109. Owner/sprint theo TaskList; không tự đóng task khi viết docs.
+Tất cả hàng dưới là **TARGET pending implementation**, không phải kiểm chứng runtime. Boundaries đã duyệt tại097;079 ghi instant/hai modes đã duyệt; thời gian/children/check-in evidence tại090/112, Finance/Legal084/086/088/109 vẫn là deliverables riêng. Owner/sprint theo TaskList; policy docs không đóng implementation tasks.
 
 | Domain | Tác động bắt buộc / gate |
 |---|---|
@@ -123,10 +123,10 @@ QA phải chứng minh happy + critical edge bằng test nghiệp vụ/DB thật
 - Migration counts/totals/history và active future bookings khớp, không tự merge địa chỉ; archive/lock cô lập type, giữ support access.
 - Search trước ngày không claim stock; sold out không available; join nhiều items không nhân booking/revenue/review.
 
-## 9. Decision log / còn cần duyệt
+## 9. Frozen inventory decisions / remaining delivery gates
 
 **Yêu cầu user đã xác nhận:** multi-room là core MVP; các phòng/types được nhóm theo property và guest xem danh sách phòng/types khả dụng. Không chờ quyết định có làm inventory hay không, không đưa yêu cầu này sang P2.
 
-**Đề xuất mặc định MVP — chưa được user/PO phê duyệt:** whole-place một type quantity1; exclusive WHOLE_PLACE/ROOM_BASED thay vì linked sale; pooled interchangeable types thay vì inventory bắt buộc từng physical room; shared-plan stock; một property/date range/currency mỗi booking; all-or-nothing cancellation thay vì partial item/quantity cancellation. Giữ các mặc định này làm target review nhất quán, không gọi là scope đã chọn. TSK-097 phải ghi quyết định PO cho từng ranh giới và đồng bộ tài liệu/API/schema/AC nếu thay đổi; TSK-084 phải duyệt cancellation granularity cùng refund policy trước triển khai liên quan.
+**S0-097-v1 — toàn bộ inventory boundaries đã được user/PO phê duyệt:** whole-place một type quantity1 (bedrooms mô tả); exclusive WHOLE_PLACE/ROOM_BASED, không linked sale; pooled interchangeable types, PhysicalRoom assignment tương lai; shared-plan stock; một property/date range/VND mỗi booking; all-booking cancellation, không partial item/quantity cancellation. API/ERD là projections của freeze này, không evidence schema đã tồn tại. TSK-084 còn phải freeze refund policy, không reopen cancellation granularity.
 
 Instant/hai modes/online collection và actual-check-in+24h eligibility đã duyệt; không mở lại. PO/BA/Finance/Legal còn ký: hold TTL/late-paid compensation; timezone/check-in/out/lead/min-max stay; child ages/extra beds; fee/tax/commission bases/rates/funding; exact deposit config trong hướng15–20%; coverage/rounding/zero exception; cancellation/no-show/refund; caps/stacking; completion/review; check-in evidence/contested fallback và all-arrived vs per-room entitlement boundary; legal/liquidity/dispute recovery. Core scope không được lùi P2 vì config chưa duyệt; block dependent work/release thay vì bịa config.

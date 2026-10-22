@@ -12,7 +12,7 @@
 | PAY-04 | Host payable chỉ **ELIGIBLE actual check-in +24 giờ** cho entitlement áp dụng, còn subject dispute/reconcile/refund availability/legal | Check-in evidence và all-arrived vs per-room boundary cần PO duyệt tại TSK-090/112; legal/funding tại TSK-086 |
 | PAY-05 | Không free unpaid reservation, không thu commission hằng tháng, không StayHub QR pass-through tại chỗ | Không tạo hidden monthly commission receivable; coverage không đủ phải reject/requote/disable offer |
 
-Quyết định user đã duyệt → decision log này và inventory → API/ERD/UI projections → task AC/evidence. Legacy chỉ để trace; khi lệch phải sửa cùng contract version trước triển khai. Inventory boundaries tại TSK-097 **không vì vậy tự được duyệt**. Không mặc định escrow hợp pháp/bắt buộc, zero fraud hoặc tỷ lệ rủi ro giả định.
+Quyết định user đã duyệt → decision log và inventory → API/ERD/UI projections → task AC/evidence. Legacy chỉ để trace; khi lệch phải sửa cùng contract version trước triển khai. Inventory boundaries có explicit questionnaire approval riêng, frozen **S0-097-v1** tại inventory canonical; không suy từ payment approval và không chứng nhận implementation. Không mặc định escrow hợp pháp/bắt buộc, zero fraud hoặc tỷ lệ rủi ro giả định.
 
 ## 1a. Approved contract matrix — S0-079-v1
 

@@ -4,6 +4,8 @@
 
 ## TARGET contract delta (chưa triển khai)
 
+**Inventory boundary freeze S0-097-v1 (2026-10-23):** user/PO approved exclusive WHOLE_PLACE or ROOM_BASED (no linked sale), truly interchangeable RoomType pools with shared-plan stock, whole-place one type quantity1 (bedrooms descriptive), one property/date range/VND per booking and all-booking cancellation only. PhysicalRoom assignment is future scope. Paths/DTO details remain proposed implementation contracts; these approved domain boundaries are not proposals or runtime evidence. Provenance: [S0DecisionLog](../business/S0DecisionLog.md).
+
 **v2 payment precedence:** [PaymentBusinessRules](../business/PaymentBusinessRules.md) duyệt cả FULL_PREPAY/HYBRID_DEPOSIT core MVP, instant sau required online amount; không Host approval. Tất cả amount verification dưới đây theo **dueOnline của attempt**, không booking total. Legacy mục1–8 chỉ archive, không override v2.
 
 - Search/detail nhận `checkIn/checkOut`, `adults`, `childrenAges`, `rooms` và allocation; trả property duy nhất cùng eligible types/plans, max quantity toàn stay, restrictions, currency và total stay/fee-tax inclusion. Không có dates trả indicative types, không live availability. Không trả dữ liệu booking khác/conflicting guest details.
@@ -51,7 +53,7 @@ POST quote (currency là yêu cầu được validate, không cho client quyết
 }
 ```
 
-`quantity == roomAllocations.length`, rooms=sum(quantity), adults=sum allocated adults, childrenAges multiset khớp mọi allocation; kiểm từng phòng theo capacity/age policy đã duyệt. Cùng type khác plan cộng quantity trước kiểm shared pool; duplicate type/plan items reject400 để tránh nhập nhằng ordinals. Không mixed property/date/currency trong defaults chờ PO. Mọi amount/policy/guestId do client thêm không được tin (unknown fields reject400).
+`quantity == roomAllocations.length`, rooms=sum(quantity), adults=sum allocated adults, childrenAges multiset khớp mọi allocation; kiểm từng phòng theo capacity/age policy đã duyệt. Cùng type khác plan cộng quantity trước kiểm shared pool; duplicate type/plan items reject400 để tránh nhập nhằng ordinals. S0-097-v1 rejects mixed property/date/currency; VND only, whole-place quantity1. Mọi amount/policy/guestId do client thêm không được tin (unknown fields reject400).
 
 Response quote minh họa ApiResponse `data` (outer success=true/message/errorCode=null):
 

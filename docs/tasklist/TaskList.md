@@ -222,9 +222,9 @@ Quy ước: P0 chặn tiền thật; P1 MVP; P2 tùy chọn. `needs PO approval`
 
 | Phạm vi | P0 | P1 | P2 | needs PO approval | pending | Hoàn tất |
 |---|---:|---:|---:|---:|---:|---:|
-| TSK-076–114 (39 task; completed policy is not runtime completion) | 22 | 16 | 1 | 6 | 32 | 1 |
+| TSK-076–114 (39 task; completed policy is not runtime completion) | 22 | 16 | 1 | 6 | 31 | 2 |
 
-**TARGET core MVP:** [Inventory](../business/PropertyInventoryBusinessRules.md) và [Payment v2](../business/PaymentBusinessRules.md), chưa triển khai. Multi-room/full/hybrid bắt buộc. Questionnaire approvals recorded in [S0DecisionLog](../business/S0DecisionLog.md); inventory/refund/config deliverables remain pending their dedicated tasks. Checked TSK-023–040/046–048/063–075 giữ lịch sử và revalidation. Tổng **114 IDs: 72 checked (71 lịch sử + 1 policy design), 42 unchecked; active MVP scope42, remaining41 + optional096; active done1/42**. S0 done1/8, pending7/8; không claim runtime completion/capacity/days.
+**TARGET core MVP:** [Inventory](../business/PropertyInventoryBusinessRules.md) và [Payment v2](../business/PaymentBusinessRules.md), chưa triển khai. Multi-room/full/hybrid bắt buộc. Questionnaire approvals recorded in [S0DecisionLog](../business/S0DecisionLog.md); inventory boundary design097 completed, refund/config deliverables remain pending their dedicated tasks. Checked TSK-023–040/046–048/063–075 giữ lịch sử và revalidation. Tổng **114 IDs: 73 checked (71 lịch sử + 2 policy design), 41 unchecked; active MVP scope42, remaining40 + optional096; active done2/42**. S0 done2/8, pending6/8; không claim runtime completion/capacity/days.
 
 **Một nguồn dependency duy nhất:** các trường `Deps` ở bảng lịch sprint bên dưới; không còn inline/override competing edges. Mỗi ID unchecked có đúng một hàng, một Sprint/Agent/rank; completed S0 rows retained for history and dependency evidence. Deps chỉ explicit IDs (không range); Ref/AC/coverage mentions không tạo edge. Checked history không thêm edge redesign. Cùng sprint chỉ bắt đầu dependent sau accepted handoff của deps; rank là thứ tự topological gate, không bắt buộc tuần tự các task độc lập.
 
@@ -251,7 +251,7 @@ Quy ước: P0 chặn tiền thật; P1 MVP; P2 tùy chọn. `needs PO approval`
 
 **Docs inputs không đóng task:**097 domain/decision log,099 schema/protocol,100–102 selection/hold contracts,098/101 host/guest,106 additive cutover,107 inventory evidence;109–114 thêm hai financial modes. Fixture3rooms total6.900.000 full/hybrid và edge Family đêm2 hết rollback dùng cùng version. Agent A single writer mọi shared docs; ownership task là trách nhiệm deliverable, không permission cùng edit tài liệu.
 
-- [ ] **TSK-097** `[P1 · pending]` Domain/contracts và PO decision log. **AC:** multi-room core đã xác nhận; exclusive mode/whole-place quantity1/pooled vs physical/shared stock/một property-date-currency/cancellation granularity cùng084 còn cần PO. Version canonical/contracts/AC và boundaries; không reopen core hay tự duyệt mọi domain assumption.
+- [x] **TSK-097** `[P1 · completed policy design]` **S0-097-v1, 2026-10-23:** explicit user PO approval frozen: exclusive WHOLE_PLACE/ROOM_BASED, interchangeable pooled RoomTypes/shared-plan stock, PhysicalRoom assignment future, whole-place one type quantity1/bedrooms descriptive, one property/date range/VND and all-booking cancellation (no partial). **AC met (design only):** canonical Inventory + targeted Overview/API/ERD projections; [approval/evidence](../business/S0DecisionLog.md). Schema099/hold102/migration106/runtime107 and refund084 remain pending, no implementation claim.
 - [ ] **TSK-098** `[P1 · pending]` Host types/plans/calendars: A sở hữu mutation/entities/DTO/ownership/CSRF/version/OOO/capacity guards, không template. **AC:** một property nhiều types, plans share stock, allowed payment modes hợp lệ, reductions không phá holds/confirmed, archive giữ future rights. B host UI thuộc113, không cùng sửa PropertyServiceImpl.
 - [ ] **TSK-099** `[P0 · pending]` Additive inventory schema/capacity protection. **AC:** FK type-plan-property, nonnegative stock, stable lock order/transaction proof; plan không stock riêng; migration/rollback reviewed, không bỏ exclusion trước reconcile. Reserve version theo latest/claim, không hardcode V14.
 - [ ] **TSK-100** `[P1 · pending]` Read-only eligible offer search theo accepted repository/DTO. **AC:** một property/card, min stock mọi đêm/per-room occupancy, total basis rõ, no dates không live stock, shared plans không duplicate. A shared repository/entities boundary, B adapters/controllers chỉ theo manifest accepted.
@@ -280,7 +280,7 @@ Sprint labels below replace old track headings **only for unchecked work**; chec
 | Task | Sprint | Agent | Rank | Deps | Phase / scope / accepted handoff and evidence |
 |---|---|---|---:|---|---|
 | TSK-079 | S0 | A | 1 | none | COMPLETED policy S0-079-v1 (2026-10-23); PaymentBusinessRules + S0DecisionLog approval/check evidence; not implementation |
-| TSK-097 | S0 | A | 2 | none | Inventory boundary approval; business/ERD contract; unresolved assumptions explicit |
+| TSK-097 | S0 | A | 2 | none | COMPLETED policy S0-097-v1 (2026-10-23); Inventory/Overview/API/ERD + S0DecisionLog; implementation gates remain pending |
 | TSK-081 | S0 | A | 3 | TSK-079, TSK-097 | Hold/attempt/expiry policy; documented late-paid disposition |
 | TSK-084 | S0 | A | 4 | TSK-079, TSK-097 | Refund/cancellation signed matrix; platform/direct split |
 | TSK-086 | S0 | A | 5 | TSK-084 | +24h record/legal/funding/earning approvals; no auto payout |

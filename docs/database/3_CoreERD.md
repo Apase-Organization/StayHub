@@ -4,6 +4,8 @@
 
 Theo [canonical](../business/PropertyInventoryBusinessRules.md); names dưới là đề xuất DB review TSK-099, không map tự động sang entity hiện tại. `type_day_inventory` là tên thống nhất cho type/date inventory (canonical từng gọi `type_date_inventory`).
 
+**Approved domain S0-097-v1 (2026-10-23):** exclusive WHOLE_PLACE/ROOM_BASED, no linked whole+room sale; RoomType pools only truly interchangeable rooms, all RatePlans share type stock. Whole-place has one type quantity1; bedrooms are descriptive. Booking header fixes one property/date range/VND for every item; cancellation releases the whole booking, never selected item/quantity. PhysicalRoom assignment is future scope. These are approved design constraints, not optional schema assumptions; TSK-099 must implement/review actual cross-row protections and TSK-106 backfill must preserve evidence, not fabricate historical sale modes. [Approval log](../business/S0DecisionLog.md).
+
 ```mermaid
 erDiagram
     PROPERTIES ||--o{ ROOM_TYPES : owns
