@@ -113,6 +113,8 @@ Fixture basis tại payment canonical: fee100.000 Host entitlement, discount200.
 
 Financial mutation body example (evidence handle private; key in `Idempotency-Key`):
 
+**Approved S0-084-v1 refund projection:** expose snapshot scheduled check-in/cancel request instants, >=48h free-window decision, actual-stay evidence/case reason, named charge gross/discount/net allocations, collected source and Rp/Rh entitlements with source-specific paid/reserved/remaining. Free-window/Host inability returns all collected Guest cash; late/no-show only collected unused net-cleaning without actual check-in; after-arrival incident requires Admin disposition. Server computes amount/policy, never client-asserted eligibility. Reserve under lock bounded by both source policy remaining and collected-minus-paid-minus-reserved plus liquidity; no Host money in platform pool, no automatic B charge/monthly invoice. Status projection distinguishes REQUESTED/PROCESSING/PAID and proof, platform SLA5–10businessdays from eligibleRequestAt (retry unchanged), Host direct separately without promised SLA. Calendar/holiday source and tax/legal clearance unresolved → paid activation blocked, tax config unset/disabled; never infer tax law. Exact DTO/error freeze109 and execution085 remain pending.
+
 ```json
 {"amount":300000,"currency":"VND","method":"CASH","paidAt":"2030-12-10T08:00:00Z","reference":"host-receipt-1","evidenceHandle":"private-evidence-opaque-id","expectedVersion":4}
 ```

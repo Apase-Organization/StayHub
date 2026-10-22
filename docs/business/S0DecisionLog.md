@@ -4,14 +4,14 @@
 
 Approval source: user answered all seven policy questionnaire groups approving the proposals on 2026-10-23. User acts as product owner, not legal counsel or a named Finance/Operations signatory. No signatures or real-money permission are inferred.
 
-Decision approval, completed design deliverable and runtime clearance are separate statuses. TSK-079/097/081 delivered; other five questionnaire approvals are provenance, not completed tasks. Their contracts/fixtures will be frozen sequentially.
+Decision approval, completed design deliverable and runtime clearance are separate statuses. TSK-079/097/081/084 delivered; other four questionnaire approvals are provenance, not completed tasks. Their contracts/fixtures will be frozen sequentially.
 
 | Task | Decision approval | Deliverable status / version |
 |---|---|---|
 | TSK-079 | Approved instant, both required modes, required-online authority and exclusions | Completed policy design, S0-079-v1, 2026-10-23 |
 | TSK-097 | Approved inventory boundaries | Completed policy design, S0-097-v1, 2026-10-23 |
 | TSK-081 | Approved hold/retry/late-payment parameters | Completed policy design, S0-081-v1, 2026-10-23 |
-| TSK-084 | Approved cancellation/refund parameters | Pending dedicated deliverable |
+| TSK-084 | Approved cancellation/refund parameters | Completed policy design, S0-084-v1, 2026-10-23 |
 | TSK-086 | Approved financial/operations design direction, not legal clearance | Pending dedicated deliverable |
 | TSK-088 | Approved discount/abuse parameters | Pending dedicated deliverable |
 | TSK-090 | Approved time/arrival/completion/review parameters | Pending dedicated deliverable |
@@ -38,3 +38,9 @@ Checks: `python3 .opencode/verify-dual-payment-docs.py` PASS (2026-10-23, 0.341s
 User PO questionnaire approval frozen **S0-081-v1**, 2026-10-23, in canonical Payment section3a and Inventory/API projections. Approved15min original-created deadline, max3 creations inclusivefirst, no extension, active strictly before expiry. Failure callback updates attempt only; retry within window/count, count3 pending can settle; worker alone early-finalizes all3 terminal unsuccessful/no credit or finalizes expiry. Allocation/IPN/worker serialize, single required booking credit and atomic all-item/cap convert/release. Late/extra real money retained in ledger/reconcile/refund case owned OperationsFinance, Admin maker/checker proof execution, no stock resurrection/automatic refund PAID.
 
 Contract review examples cover retry success, exact expiry rejection, pending third attempt, all-terminal final failure and duplicate/extra receipts. These are design examples, not runtime tests. Only081 newly closed: 74 checked/40 unchecked, active done3/42, S0 done3/8. Numeric081 policy is approved, no outstanding PO blocker. Runtime082/083/102/110/114 and release095 remain blocked independently. Checks: `python3 .opencode/verify-dual-payment-docs.py`, `git diff --check`; execution result/duration in handoff. Full/integration/e2e skipped for docs-only scope; no dummy RED/GREEN.
+
+## TSK-084 acceptance evidence
+
+User PO questionnaire approval frozen **S0-084-v1**, 2026-10-23, canonical Payment section5a with Inventory/Overview/API projections. Numeric >=48h boundary/full actual collected refund; late/no-show room nonrefundable but collected net unused cleaning refundable absent actual check-in; Host inability full collected; after-arrival incidents Admin case. Whole-booking cancellation remains097. Online/direct source pools and policy/paid/reserved guards, immutable discount/funding allocations and retained/uncollected disclosure prevent double return or fictional cash. No automatic B debit/monthly invoice. Platform SLA5–10businessdays from eligible request, no Host same-SLA promise without contract.
+
+Worked examples cover full/hybrid/free-window, partial direct receipts, late-cleaning proportional discount/source allocations, policy-limited versus cash-limited refund boundaries. Commercial rate/fee/config freeze109 not completed here. Tax treatment has no legal approval; unset/disabled config and reviewed tax/calendar/holiday/operations clearance block paid activation095. Only084 newly closed:75 checked/39 unchecked, active done4/42, S0 done4/8; remaining four S0 tasks unchecked. `python3 .opencode/verify-dual-payment-docs.py` PASS 2026-10-23 in0.432s:21 docs,11 JSON/1 JSONC,90 relative links, IDs/counts/DAG/ranks/version projections and illustrative refund/source conservation. `git diff --check` PASS. Ignored local validator incrementally adapted. No runtime/source changes, full/integration/e2e skipped for docs-only scope; policy approval not legal or implementation evidence.
