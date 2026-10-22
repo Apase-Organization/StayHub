@@ -81,9 +81,27 @@
                     <tbody>
                     <tr th:if="${bookingPage.empty}">
                         <td colspan="6" class="px-6 py-12 text-center">
-                            <h3 class="text-lg font-black">No booking records yet</h3>
-                            <p class="mt-2 text-text-gray">Track C will provide booking entities, payment totals and status transitions.</p>
+                            <h3 class="text-lg font-black">No booking records found</h3>
+                            <p class="mt-2 text-text-gray">No bookings match the selected criteria.</p>
                         </td>
+                    </tr>
+                    <tr th:unless="${bookingPage.empty}" th:each="b : ${bookingPage.content}" class="border-b border-border hover:bg-bg-light/60 transition">
+                        <td class="px-6 py-4 font-bold text-primary-500" th:text="|#${b.id}|">#1</td>
+                        <td class="px-6 py-4">
+                            <p class="font-bold text-text-900" th:text="${b.guestName}">Guest</p>
+                            <p class="text-xs text-text-gray" th:text="${b.guestEmail}">email</p>
+                        </td>
+                        <td class="px-6 py-4">
+                            <p class="font-bold text-text-900" th:text="${b.propertyTitle}">Property</p>
+                            <p class="text-xs text-text-gray" th:text="${b.propertyCity}">City</p>
+                        </td>
+                        <td class="px-6 py-4 text-sm" th:text="|${b.checkInDate} ~ ${b.checkOutDate}|">Dates</td>
+                        <td class="px-6 py-4">
+                            <span class="inline-flex rounded-full px-3 py-1 text-xs font-bold"
+                                  th:classappend="${b.status.name() == 'CONFIRMED' || b.status.name() == 'COMPLETED'} ? ' bg-green-100 text-green-700' : (${b.status.name() == 'PENDING' || b.status.name() == 'PENDING_PAYMENT'} ? ' bg-amber-100 text-amber-800' : ' bg-slate-100 text-slate-700')"
+                                  th:text="${b.status}">CONFIRMED</span>
+                        </td>
+                        <td class="px-6 py-4 font-bold" th:text="|${#numbers.formatDecimal(b.totalPrice, 0, 'COMMA', 0, 'POINT')} VND|">0 VND</td>
                     </tr>
                     </tbody>
                 </table>

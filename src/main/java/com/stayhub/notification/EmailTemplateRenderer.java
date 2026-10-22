@@ -37,19 +37,28 @@ public final class EmailTemplateRenderer {
                                             BigDecimal totalPrice) {
         String statusColor = switch (status) {
             case "CONFIRMED" -> "#16a34a";
+            case "COMPLETED" -> "#2563eb";
             case "REJECTED", "CANCELLED" -> "#dc2626";
             default -> PRIMARY;
         };
         String statusBackground = switch (status) {
             case "CONFIRMED" -> "#dcfce7";
+            case "COMPLETED" -> "#dbeafe";
             case "REJECTED", "CANCELLED" -> "#fee2e2";
             default -> "#fff1f2";
         };
         String title = switch (status) {
             case "CONFIRMED" -> "Your booking is confirmed";
+            case "COMPLETED" -> "Thank you for staying! Leave a review";
             case "REJECTED" -> "Your booking was rejected";
             case "CANCELLED" -> "Your booking was cancelled";
             default -> "Your booking was updated";
+        };
+        String footerNote = switch (status) {
+            case "COMPLETED" -> "Your trip is completed! We hope you enjoyed your stay. Please log in to your account and leave a review to help future guests.";
+            case "CANCELLED" -> "Your booking has been cancelled. If applicable, refund processing will follow the cancellation and refund policy.";
+            case "CONFIRMED" -> "Your booking is confirmed. Please review your check-in time and host contact details on your StayHub account.";
+            default -> "You can review your trip details from your StayHub bookings page.";
         };
         return layout(title, "StayHub booking update for " + propertyTitle + ".",
                 """
@@ -63,13 +72,13 @@ public final class EmailTemplateRenderer {
                     %s
                 </table>
                 <div style="margin-top:22px;padding:18px;border-radius:18px;background:#f9fafb;border:1px solid #e5e7eb;color:%s;font-size:14px;line-height:1.6;">
-                    You can review your trip details from your StayHub bookings page.
+                    %s
                 </div>
                 """.formatted(MUTED, escape(fullName), MUTED, TEXT, escape(propertyTitle), statusBackground, statusColor, escape(status),
                         detailRow("Check-in", DATE_FORMATTER.format(checkIn)),
                         detailRow("Check-out", DATE_FORMATTER.format(checkOut)),
                         detailRow("Guests", String.valueOf(guests)),
-                        detailRow("Total", totalPrice.stripTrailingZeros().toPlainString() + " VND"), MUTED));
+                        detailRow("Total", totalPrice.stripTrailingZeros().toPlainString() + " VND"), MUTED, escape(footerNote)));
     }
 
     private static String layout(String heading, String preheader, String body) {

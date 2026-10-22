@@ -34,19 +34,41 @@ class EmailNotificationServiceTest {
     }
 
     @Test
-    void sendsEmailForConfirmedRejectedAndCancelledBookings() {
+    void sendsEmailForConfirmedRejectedCancelledAndCompletedBookings() {
         Booking booking = booking(BookingStatus.CONFIRMED);
-
         notificationService.bookingStatusChanged(booking);
-
         verify(mailSender).send(org.mockito.ArgumentMatchers.any(MimeMessage.class));
+
+        // COMPLETED booking also receives email inviting guest to review
+        Booking completed = booking(BookingStatus.COMPLETED);
+        completed.setId(2L);
+        notificationService.bookingStatusChanged(completed);
+        verify(mailSender, org.mockito.Mockito.times(2)).send(org.mockito.ArgumentMatchers.any(MimeMessage.class));
     }
 
     @Test
-    void doesNotSendForCompletedOrWhenDisabled() {
-        notificationService.bookingStatusChanged(booking(BookingStatus.COMPLETED));
-        verify(mailSender, never()).send(org.mockito.ArgumentMatchers.any(MimeMessage.class));
+    void deduplicatesDuplicateNotificationEventsForSameBookingAndStatus() {
+        Booking booking = booking(BookingStatus.CONFIRMED);
+        notificationService.bookingStatusChanged(booking);
+        notificationService.bookingStatusChanged(booking); // duplicate invocation
 
+        verify(mailSender, org.mockito.Mockito.times(1)).send(org.mockito.ArgumentMatchers.any(MimeMessage.class));
+    }
+
+    @Test
+    void retriesUpToMaxAttemptsOnFailureWithoutThrowing() {
+        org.mockito.Mockito.doThrow(new org.springframework.mail.MailSendException("SMTP timeout"))
+                .when(mailSender).send(org.mockito.ArgumentMatchers.any(MimeMessage.class));
+
+        Booking booking = booking(BookingStatus.CONFIRMED);
+        org.junit.jupiter.api.Assertions.assertDoesNotThrow(() -> notificationService.bookingStatusChanged(booking));
+
+        // Verify it retried 3 times
+        verify(mailSender, org.mockito.Mockito.times(3)).send(org.mockito.ArgumentMatchers.any(MimeMessage.class));
+    }
+
+    @Test
+    void doesNotSendWhenDisabled() {
         ReflectionTestUtils.setField(notificationService, "mailEnabled", false);
         notificationService.bookingStatusChanged(booking(BookingStatus.CANCELLED));
         verify(mailSender, never()).send(org.mockito.ArgumentMatchers.any(MimeMessage.class));

@@ -29,7 +29,7 @@ public class AdminController {
                                            Model model) {
         int safePage = Math.max(page, 0);
         int safeSize = Math.min(Math.max(size, 1), 100);
-        Page<Object> bookingPage = new PageImpl<>(List.of(), PageRequest.of(safePage, safeSize), 0);
+        var bookingPage = adminService.getBookings(keyword, status, PageRequest.of(safePage, safeSize));
         model.addAttribute("stats", adminService.getDashboardStats());
         model.addAttribute("bookingPage", bookingPage);
         model.addAttribute("keyword", keyword);

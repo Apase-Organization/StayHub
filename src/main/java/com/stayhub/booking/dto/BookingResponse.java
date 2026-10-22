@@ -37,6 +37,9 @@ public class BookingResponse {
     private String discountCode;
     private BigDecimal discountAmount;
     private BigDecimal totalPrice;
+    private String paymentMode;
+    private BigDecimal dueOnline;
+    private BigDecimal balanceDueHost;
     private BookingStatus status;
     private PaymentMethod paymentMethod;
     private PaymentStatus paymentStatus;

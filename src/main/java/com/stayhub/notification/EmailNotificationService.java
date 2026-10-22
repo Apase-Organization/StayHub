@@ -20,9 +20,11 @@ import org.springframework.stereotype.Service;
 public class EmailNotificationService implements NotificationService {
 
     private static final Set<BookingStatus> NOTIFIABLE_STATUSES = Set.of(
-            BookingStatus.CONFIRMED, BookingStatus.REJECTED, BookingStatus.CANCELLED);
+            BookingStatus.CONFIRMED, BookingStatus.REJECTED, BookingStatus.CANCELLED, BookingStatus.COMPLETED);
+    private static final int MAX_RETRIES = 3;
 
     private final JavaMailSender mailSender;
+    private final Set<String> sentNotifications = java.util.concurrent.ConcurrentHashMap.newKeySet();
 
     @Value("${app.mail.enabled:false}")
     private boolean mailEnabled;
@@ -38,10 +40,18 @@ public class EmailNotificationService implements NotificationService {
         if (!NOTIFIABLE_STATUSES.contains(booking.getStatus())) {
             return;
         }
+
+        String dedupeKey = booking.getId() + ":" + booking.getStatus();
+        if (!sentNotifications.add(dedupeKey)) {
+            log.info("Duplicate notification ignored for booking {} with status {}.", booking.getId(), booking.getStatus());
+            return;
+        }
+
         if (!mailEnabled) {
             log.info("Mail notification disabled. Booking {} changed to {}.", booking.getId(), booking.getStatus());
             return;
         }
+
         try {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
@@ -57,10 +67,27 @@ public class EmailNotificationService implements NotificationService {
                     booking.getGuests(),
                     booking.getTotalPrice()
             ));
-            mailSender.send(message);
-            log.info("Sent booking {} notification to {} for booking {}.", booking.getStatus(), booking.getGuest().getEmail(), booking.getId());
+
+            int attempts = 0;
+            boolean sent = false;
+            while (attempts < MAX_RETRIES && !sent) {
+                attempts++;
+                try {
+                    mailSender.send(message);
+                    sent = true;
+                    log.info("Sent booking {} notification to {} for booking {} (attempt {}/{})",
+                            booking.getStatus(), booking.getGuest().getEmail(), booking.getId(), attempts, MAX_RETRIES);
+                } catch (Exception ex) {
+                    log.warn("Attempt {}/{} failed sending notification for booking {}: {}",
+                            attempts, MAX_RETRIES, booking.getId(), ex.getMessage());
+                    if (attempts >= MAX_RETRIES) {
+                        log.error("Exhausted retries ({}) sending notification for booking {}. Safely dropped without transaction rollback.",
+                                MAX_RETRIES, booking.getId(), ex);
+                    }
+                }
+            }
         } catch (MessagingException | UnsupportedEncodingException | RuntimeException exception) {
-            log.warn("Unable to send booking status notification for booking {}", booking.getId(), exception);
+            log.warn("Unable to prepare booking status notification for booking {}", booking.getId(), exception);
         }
     }
 
