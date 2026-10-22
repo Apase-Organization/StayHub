@@ -14,6 +14,32 @@
 
 Quyết định user đã duyệt → decision log này và inventory → API/ERD/UI projections → task AC/evidence. Legacy chỉ để trace; khi lệch phải sửa cùng contract version trước triển khai. Inventory boundaries tại TSK-097 **không vì vậy tự được duyệt**. Không mặc định escrow hợp pháp/bắt buộc, zero fraud hoặc tỷ lệ rủi ro giả định.
 
+## 1a. Approved contract matrix — S0-079-v1
+
+Approved 2026-10-23 by user as product owner through the seven-group questionnaire, recorded in [S0DecisionLog](S0DecisionLog.md). This is a versioned policy approval, not an invented signature, legal clearance or runtime certification. This section supersedes earlier pending wording for the state/actor contract only; numerical configuration and legacy fixtures below remain pending replacement at TSK-109/086, not approved rollout inputs.
+
+| Mode | Server quote / required online O | Direct balance B | Confirmation |
+|---|---|---|---|
+| FULL_PREPAY | O = contractual total T | B = 0 | Instant only after verified exact O and active all-item hold |
+| HYBRID_DEPOSIT | Mandatory O from server-computed versioned config; O + B = T | B = T − O, paid directly to Host cash/bank at check-in | Same instant guard; does not wait for B |
+
+Both modes are required MVP. Guest selects only server-allowed plan/mode; Host may configure owned offers only within approved platform config, never waive O or accept/reject a booking. Snapshot contract/config version, mode, T/O/B, currency, allocations and consent. Each attempt binds expected O server-side to booking/reference/currency/version, not a client amount or T substituted for hybrid O. Exact deposit/rounding/commission/funding/tax/DTO freeze belongs to TSK-109/086; approval of parameters is not their completed freeze. No free unpaid reservation, monthly commission receivable or onsite StayHub QR pass-through.
+
+| Booking state / event | Authorized actor and guard | Collection / resulting state |
+|---|---|---|
+| New → PENDING_PAYMENT | Authenticated Guest for own booking; valid server quote and atomic all-item hold | ONLINE_DUE; no confirmation from submit |
+| PENDING_PAYMENT → CONFIRMED | Verified provider IPN service only: signature, merchant, reference, currency, envelope/result and exact attempt O; active hold under serialized expiry/credit transaction | ONLINE_PAID_VERIFIED; convert all holds once; full B=0, hybrid DIRECT_OUTSTANDING |
+| Return / polling, any state | Authorized Guest/Host/support read scope; browser signature is not collection authority | Read-only; no booking/ledger mutation |
+| PENDING_PAYMENT → CANCELLED on expiry/final failure | Expiry worker / verified callback under lifecycle guards; retry/final-failure details owned by TSK-081 | Release once; failed attempt alone is not unconditionally whole-booking failure |
+| Duplicate / late / extra success | Verified IPN service, unique event/attempt and booking credit guard | Reconcile/refund real received money; no second credit or resurrection of CANCELLED/COMPLETED |
+| CONFIRMED, direct receipt / arrival | Owning Host attests receipt/evidence; Guest independently acknowledges or contests; Admin resolves evidenced case | DIRECT_PARTIAL_ATTESTED / DIRECT_PAID_ATTESTED remain distinct from provider verification; no automatic completion/payout |
+| PENDING_PAYMENT / CONFIRMED → CANCELLED | Guest owns booking within policy; Host inability is an evidenced support/Admin case, not Host reject; Admin scoped authority and audit | Cancellation does not imply refund PAID; responsibility follows actual collection source; detailed matrix TSK-084 |
+| CONFIRMED → COMPLETED | Guarded service with actual-stay/date/evidence and unresolved-case checks; actor/evidence details TSK-090/092 | Neither online SUCCESS, direct receipt nor calendar alone completes stay |
+| Refund REQUESTED → PAID / FAILED | Scoped Admin maker proposes; different human checker authorizes; proof/reference and pool/liquidity guards | Independent refund state; never inferred from CANCELLED |
+| Payout BLOCKED → ELIGIBLE → PAID / FAILED | Eligibility service evaluates actual check-in +24h and all gates; OperationsFinance reconciles; Admin maker/checker are different humans, proof required | Independent payout state; no automatic transfer, no direct B paid twice; detailed design TSK-086/090 |
+
+All mutations require authentication/ownership or dedicated service authority, expected version/idempotency and audit; roles are not interchangeable. Host receipt is not IPN, Guest acknowledgment is not bank proof, and maker cannot check their own transfer. Runtime and real-money release remain blocked pending implementation evidence and TSK-095 contractual/legal/operations clearance.
+
 ## 2. Amounts, funding và invariants
 
 Tất cả số tiền exact decimal/minor currency units, VND rounding theo policy snapshot; không float. Mỗi fee/tax có tên, scope, inclusion, beneficiary, commission eligibility và refundability. Commission là khoản khấu trừ từ entitlement theo hợp đồng, **không tự cộng thêm lên tổng Guest** hay đếm thêm legacy guest service fee.

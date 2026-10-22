@@ -222,13 +222,13 @@ Quy ước: P0 chặn tiền thật; P1 MVP; P2 tùy chọn. `needs PO approval`
 
 | Phạm vi | P0 | P1 | P2 | needs PO approval | pending | Hoàn tất |
 |---|---:|---:|---:|---:|---:|---:|
-| TSK-076–114 (39 task; 1 approved-policy/pending-deliverable ngoài hai cột status) | 22 | 16 | 1 | 6 | 32 | 0 |
+| TSK-076–114 (39 task; completed policy is not runtime completion) | 22 | 16 | 1 | 6 | 32 | 1 |
 
-**TARGET core MVP:** [Inventory](../business/PropertyInventoryBusinessRules.md) và [Payment v2](../business/PaymentBusinessRules.md), chưa triển khai. Multi-room/full/hybrid bắt buộc; exclusive sale mode/pooled/whole-place quantity1/một property-date-currency/hủy toàn booking vẫn là **đề xuất chờ TSK-097/084**, không tự được duyệt. Checked TSK-023–040/046–048/063–075 giữ lịch sử và revalidation. Tổng **114 IDs: 71 checked lịch sử, 43 unchecked; 42 active MVP, 1 optional096; active done0/42**. Không claim capacity/days từ estimate lịch sử.
+**TARGET core MVP:** [Inventory](../business/PropertyInventoryBusinessRules.md) và [Payment v2](../business/PaymentBusinessRules.md), chưa triển khai. Multi-room/full/hybrid bắt buộc. Questionnaire approvals recorded in [S0DecisionLog](../business/S0DecisionLog.md); inventory/refund/config deliverables remain pending their dedicated tasks. Checked TSK-023–040/046–048/063–075 giữ lịch sử và revalidation. Tổng **114 IDs: 72 checked (71 lịch sử + 1 policy design), 42 unchecked; active MVP scope42, remaining41 + optional096; active done1/42**. S0 done1/8, pending7/8; không claim runtime completion/capacity/days.
 
-**Một nguồn dependency duy nhất:** các trường `Deps` ở bảng lịch sprint bên dưới; không còn inline/override competing edges. Mỗi ID unchecked có đúng một hàng, một Sprint/Agent/rank. Deps chỉ explicit IDs (không range); Ref/AC/coverage mentions không tạo edge. Checked history không thêm edge redesign. Cùng sprint chỉ bắt đầu dependent sau accepted handoff của deps; rank là thứ tự topological gate, không bắt buộc tuần tự các task độc lập.
+**Một nguồn dependency duy nhất:** các trường `Deps` ở bảng lịch sprint bên dưới; không còn inline/override competing edges. Mỗi ID unchecked có đúng một hàng, một Sprint/Agent/rank; completed S0 rows retained for history and dependency evidence. Deps chỉ explicit IDs (không range); Ref/AC/coverage mentions không tạo edge. Checked history không thêm edge redesign. Cùng sprint chỉ bắt đầu dependent sau accepted handoff của deps; rank là thứ tự topological gate, không bắt buộc tuần tự các task độc lập.
 
-- [ ] **TSK-079** `[P0 · approved policy / pending deliverable]` Ghi decision/state matrix **instant đã duyệt**, FULL_PREPAY và HYBRID_DEPOSIT core MVP, required online vs total/direct balance/actor/config states; không hỏi lại host approval. **AC:** ký version matrix, no host accept/reject, no monthly commission/no onsite StayHub QR pass-through, không tick implementation; unresolved config tách109/086. **Ref:** Payment canonical, TSK-043/044/071–073 revalidation.
+- [x] **TSK-079** `[P0 · completed policy design]` **S0-079-v1, 2026-10-23:** approved instant FULL_PREPAY/HYBRID_DEPOSIT state×actor×required-online/direct collection contract. **AC met (design only):** versioned user PO approval, no Host accept/reject, no monthly commission/no onsite StayHub QR; config109/086 and runtime/release remain separate. **Evidence:** [approval and validation log](../business/S0DecisionLog.md), [canonical matrix](../business/PaymentBusinessRules.md#1a-approved-contract-matrix--s0-079-v1); TSK-043/044/071–073 still require revalidation.
 - [ ] **TSK-080** `[P0 · pending]` Đồng bộ transition/read-only status adapters theo approved instant. **AC:** return/poll không mutation; online attempt SUCCESS không đồng nghĩa fully paid/direct verified; CONFIRMED chỉ server state, no Host accept/reject. Core transaction thuộc A/082, B chỉ đọc/projection. **Ref:** TSK-071–075 revalidation.
 - [ ] **TSK-081** `[P0 · needs PO approval]` Chốt hold/expiry/callback muộn. **AC:** state giữ lịch, TTL TBD, retry attempts/release/paid-after-expiry/đã bán; không tự hồi sinh booking, refund/reconcile disposition có owner.
 - [ ] **TSK-082** `[P0 · pending]` Harden IPN/lifecycle hold. **AC:** verify signature/merchant/currency/ref/envelope/result và **attempt dueOnline**, không T; unique event/credit/replay/out-of-order, serialize expiry +all-item conversion +caps/ledger/outbox. Late/extra paid ghi reconcile/refund, không double charge/confirm. **Ref:** TSK-070/072/074.
@@ -279,7 +279,7 @@ Sprint labels below replace old track headings **only for unchecked work**; chec
 
 | Task | Sprint | Agent | Rank | Deps | Phase / scope / accepted handoff and evidence |
 |---|---|---|---:|---|---|
-| TSK-079 | S0 | A | 1 | none | Approved decision/state matrix; business/API docs; signed version not implementation |
+| TSK-079 | S0 | A | 1 | none | COMPLETED policy S0-079-v1 (2026-10-23); PaymentBusinessRules + S0DecisionLog approval/check evidence; not implementation |
 | TSK-097 | S0 | A | 2 | none | Inventory boundary approval; business/ERD contract; unresolved assumptions explicit |
 | TSK-081 | S0 | A | 3 | TSK-079, TSK-097 | Hold/attempt/expiry policy; documented late-paid disposition |
 | TSK-084 | S0 | A | 4 | TSK-079, TSK-097 | Refund/cancellation signed matrix; platform/direct split |
