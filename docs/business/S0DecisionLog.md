@@ -4,7 +4,7 @@
 
 Approval source: user answered all seven policy questionnaire groups approving the proposals on 2026-10-23. User acts as product owner, not legal counsel or a named Finance/Operations signatory. No signatures or real-money permission are inferred.
 
-Decision approval, completed design deliverable and runtime clearance are separate statuses. TSK-079/097/081/084/086/088 delivered;090/109 approvals are provenance, not completed tasks.086 is completed PRODUCT CONTRACT, NOT legal clearance.
+Decision approval, completed design deliverable and runtime clearance are separate statuses. TSK-079/097/081/084/086/088/090 delivered;109 approval is provenance, not completed config/DTO freeze.086 is completed PRODUCT CONTRACT, NOT legal clearance.
 
 | Task | Decision approval | Deliverable status / version |
 |---|---|---|
@@ -14,8 +14,14 @@ Decision approval, completed design deliverable and runtime clearance are separa
 | TSK-084 | Approved cancellation/refund parameters | Completed policy design, S0-084-v1, 2026-10-23 |
 | TSK-086 | Approved financial/operations product contract, not Finance/Legal approval | Completed PRODUCT CONTRACT S0-086-v1, 2026-10-23; real-money095 BLOCKED |
 | TSK-088 | Approved discount/abuse parameters | Completed policy design S0-088-v1, 2026-10-23 |
-| TSK-090 | Approved time/arrival/completion/review parameters | Pending dedicated deliverable |
+| TSK-090 | Approved time/arrival/completion/review parameters | Completed policy design S0-090-v1, 2026-10-23 |
 | TSK-109 | Approved numerical choices, not completed config/DTO freeze | Pending dedicated deliverable |
+
+## TSK-090 acceptance evidence
+
+User PO approval frozen **S0-090-v1,2026-10-23** at Inventory3a with Payment/Overview/API/Review projections. HCM UTC+7/14:00checkin/11:00checkout/1..30nights, same-day originalcreation<20 only/retry081 deadline; adults18+,eachroom>=1adult, childinteger0..17/alloccupancy/noextra pricing. Host+Guestack or Admin verified audited case actualevent notfuture/notprebooking with chronology checks, no invented24hbackdate cap. ALLARRIVED maxactual+24h/allgates, no Hosttap/calendar bypass. Completion at/after scheduledcheckout11 plus actualstay/no unresolvedcase; earlycheckout no exception. ActualbookingGuest one review within [completedAt,completedAt+14days), no-show denied, duplicate/idempotency boundaries explicit. Same-day/future/cutoff/nights/ages/adjacency/actual-versus-ack/completion/review boundary examples documented, not runtime proof.
+
+Only090 newly closed:78 checked/36 unchecked, active done7/42, S0 done7/8;109 unchecked. Real-money095 legal/tax/calendar/ops/runtime clearance BLOCKED. Checks `python3 .opencode/verify-dual-payment-docs.py` and `git diff --check`, results in execution handoff. No runtime/source tests; integration/e2e/full skipped docs-only.
 
 ## TSK-088 acceptance evidence
 

@@ -16,7 +16,9 @@
 | `created_at` | TIMESTAMPTZ | NOT NULL | Creation timestamp |
 | `updated_at` | TIMESTAMPTZ | NOT NULL | Last update timestamp |
 
-### Review rule
+### Approved S0-090-v1 review rule (not implemented)
+
+Canonical [Inventory3a](../business/PropertyInventoryBusinessRules.md): authenticated booking actual-stay Guest only; COMPLETED requires scheduled checkout date11:00 Asia/Ho_Chi_Minh boundary reached plus actual-stay evidence/no unresolved incident (early checkout cannot complete early). Require `completedAt <= now < completedAt + 14days`, exact end exclusive; one review per booking across all rooms/modes. No-show/calendar/payment alone grants no eligibility. Unique booking constraint plus transaction guard/idempotency handles concurrent duplicate attempts; same-key replay same review, distinct second create409 duplicate, closed window409, nonactual/incomplete409 ineligible; ownership404/session401/role-CSRF403. Retain immutable completedAt; repeated completion cannot reset window. Baseline status-only diagram below is incomplete legacy, not target authorization or runtime evidence. Moderation/two-way096 scope not expanded.
 
 ```text
 Booking.status must equal COMPLETED

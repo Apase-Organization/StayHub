@@ -151,7 +151,7 @@ Contract cases (not runtime tests): created10:00 → expiry10:15; attempt1 fails
 
 Host có ownership chỉ **attest** tiền cash/bank họ nhận: amount/currency/method, paidAt, recordedAt, actor, reference, evidence handle, idempotency key/body hash, expectedVersion. Không lưu/expose bank credentials hay PII nhạy cảm trong API/logs; evidence private, audited, quyền support tối thiểu. Amount dương, partial receipts cộng dồn tới B; overpayment/conflicting evidence vào case, không xác minh tự động. Correction bằng reversal tham chiếu receipt gốc, không xóa audit. Guest acknowledgment/dispute độc lập; không biến attestation thành VNPay event.
 
-Check-in ghi item/roomOrdinal, actualAt/timezone/actor/evidence/version và Guest acknowledgment hoặc Admin verified-case fallback; validate anti-backdating, không Host tap/calendar-only. ALLARRIVED baseline đã duyệt086: max actualAt mọi booked room+24h, không per-room early payout.090/112 còn evidence-contract/implementation deliverables; partial/no-show/contested không tự eligible,095 clearance vẫn BLOCKED.
+**S0-090-v1 evidence contract frozen** tại Inventory3a: per-item/room actualAt not future/not before booking, chronology/private evidence/audit/version/idempotency, no invented maximum backdate. Host+Guest acknowledgment or Admin verified audited case, never Host tap alone. ALLARRIVED max verified actualAt+24h (not ack time), all financial/legal gates remain; partial/no-show/contested not automatically eligible. Completion at/after scheduled checkout11:00 plus actual evidence/no unresolved case, not early checkout; actual-stay Guest review once within [completedAt, completedAt+14days).112/092 implementation and095 clearance remain pending,109 freeze not completed.
 
 ## 5. Refund, dispute và payout
 
