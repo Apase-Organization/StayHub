@@ -1,5 +1,7 @@
 # Discounts
 
+**S0-109-v1 FROZEN_DESIGN:** [typed CampaignPublish/Selection/errors](../business/contracts/s0-api-v1.json), [policy](../business/contracts/s0-policy-v1.json)/[fixtures](../business/contracts/s0-fixtures-v1.json). quota is mandatory positivefinite per-campaign publication input, never a hardcoded livebudget; value/type/timewindow servervalidated. Frozen088controls,089runtimepending, no taxamount/signatures/activation introduced.
+
 **Approved TARGET S0-088-v1, 2026-10-23, not implemented:** [Payment section2b](../business/PaymentBusinessRules.md) canonical: self-owner block, one code/no stacking, per-user/code1 accepted-online consumption; required positive finite campaign Q, no unlimited default. PlatformD<=Cgross, Cnet=Cgross−D/O>=Cnet, no Guest fee. Whole-VND HALF_UP/stable largest remainder, no zeroT/O exception. Tax unset/disabled, paid release blocked.
 
 > **LEGACY schema/formula/flow below, not active contract:** nullable usage_limit/per_user_limit or service_fee do not authorize unlimited quota/stacking/Guest fee. TARGET requires Q>0 finite integer, user cap1, campaign/amount/funder/version snapshots and audited reservation/consumption records; actual additive schema089/099/110 not claimed existing.

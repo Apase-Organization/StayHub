@@ -1,5 +1,7 @@
 # Properties
 
+**S0-109-v1 FROZEN_DESIGN** [policy](../business/contracts/s0-policy-v1.json)/[API](../business/contracts/s0-api-v1.json): exclusiveWHOLE_PLACE/ROOM_BASED/interchangeablepool/sharedplans/wholeplace1/descriptivebedrooms approved. Plan policyVersion/allowedmodes snapshot, MoneywholeVND/noGuestfee/O>=Cnet, HCM090 time/occupancy. No propertytax/providerfee rate invented;095paidpublishingblocked. Legacy singleunit columns below remain history, not sourcecompatibility.
+
 **TARGET payment v2:** RatePlan allowedPaymentModes/paymentPolicyVersion server-validated; selected mode frozen tại quote/booking, không sinh stock riêng. Full và hybrid bắt buộc trong release MVP; invalid coverage offer bị reject/requote chứ không đẩy hybrid sang later. Actual check-in theo booking room allocation, không cần PhysicalRoom schema; payout gate không lấy ngày property calendar làm evidence. Xem [Payment rules](../business/PaymentBusinessRules.md).
 
 > **CURRENT/LEGACY single-unit tables/diagrams bên dưới, không phải target multi-room.** [TARGET canonical](../business/PropertyInventoryBusinessRules.md): classification tách WHOLE_PLACE/ROOM_BASED; Property có RoomTypes (whole-place quantity1), mỗi type capacity/ảnh/tiện nghi và RatePlans dùng chung stock. Type/date total, blocked, held, confirmed và remaining không âm; OOO không phá commitments. Bedrooms không phải quantity. PhysicalRoom assignment future; pool phải bảo đảm continuity. Đây là conceptual delta, chưa có migration.

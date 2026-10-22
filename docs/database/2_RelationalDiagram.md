@@ -28,7 +28,7 @@ flowchart LR
     B -->|1:0..1| Rev[reviews]
 ```
 
-Cardinalities cho draft có thể 0 children; submit phải >=1 item. [CoreERD](3_CoreERD.md) và [Payment v2](8_Payment.md) giữ keys/atomicity: nhiều online attempts, unique event/ref/journal, versioned Host-attested direct receipts/reversals, per-room actual check-in, balanced ledger/refund/payout/disputes. Booking snapshot mode/required online/direct split/policy/funding; zero-online exception phải duyệt, không bypass hybrid deposit. Both modes core MVP; legacy1:1 bên dưới không còn là target.
+**S0-109-v1 FROZEN_DESIGN** [typed contract](../business/contracts/s0-api-v1.json): draft0children/submit>=1item; ERD/Payment keys/atomicity multipleattempts/uniqueevent/journal/directmemo/perroomactual/balancedledger. Immutable policyVersion/fixtureVersion/quoteHash/snapshots, wholeVND/noGuestfee/platformD/O>=Cnet, zeroT/O rejected/no exception. Original900s/max3, ALLARRIVED+24/allgates and review090 frozen; no migration/runtime/legal claim. Legacy1:1 below archive.
 
 ## CURRENT/LEGACY conceptual archive — không phải target
 

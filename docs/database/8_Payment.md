@@ -2,6 +2,8 @@
 
 ## TARGET v2 — cả hai modes bắt buộc, chưa có migration
 
+**S0-109-v1 FROZEN_DESIGN** [typed API](../business/contracts/s0-api-v1.json)/[policy](../business/contracts/s0-policy-v1.json)/[fixtures](../business/contracts/s0-fixtures-v1.json). API camelCase and DB snake_case are mappings, not competing DTO aliases; Money whole integer VND/SQL scale0 (conceptual columns below,099 reviews actual migration). policy_version/fixture_version/quote_hash and immutable consent/actor/amount/selection/expiry snapshot required. hold_expires_at=originalcreated+900s, max3creations; quote_expires_at distinct explicit server instant/no stock. No Guestfee, platformD<=Cgross, coverageO>=Cnet.095 legal/tax/calendar/providercontract/signedops/liquidity/runtime still BLOCKED; JSON design not environment activation.
+
 [Payment canonical](../business/PaymentBusinessRules.md) và [ERD](3_CoreERD.md) có ưu tiên hơn legacy bên dưới. Booking-level settlement có **nhiều attempts**, không giữ UNIQUE booking_id trên attempts. Mode/policy/config/base/rate/rounding/funding/commission snapshots bất biến; full O=T/B0, hybrid required deposit O +direct Host balance B=T. Không dùng booking total để verify gateway hybrid.
 
 | Proposed record | Fields / integrity / source |
@@ -20,7 +22,7 @@ Account separation: online cash clearing, commission reserve (not earned), commi
 
 Lock protocol extends booking/lifecycle row → inventory day order → approved global discount/ledger account order; every writer must adopt same reviewed order. Under lock re-evaluate dueOnline outstanding, attempt credit uniqueness, coverage/allocations, refundable remaining/reserves, eligible payable and dispute/legal/liquidity gates. Unique event/journal keys + transactions prevent double credit/refund/payout. Platform `newRefund <= onlineVerified - paidRefunds - reservedRefunds` and policy remaining, with available liquidity check after payout; Host direct responsibility never increases that pool. Adjustments preserve exact header/item/room/night sums and nonnegative entitlements or open deficit recovery case.
 
-Fixture T6.900.000: full online6.900.000/direct0/commission1.035.000/heldHost5.865.000; hybrid fixture20% online1.380.000/direct5.520.000/commission1.035.000/heldHost345.000. Fee100.000 Host, discount200.000 Host-funded, tax/providercost0, commission fixture15% adjusted entitlement; not rollout config. Check-in evidence boundary all-arrived vs per-room and commercial/legal config remain approval gates. Backfill legacy mode/provenance only when supported by evidence; unknown not invented. No SQL/schema/source changed by this design.
+Active s0-fixtures-v1: room7.000.000/clean0/Guestfee0/platformD200.000 → T6.800.000/Cgross1.050.000/Cnet850.000. FullO6.800.000/B0/held5.950.000; hybridO1.360.000/B5.440.000/held510.000, Host5.950.000 both. Separate grossdue1.050.000/fundedexpense200.000/retained850.000, not earned by IPN. Record grossdue/fundedexpense with balanced journal lines, not netretention pretending gross revenue. Tax/providerfixture0 not approval actual amount. ALLARRIVED maxverifiedactual+24h/allgates frozen090/086, no Hosttap or per-room early payout. Backfill only evidenced legacy mode/provenance, unknown not invented; no schema/source change.
 
 ## CURRENT/LEGACY archive — not target
 

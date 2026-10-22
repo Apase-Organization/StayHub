@@ -4,7 +4,7 @@
 
 Approval source: user answered all seven policy questionnaire groups approving the proposals on 2026-10-23. User acts as product owner, not legal counsel or a named Finance/Operations signatory. No signatures or real-money permission are inferred.
 
-Decision approval, completed design deliverable and runtime clearance are separate statuses. TSK-079/097/081/084/086/088/090 delivered;109 approval is provenance, not completed config/DTO freeze.086 is completed PRODUCT CONTRACT, NOT legal clearance.
+All eight S0 product/design deliverables079/097/081/084/086/088/090/109 complete, aggregate **S0-109-v1 FROZEN_DESIGN**. Productapproval/designcompletion/runtimeclearance separate:086 PRODUCTCONTRACT notlegalclearance,109 not sourcecompatibility or moneyactivation.095 remains BLOCKED.79 checked/35unchecked, active done8/42/remaining34+optional096; S0done8/8. Only109 newly closed in finalfreeze.
 
 | Task | Decision approval | Deliverable status / version |
 |---|---|---|
@@ -15,7 +15,43 @@ Decision approval, completed design deliverable and runtime clearance are separa
 | TSK-086 | Approved financial/operations product contract, not Finance/Legal approval | Completed PRODUCT CONTRACT S0-086-v1, 2026-10-23; real-money095 BLOCKED |
 | TSK-088 | Approved discount/abuse parameters | Completed policy design S0-088-v1, 2026-10-23 |
 | TSK-090 | Approved time/arrival/completion/review parameters | Completed policy design S0-090-v1, 2026-10-23 |
-| TSK-109 | Approved numerical choices, not completed config/DTO freeze | Pending dedicated deliverable |
+| TSK-109 | Approved numerical/product choices and versioned DTO/error/fixture freeze | Completed FROZEN_DESIGN S0-109-v1,2026-10-23; no runtime compatibility or release permission |
+
+## S0 final handoff — TSK-109
+
+### Frozen artifact manifest and precedence
+
+| Exact tracked path | Version / responsibility |
+|---|---|
+| `docs/business/contracts/s0-policy-v1.json` | s0-policy-v1, approvedparameters/clearancefalse/finitecampaignQpublishinput (no invented realquota) |
+| `docs/business/contracts/s0-fixtures-v1.json` | s0-fixtures-v1, computed happy/edge financial,source-refund,rounding,IPN-retry,occupancy,time,review,actualarrival,completion,caps examples |
+| `docs/business/contracts/s0-api-v1.json` | s0-api-v1, exact typed fields/enums/errors/projections/endpoints; serverconsent/hash/version binding |
+| `docs/business/contracts/verify_s0_contracts.py` | stdlib explicitinput verifier, not productionengine; `--self-test` rejects altered expectedcases/policy |
+| `docs/business/PaymentBusinessRules.md`, `docs/business/PropertyInventoryBusinessRules.md`, `docs/business/OverviewBusiness.md` | Humanpolicy equations/state/actor/source/financial/evidence explanation of JSON, not alternate rates |
+| `docs/architecture/3_API_Design.md`, `docs/database/3_CoreERD.md`, `docs/database/8_Payment.md`, `docs/ui/UXUI_DesignSystem.md`, `docs/ui/ApplicationDesigned.md` | Frozen API/DB/UI projections; conceptual schema/UI not existing runtime |
+| `docs/tasklist/TaskList.md`, `docs/business/S0DecisionLog.md` | Single dependency/owner/sprint/count authority and durable approval/check evidence |
+
+Links: [policy](contracts/s0-policy-v1.json), [fixtures](contracts/s0-fixtures-v1.json), [API](contracts/s0-api-v1.json), [verifier](contracts/verify_s0_contracts.py). All statusFROZEN_DESIGN/sourceCompatibilityNONE_IMPLEMENTATION_REQUIRED; no secrets/environmentcredentials/runtimeactivation. JSON is exact field/unit/error authority, human matrices explain it; historical snapshots below are not current config. No automatic backward compatibility with existing Mock/VNPay/entity payloads claimed. Money integer wholeVND; rates integer bps, decimals only exact calculation/HALF_UP. Selection.currency declared/validatedVND; serveronly amounts not accepted. Quote binds actorId/policyVersion/fixtureVersion/selection/quoteAmounts/quoteExpiresAt with SHA256 sortedkeycompactUTF8/no floats; immutable consent acceptedPolicyVersion/acceptedFixtureVersion/acceptedQuoteHash, changedinput409requote. Quoteexpiry explicitserverinstant, not a commercialfixed5minTTL; hold originalcreated+900s/max3creation/noextension/exactO notT. Invalid15%deposit boundary is malformedconfig/coverageprimitive unitcase, not alternate MVPpolicy.
+
+All active projections use room7m/noGuestfee/platformD200k/T6.8m/Cgross1.05m/Cnet850k; hybridO1.36m/B5.44m/held510k/fullheld5.95m/Host5.95m. Due/reserved/earned distinct, no depositrevenue or fictitious discountcash.084refundsources/discountcleaningguards and090evidence/14dayexclusivewindow frozen; campaignrequiresfiniteQ atpublish no inventedrealbudget. Tax/provideractualcontract/calendarholidaycutoff/legal/signedops/liquidity evidence intentionally absent/false, **paidpublishingblocked/realmoneydisabled/095BLOCKED**, no FinanceLegal signatures. Conservative reserve untilcompleted/resolvedobligations/reviewedearningbasis, not legalaccounting opinion.
+
+### S1 entry and exact-path planned manifest — NOT started or authorized by this document
+
+S0 ready for controller scoped review, then **user PR review/merge before any S1 work**. No implicit task spawn/sourceedit permission. Integrator A single writer shared docs/entities/repositories/DTO/security/migrations; B read-only review reports until accepted backend contract and separately acknowledged UI/adapters manifest. TaskList ranks/deps remain canonical099→110, no simultaneous shared writers. Before edits: controller obtains currentsource/scoped scout context, exactexisting paths/base revision/dirtyownership and acknowledges manifest; no source discovery delegated from this docs task. Migration version cannot be reserved from legacy lists: current Flyway maximum and additive filename must be explicitly approved at099; **no migration filename/version authorized here**.
+
+Planned new source names (not claims existing, not edit authorization):099 A `src/main/java/com/stayhub/property/model/RoomType.java`, `src/main/java/com/stayhub/property/model/RatePlan.java`, `src/main/java/com/stayhub/property/model/TypeDayInventory.java`, `src/main/java/com/stayhub/booking/model/BookingItem.java`, `src/main/java/com/stayhub/booking/model/RoomAllocation.java`, `src/main/java/com/stayhub/booking/model/NightlySnapshot.java`, `src/main/java/com/stayhub/booking/model/InventoryCommitment.java`; isolated099 smoke planned `src/test/java/com/stayhub/property/InventoryContractSmokeTest.java`.110 A planned `src/main/java/com/stayhub/payment/model/PaymentAttempt.java`, `src/main/java/com/stayhub/payment/model/LedgerJournal.java`, `src/main/java/com/stayhub/payment/model/LedgerLine.java`, isolated `src/test/java/com/stayhub/payment/LedgerContractSmokeTest.java`. Controller must confirm feature-local package conventions, collisions and exactexisting Booking/Property/entity/repository/DTO files before accepting new manifest; proposed names may require reviewed adaptation, not silent alternate packages. No prefix grants package-wide write. B has **no S1 source write manifest**; exact report path assigned by controller, never same shared docs. Later templates/adapters only after A099/110manifest symbols/DTO/schema/test evidence accepted.
+
+099 exit: composite FK/property-type-plan/calendar/inventorycapacity protection/lockprotocol/migrationproof;110 exit: immutable balancedjournals/uniqueevents/source distinctions, no full payout/refund/UI implementation duplicated. Existing exclusion retained through106backfill/reconcile/protection. New source integration requires isolated happy+criticaledge RED→GREEN productionbehavior, mockexternal only; DB-real/concurrency/integration by explicitrequest, not these JSONdocs checks. S1 runtime acceptance, release095 and source compatibility remain unverified.
+
+### Validation evidence and limits
+
+Commands: `python3 docs/business/contracts/verify_s0_contracts.py --self-test`; `python3 .opencode/verify-dual-payment-docs.py` (ignored compatibility entry delegates tracked verifier); `git diff --check`. Verifier reads only explicit threeJSON/24namedMarkdown inputs, computes formulas/allocations/sourcepools/lifecycle/time/review and typedexample binding, pins approvedpolicy independently, checks mutationrejections and actualTaskList IDs/counts/DAG/ranks/sprintcoverage/links/fences. Results/durations recorded in final execution response and appended here after checks. It is a **contract example checker**, not productionbehavior, actualbankoperation, DBconcurrency, endtoend, legal/tax/calendar review or signedops evidence. No Maven/Compose/integration/e2e/fullsuite: docs-only scope. No commit/push/S1work in this delivery.
+
+Validation snapshot2026-10-23: tracked command **PASS0.898s**,73fixturecases/13groups,38independentapprovedpolicy pins,25DTO schemas/allrequiredfields/unknownfield negatives,38errors,85mutationrejections (73alteredoutcomes+9criticalinputchanges+3policychanges).24Markdown/12JSON-or-JSONC/151relativelinks/10scopedanchors,114IDs/79checked/35unchecked/DAG/ranks/sprintcoverage. `git diff --check` PASS. Earlier incremental doccheck failed expectedly while109 stillunchecked, then new projection checks exposed missing input-discount mapping and a validator local-variable shadowing defect; both corrected before this PASS. These are checker development failures, not production RED/GREEN evidence. Compatibility command delegates same verifier; final execution handoff records its separate duration. Arrival fixtures with legal/liquid=true are synthetic conditional-gate examples, never claims current clearance; policyclearance staysfalse. Coverageprimitive cases are guards only, explicitly not alternatevalid20%quoteconfig; campaignQ1/Q10 are testinputs notlivebudgets.
+
+## Historical per-task execution snapshots (superseded by final109 freeze above)
+
+Counts, pending109 statements and old6.9m references below describe their original execution stages only, not current activeconfig/progress. Preserve provenance; do not reopen completed S0 policy or use historical fixtures as active offers.
 
 ## TSK-090 acceptance evidence
 

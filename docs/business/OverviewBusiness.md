@@ -1,5 +1,7 @@
 # TỔNG QUAN NGHIỆP VỤ DỰ ÁN STAYHUB
 
+**S0-109-v1 FROZEN_DESIGN:** [policy](contracts/s0-policy-v1.json)/[fixtures](contracts/s0-fixtures-v1.json)/[typed API](contracts/s0-api-v1.json) and [finalhandoff](S0DecisionLog.md#s0-final-handoff--tsk-109) supersede historical pending109 wording below. All eight S0 design deliverables complete; runtime/sourceCompatibility none and095actual legal/contracts/tax/calendar/provider/signedops/liquidity clearance BLOCKED. Active6.800.000 fixture and approved20%/15%/platformD/Cnetcoverage/noGuestfee; wholeVND/immutable versions+hash+consent. No moneyactivation config or productionproof.
+
 > **TARGET MVP, chưa triển khai (2026-10-23):** [PropertyInventoryBusinessRules.md](PropertyInventoryBusinessRules.md) là canonical inventory; [PaymentBusinessRules.md](PaymentBusinessRules.md) là canonical tài chính. User đã duyệt instant và **cả FULL_PREPAY + HYBRID_DEPOSIT trong core MVP**. Approval nghiệp vụ không phải evidence source/runtime; lịch sử paid→PENDING/host approval vẫn phải tái xác minh. Return/poll chỉ đọc.
 
 ## 1. StayHub là gì?
@@ -57,7 +59,7 @@ Là đội ngũ vận hành nền tảng, có thể:
 7. **VNPay xác nhận qua IPN** — verify signature/merchant/reference/currency/result và amount theo **dueOnline/attempt**, không mặc định booking total; expiry/duplicates serialize.
 8. **CONFIRMED instant** sau verified required online amount và hold hợp lệ, cả hai mode. Hybrid không chờ B để confirm; receipt trực tiếp là Host attested, không bank/provider verified. Email phân biệt online paid và direct outstanding.
 9. **Guest có thể huỷ booking** ở trạng thái CONFIRMED theo rule hệ thống → booking chuyển sang **CANCELLED**.
-10. Actual check-in per booked room có evidence/acknowledgment theo policy cần duyệt; completion/no-show guard actor/ngày/evidence riêng, không tự chứng minh check-in chỉ vì ngày lịch. Host payable chỉ xét eligible actual check-in +24h, còn dispute/reconcile/refund/legal gates.
+10.090actual evidence perroom Host+Guestack/auditedAdmin frozen; ALLARRIVED maxactual+24h/allgates, completioncheckout11+actualstay/resolvedcase, calendar alone insufficient; runtime pending.
 11. Khi booking đã COMPLETED, Guest có thể **viết đánh giá (Review)** cho chỗ ở đó — đánh giá này sẽ hiển thị công khai ở trang chi tiết chỗ ở, góp phần vào điểm rating trung bình.
 
 Toàn bộ vòng đời trạng thái của một booking có thể tóm tắt như sau:
@@ -65,7 +67,7 @@ Toàn bộ vòng đời trạng thái của một booking có thể tóm tắt n
 ```
 PENDING_PAYMENT ──(verified dueOnline + active hold)──► CONFIRMED ──(guarded stay evidence)──► COMPLETED ──► REVIEW
        │                                                 │
-       └──(VNPay failed/cancelled/expired)──► CANCELLED  │
+       └──(worker guarded final-failure/expiry)──► CANCELLED │
                                                          └──(Guest Cancel)──► CANCELLED
 ```
 
@@ -80,7 +82,7 @@ StayHub vận hành theo **commission hợp đồng trên giao dịch**; không 
 | **Phí dịch vụ StayHub (Service fee)** | Phí nền tảng thu trên mỗi giao dịch thành công | StayHub |
 | **Mã giảm giá (Discount)** | Khoản giảm trừ theo campaign/promo code | StayHub/marketing budget |
 
-→ **S0-086-v1 completed PRODUCT CONTRACT, not legal clearance:** S=room+cleaning+reviewed named tax, no Guest service fee. Cgross=15% prediscount room+cleaning excludingtax; platform-funded D<=Cgross; Cnet=Cgross−D, T=S−D. Hybrid O=20%T HALF_UP VND, B=T−O, require O>=Cnet (not Cgross); Host=S−Cgross=held(O−Cnet)+directB. Full O=T, held=T−Cnet. Provider fees platform expense at actual contract cost. T1m/D0→Cgross=Cnet150k, hybrid200k/800k/held50k, Host850k; S7m/D200k→T6.8m/Cgross1.05m/Cnet850k, hybridO1.36m/B5.44m/held510k, fullheld5.95m, Host5.95m both. Old6.9m projections are legacy awaiting109 replacement. Numeric choices approved, config109 not complete. No revenue from deposit: reserve liabilities until completed/resolved obligations and reviewed earning basis. Actual ALLARRIVED max(actualAt)+24h only earliest eligibility with all gates, no automatic transfer. OperationsFinance daily reconcile/reserve/recovery, different human Admin maker/checker and bank proof. **Real-money095 BLOCKED** pending contracts/legal/signedops/calendar/tax/liquidity/runtime evidence. No fabricated Finance/Legal approval; tax config unset/disabled. Details [Payment](PaymentBusinessRules.md).
+→ **S0-086/109 FROZEN PRODUCT DESIGN, not legal clearance:** Sroom+clean+reviewedtax/noGuestfee; Cgross15%prediscountroom+clean excludingtax/platformD<=Cgross/Cnet=Cgross−D/T=S−D. HybridO20%THALF_UP/B=T−O/O>=Cnet, HostS−Cgross=heldO−Cnet+B; fullheldT−Cnet. Actualproviderfee platformexpense.1m/D0→C150k/hybridO200k/B800k/held50k/Host850k.7m/D200k→T6.8m/Cgross1.05m/Cnet850k/O1.36m/B5.44m/held510k/fullheld5.95m/Host5.95mboth. All active109projections replaced, no oldfee. No depositrevenue, reserve untilcompleted/resolvedobligations/reviewedearning. ALLARRIVEDactual+24/allgates/noautotransfer, OperationsFinance dailyreconcile/reserve/recovery/differenthumanAdminmakerchecker/bankproof.095contracts/legal/signedops/calendar/tax/liquidity/runtime BLOCKED, taxunsetdisabled, no fabricatedsignatures. [Payment](PaymentBusinessRules.md).
 
 ## 5. Ba mảng nghiệp vụ cốt lõi
 
@@ -134,7 +136,7 @@ Admin đóng vai trò giám sát toàn hệ thống chứ không tham gia trực
 - **VNPay trước cho thanh toán VND:** giúp flow demo sát thực tế người dùng Việt Nam hơn, hỗ trợ bank/card/QR và có IPN để xác minh giao dịch.
 - **Tự xác nhận sau payment success:** giảm friction cho Guest; booking chỉ được CONFIRMED khi backend đã verify checksum và amount từ VNPay.
 - **Discount snapshot:** giúp audit rõ ràng số tiền trước/sau giảm giá, đồng thời tránh lệ thuộc vào campaign có thể thay đổi sau này.
-- **Minh bạch payment split:** Guest thấy total/dueOnline/balance direct và refund responsibility; host/admin thấy commission/payable đúng quyền. Exact commercial config còn mở; không suy deposit thành platform revenue hay áp thêm service fee legacy.
+- **Payment split:** Guest totalStay/dueOnline/balanceDueHost/refund; HostAdmin Settlement scoped, exact109productconfig frozen, actualprovider/tax/legal permissions absent; no depositrevenue/Guestfee.
 - **Review TARGET:** tối đa một review/property cho mỗi completed booking bất kể quantity, có thể kèm type context snapshot; đây là policy StayHub, không khẳng định chính sách các nền tảng giống nhau.
 
 ## 10. Định hướng mở rộng
@@ -144,7 +146,7 @@ Sau khi project hoạt động ổn định, một số hướng phát triển t
 - **Core release gates, không optional:** multi-room TSK-097–108 và hai payment modes TSK-109–114 cùng remediation/P0 phải đạt TSK-095; không feature flag hybrid sang Post-MVP, chưa có production-readiness evidence.
 - **MoMo/ZaloPay:** thêm provider khác sau khi abstraction VNPay ổn định.
 - **Wishlist:** cho Guest lưu lại chỗ ở yêu thích để quay lại đặt sau, tăng tỷ lệ chuyển đổi (conversion).
-- **Hold expiry (core):** TTL TBD; release atomic mọi items/caps, late paid không tự hồi sinh stock; refund lifecycle khác booking cancellation.
+- **Hold expiry core:** originalcreated+900s/max3creations/noextension/active t<expiry, worker guardedfinalization/allitems-caps once; latepaid reconcile/norevive, refundstate separate.
 - **Rating trung bình được cache** thay vì tính lại mỗi lần load trang, phục vụ khi lượng review lớn.
 - **Báo cáo xuất file (CSV/PDF) cho Admin:** phục vụ nhu cầu báo cáo định kỳ, đối soát doanh thu với Host.
 - **Thông báo real-time (WebSocket):** thay vì chỉ gửi email, giúp Host/Guest nhận cập nhật trạng thái tức thời ngay trên giao diện.

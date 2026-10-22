@@ -1,29 +1,31 @@
 # Payment — canonical TARGET v2 (2026-10-23)
 
+**S0-109-v1 / s0-policy-v1 — FROZEN_DESIGN, sourceCompatibility NONE_IMPLEMENTATION_REQUIRED.** [Policy](contracts/s0-policy-v1.json), [fixtures](contracts/s0-fixtures-v1.json), [typed API/errors](contracts/s0-api-v1.json), [stdlib verification](contracts/verify_s0_contracts.py) are the frozen design inputs; [S0 handoff](S0DecisionLog.md#s0-final-handoff--tsk-109) records evidence/owners/limits. All eight S0 product decisions are frozen; implementation and real-money095 remain BLOCKED. Whole-VND integer Money,20% postdiscount deposit/15% prediscount room+clean commission, platform-funded D and O>=Cnet are not proposals. Quote expiry is explicit server quoteExpiresAt, distinct from original booking createdAt+900s hold; no quote TTL commercial value is invented.
+
 **Approved direction, pending delivery.** Cả `FULL_PREPAY` và `HYBRID_DEPOSIT` là **core MVP bắt buộc**, cùng multi-room. Đây là thiết kế, không chứng nhận source/schema/runtime đã đạt. Không dùng sandbox, screenshot hay checkbox lịch sử làm evidence tiền thật. Inventory theo [PropertyInventoryBusinessRules](PropertyInventoryBusinessRules.md); contracts tại [API](../architecture/3_API_Design.md), [Payment data](../database/8_Payment.md); tiến độ/evidence tại [TaskList](../tasklist/TaskList.md).
 
 ## 1. Quyết định đã duyệt và thứ tự ưu tiên
 
 | Decision | Đã duyệt | Chưa chốt / gate |
 |---|---|---|
-| PAY-01 | FULL_PREPAY: thu 100% online qua StayHub/VNPay | Fee/tax basis, funding và commercial config: TSK-086/088/109 |
-| PAY-02 | HYBRID_DEPOSIT: approved20% postdiscountT HALF_UP VND online; B trực tiếp Host cash/bank tại check-in, O>=Cnet | Numeric product choice086 approved; config artifact/DTO freeze109 pending |
-| PAY-03 | Cả hai instant CONFIRMED sau verified required online amount và active all-item hold; không Host accept/reject | Ghi state matrix/config tại TSK-079; không hỏi lại instant hay lùi hybrid sang Post-MVP |
-| PAY-04 | ALLARRIVED max(actualAt)+24h earliest eligibility, subject dispute/refund/reconcile/liquidity/legal | Product086 approved;090/112 evidence delivery pending,095 legal/ops clearance BLOCKED |
+| PAY-01 | FULL_PREPAY:100% T online |109 frozen design; reviewed tax/provider/earning permissions and runtime095 blocked |
+| PAY-02 | HYBRID_DEPOSIT:20% postdiscountT HALF_UP VND; B Host cash/bank at check-in, O>=Cnet |109 config/DTO freeze complete, not runtime activation |
+| PAY-03 | Instant after verified exact attempt O +active all-item hold, no Host accept/reject |079/081/109 frozen;082 runtime pending |
+| PAY-04 | ALLARRIVED max(actualAt)+24h earliest eligibility/all gates |086/090 design frozen;112 runtime/095 legal and ops clearance blocked |
 | PAY-05 | Không free unpaid reservation, không thu commission hằng tháng, không StayHub QR pass-through tại chỗ | Không tạo hidden monthly commission receivable; coverage không đủ phải reject/requote/disable offer |
 
 Quyết định user đã duyệt → decision log và inventory → API/ERD/UI projections → task AC/evidence. Legacy chỉ để trace; khi lệch phải sửa cùng contract version trước triển khai. Inventory boundaries có explicit questionnaire approval riêng, frozen **S0-097-v1** tại inventory canonical; không suy từ payment approval và không chứng nhận implementation. Không mặc định escrow hợp pháp/bắt buộc, zero fraud hoặc tỷ lệ rủi ro giả định.
 
 ## 1a. Approved contract matrix — S0-079-v1
 
-Approved 2026-10-23 by user as product owner through the seven-group questionnaire, recorded in [S0DecisionLog](S0DecisionLog.md). This is a versioned policy approval, not an invented signature, legal clearance or runtime certification. This section supersedes earlier pending wording for the state/actor contract only; numerical configuration and legacy fixtures below remain pending replacement at TSK-109/086, not approved rollout inputs.
+Approved2026-10-23 by user as PO through questionnaire, recorded in [S0DecisionLog](S0DecisionLog.md). Versioned product approval, not signature/legal/runtime certification.109 now consolidates all approved design parameters and active fixtures; historical proposal wording is superseded, not permission to activate funds.
 
 | Mode | Server quote / required online O | Direct balance B | Confirmation |
 |---|---|---|---|
 | FULL_PREPAY | O = contractual total T | B = 0 | Instant only after verified exact O and active all-item hold |
 | HYBRID_DEPOSIT | Mandatory O from server-computed versioned config; O + B = T | B = T − O, paid directly to Host cash/bank at check-in | Same instant guard; does not wait for B |
 
-Both modes are required MVP. Guest selects only server-allowed plan/mode; Host may configure owned offers only within approved platform config, never waive O or accept/reject a booking. Snapshot contract/config version, mode, T/O/B, currency, allocations and consent. Each attempt binds expected O server-side to booking/reference/currency/version, not a client amount or T substituted for hybrid O. Exact deposit/rounding/commission/funding/tax/DTO freeze belongs to TSK-109/086; approval of parameters is not their completed freeze. No free unpaid reservation, monthly commission receivable or onsite StayHub QR pass-through.
+Both modes required MVP; Guest selects only server-allowed plan/mode, Host owned offers only within frozen config, never waive O/accept/reject. Snapshot policyVersion/fixtureVersion/quoteHash, mode/T/O/B/currency/allocations/consent. Attempt expected O server-bound to booking/ref/currency/config, not client amount or hybrid T.109 frozen design complete; tax/provider/legal operational evidence still blocked095. No free unpaid reservation/monthly commission/onsite StayHub QR.
 
 | Booking state / event | Authorized actor and guard | Collection / resulting state |
 |---|---|---|
@@ -59,7 +61,7 @@ H = platformHeldHostPayable + B
 T = H + Cnet; S = H + Cgross       # before separate tax disposition, provider expense and adjustments
 ```
 
-**Approved product contract S0-086-v1, 2026-10-23**, user PO questionnaire, not Finance/Legal approval. D is platform-funded, not Host-funded: record gross commission due Cgross, funded discount expense D and net retention Cnet separately. Do not journal Cnet as gross revenue or add D again as Guest cash. Provider fees are platform expense at actual provider contractual amount (not invented); do not deduct them again from Host entitlement or imply post-expense profit nonnegative. Named taxes are not commission base or platform revenue; segregate Host-side tax liability pending reviewed disposition. Tax config remains unset/disabled and paid activation blocked. Numeric choices are approved; machine-readable config/DTO/fixture-wide freeze109 remains pending.
+**S0-086-v1 product contract /109 frozen design**, not Finance/Legal approval. D platform-funded: gross commission due Cgross/funded expenseD/netretentionCnet separately; never Cnet as gross revenue or D as Guest cash. Provider fees actual contractual platform expense, not deducted again from Host, no assumed profit. Tax not commission base/platform revenue; segregate named tax liability, config unset/disabled and paid activation blocked095. JSON109 freeze complete; evidence to enable money absent.
 
 At quote/reservation and adjustments, use immutable allocations and **hybrid coverage O>=Cnet, not O>=Cgross**. Reject/requote invalid funding/coverage with consent; never silently increase20%, create debt/monthly commission or remove hybrid from MVP. Append adjustment/reversal for refunds, never rewrite history; post-payout deficit becomes funded recovery case. `commissionDue`, reserved cash, earned revenue, Host held payable and direct attestation remain separate. Until stay COMPLETED and refund/dispute/reconcile obligations resolved, retain liabilities/reserves; any earning recognition still requires documented accounting/contract/legal review. Deposit/IPN/+24h eligibility alone never earns revenue; this is a conservative product reserve guard, not invented legal accounting clearance.
 
@@ -69,10 +71,10 @@ Tax/provider cost0 illustration, room charges1.000.000, cleaning0/D0: Cgross=Cne
 
 ```json
 [
-  {"paymentMode":"FULL_PREPAY","total":1000000,"dueOnline":1000000,"balanceDueHost":0,"commissionDue":150000,"platformHeldHostPayable":850000,"hostTotal":850000},
-  {"paymentMode":"HYBRID_DEPOSIT","total":1000000,"dueOnline":200000,"balanceDueHost":800000,"commissionDue":150000,"platformHeldHostPayable":50000,"hostTotal":850000},
-  {"paymentMode":"FULL_PREPAY","subtotal":7000000,"discount":200000,"total":6800000,"dueOnline":6800000,"balanceDueHost":0,"commissionDue":1050000,"netRetention":850000,"platformHeldHostPayable":5950000,"hostTotal":5950000},
-  {"paymentMode":"HYBRID_DEPOSIT","subtotal":7000000,"discount":200000,"total":6800000,"dueOnline":1360000,"balanceDueHost":5440000,"commissionDue":1050000,"netRetention":850000,"platformHeldHostPayable":510000,"hostTotal":5950000}
+  {"paymentMode":"FULL_PREPAY","totalStay":1000000,"dueOnline":1000000,"balanceDueHost":0,"grossCommission":150000,"netRetention":150000,"platformHeldHostPayable":850000,"hostEntitlement":850000},
+  {"paymentMode":"HYBRID_DEPOSIT","totalStay":1000000,"dueOnline":200000,"balanceDueHost":800000,"grossCommission":150000,"netRetention":150000,"platformHeldHostPayable":50000,"hostEntitlement":850000},
+  {"paymentMode":"FULL_PREPAY","subtotal":7000000,"discount":200000,"totalStay":6800000,"dueOnline":6800000,"balanceDueHost":0,"grossCommission":1050000,"netRetention":850000,"platformHeldHostPayable":5950000,"hostEntitlement":5950000},
+  {"paymentMode":"HYBRID_DEPOSIT","subtotal":7000000,"discount":200000,"totalStay":6800000,"dueOnline":1360000,"balanceDueHost":5440000,"grossCommission":1050000,"netRetention":850000,"platformHeldHostPayable":510000,"hostEntitlement":5950000}
 ]
 ```
 
@@ -80,11 +82,11 @@ Hybrid: Guest 200.000 online +800.000 trực tiếp; deposit phân bổ 150.000 
 
 Allocation-only edge (not bookable offer): charges `[1,1,1]`, D1 → stable largest remainder `[1,0,0]`, net `[0,1,1]`. Zero base never divides by0, coded checkout rejects. **LEGACY INVALID config:** old15% deposit/160k commission-on-1m illustration is not active policy. Approved20%/15%, D<=Cgross and O>=Cnet apply; invalid coverage/funding rejects without debt/rate increase.
 
-**Active multi-room replacement:** S7.000.000, D200.000, Cgross1.050.000, Cnet850.000, T6.800.000. Hybrid O1.360.000/B5.440.000/held Host510.000; full O6.800.000/B0/held Host5.950.000; Host total5.950.000 in both. Gross commission1.050.000 minus funded expense200.000 = retained850.000 before provider costs, not automatic earnings. **LEGACY INVALID for active offers:** old6.900.000 fixture (7m+100k booking/service fee−200k with Host-funded discount/adjusted commission1.035m) is arithmetic history only. API/DB/UI old6.9m projections remain legacy awaiting comprehensive109 replacement; do not use them as active quote/rollout inputs.
+**Active multi-room fixture:** S7.000.000/D200.000/Cgross1.050.000/Cnet850.000/T6.800.000. HybridO1.360.000/B5.440.000/held510.000; fullO6.800.000/B0/held5.950.000; Host5.950.000 both. Cgross−fundedD=retained850.000 before providerexpense, not earned. **LEGACY INVALID for active offers:** old6.9m service-fee/Host-funded/adjusted-commission fixture retained only in historical decision evidence; all active API/DB/UI projections now s0-fixtures-v1.
 
 ### 2a. Operations and clearance — completed PRODUCT CONTRACT, legal clearance BLOCKED
 
-Actual all-arrived baseline: verified arrival for **every booked room**, eligible earliest `max(actualAt) + 24h`, never early per-room payout. Host evidence plus Guest acknowledgment or Admin-verified contested fallback; validate event time/anti-backdating, not acknowledgment timestamp or Host tap alone. Detailed090/112 evidence deliverables remain pending. No-show/partial arrivals require case review, not implicit eligibility. All gates remain dispute/refund reserve, reconciliation, liquidity and contractual/legal authorization; +24h never guarantees transfer.
+Verified arrival for **every booked room**, earliest `max(actualAt)+24h`, not per-room early payout; Host evidence+Guestack or Admin audited verification, actual time not ack/Hosttap.090 design frozen,112 implementation pending. No-show/partial/contested require case review; dispute/refund/reconcile/liquidity/legal gates remain, never guaranteed transfer.
 
 | Role (not named person) | Approved design responsibility / required evidence |
 |---|---|
@@ -107,7 +109,7 @@ RESERVED→CONSUMED only with first accepted exact online collection +active hol
 
 Compute eligible booking-wide D once in exact decimal, HALF_UP to whole VND, apply configured percent campaign cap before funding validation. Require D<=eligible base and D<=Cgross, Cnet=Cgross−D>=0; platform-funded only, no Guest fee. Reject misfit, never silently clamp to commission or shift funder to Host. T=S−D, hybridO=HALF_UP(20%T); reject **T<=0 or O<=0**, no free/internal-settlement exception or gateway0. Require O>=Cnet. Allocate rounded D by largest remainder with stable item/room/night/charge ordinal ties, exact sumD/no negative charge; base0 rejects coded checkout, never division0. Snapshot amount/base/funder/algorithm/config version and immutable allocations.
 
-Validation semantics preview/submit:400 `ERR_SELF_BOOKING`, `ERR_DISCOUNT_STACKING`, `ERR_DISCOUNT_INVALID` (unknown/inactive/window/minimum/base/value), `ERR_NONPOSITIVE_BOOKING_AMOUNT` (T/O<=0).409 `ERR_DISCOUNT_QUOTA_EXHAUSTED`, `ERR_DISCOUNT_USER_LIMIT`, `ERR_DISCOUNT_FUNDING` (D>base/Cgross or Cnet<0), `ERR_DISCOUNT_CONFIG` (missing/nonfinite quota or invalid publish config), `ERR_DEPOSIT_COVERAGE` (O<Cnet), `ERR_QUOTE_STALE` and existing version/idempotency errors. No stock/cap/charge side effects on rejection; race loser receives conflict, not preview reservation promise. Runtime concurrency remains089/082/102/110 and DTO/config freeze109 pending.
+Validation semantics preview/submit:400 `ERR_SELF_BOOKING`, `ERR_DISCOUNT_STACKING`, `ERR_DISCOUNT_INVALID` (unknown/inactive/window/minimum/base/value), `ERR_NONPOSITIVE_BOOKING_AMOUNT` (T/O<=0).409 `ERR_DISCOUNT_QUOTA_EXHAUSTED`, `ERR_DISCOUNT_USER_LIMIT`, `ERR_DISCOUNT_FUNDING` (D>base/Cgross or Cnet<0), `ERR_DISCOUNT_CONFIG` (missing/nonfinite quota/config), `ERR_DEPOSIT_COVERAGE` (O<Cnet), `ERR_QUOTE_STALE`/version/idempotency. Rejection no stock/cap/charge; race loser conflicts. Typed109 design frozen; runtime089/082/102/110 pending.
 
 Design cases, not runtime evidence: illustrative campaignQ1 → one of two simultaneous reservations wins; same user's competing booking cannot bypass held/consumed slot. Attempt1 fail retains; worker expiry releases; online accepted consumes once and cancellation does not restore. HALF_UP0.5→1VND; equal remainder ties lowest ordinal. T1VND hybridO0 rejects before gateway; D>Cgross rejects with positiveT; O<Cnet independently rejects.
 
@@ -151,7 +153,7 @@ Contract cases (not runtime tests): created10:00 → expiry10:15; attempt1 fails
 
 Host có ownership chỉ **attest** tiền cash/bank họ nhận: amount/currency/method, paidAt, recordedAt, actor, reference, evidence handle, idempotency key/body hash, expectedVersion. Không lưu/expose bank credentials hay PII nhạy cảm trong API/logs; evidence private, audited, quyền support tối thiểu. Amount dương, partial receipts cộng dồn tới B; overpayment/conflicting evidence vào case, không xác minh tự động. Correction bằng reversal tham chiếu receipt gốc, không xóa audit. Guest acknowledgment/dispute độc lập; không biến attestation thành VNPay event.
 
-**S0-090-v1 evidence contract frozen** tại Inventory3a: per-item/room actualAt not future/not before booking, chronology/private evidence/audit/version/idempotency, no invented maximum backdate. Host+Guest acknowledgment or Admin verified audited case, never Host tap alone. ALLARRIVED max verified actualAt+24h (not ack time), all financial/legal gates remain; partial/no-show/contested not automatically eligible. Completion at/after scheduled checkout11:00 plus actual evidence/no unresolved case, not early checkout; actual-stay Guest review once within [completedAt, completedAt+14days).112/092 implementation and095 clearance remain pending,109 freeze not completed.
+**S0-090-v1/109 frozen evidence design:** Inventory3a per-room actualAt notfuture/notprebooking, chronology/private audit/version/key, no invented maxbackdate. Host+Guestack or Admin audited verification, no Hosttap; ALLARRIVED maxactual+24/allgates. Completion at/after checkout11+actualstay/no unresolvedcase, notearlycheckout; actualGuest review once [completedAt,+14days).112/092 runtime/095 clearance pending;109 freeze complete.
 
 ## 5. Refund, dispute và payout
 
@@ -175,7 +177,7 @@ User PO questionnaire approval frozen **2026-10-23**, provenance [S0DecisionLog]
 | Incident after actual check-in, partial arrival or contested service/evidence | Admin case with Guest/Host evidence; no automatic full refund or unused-cleaning assumption. Decision/amount/source/audit required; freeze disputed entitlement pending resolution |
 | Admin | Applies snapshot/evidenced case, cannot invent Guest cash or mark refund PAID from booking CANCELLED |
 
-**Charge/funding conservation:** snapshot each named room/cleaning/other legally reviewed charge, gross amount, discount allocation and funder, net Guest-funded amount and actual collection source. Allocate D once by largest remainder over eligible charges, stable item/room/night/charge ordinal ties; allocate each actual receipt across these net charge balances proportionally by largest remainder with same stable ties, never beyond charge remaining. Aggregate per charge and per source across partial receipts. Retain links to platform-funded D as funded expense/reversal, not Guest cash/refund. Never return both undiscounted cleaning and its discount; never refund uncollected charges. Adjustment journals recompute obligations/commission/funding without mutating original history or earning commission automatically. Exact commercial config/earning remains086/109, not frozen by these illustrative examples.
+**Charge/funding conservation:** snapshot named gross room/cleaning, allocated platformD, net Guest charge and actual source. Allocate roundedD once largest remainder/stable item-room-night-charge ordinal; each actual receipt allocated across remaining netcharges with same algorithm, never exceed line remaining. Preserve platform-funded expense/reversal, not Guest cash/refund; never grosscleaning+discount return/uncollected refund. Append obligation/commission/funding adjustments, no automatic earnings/history mutation.086/109 product config frozen; earning/legal evidence still blocked095.
 
 **Retained / outstanding disclosure:** late/no-show retained room component and refundable unused-cleaning component must be shown separately, with already-collected retained room money and uncollected room balance identified. The room component is nonrefundable under this policy, but uncollected B is not a refund pool or permission to debit Guest. No automatic B charge, new monthly commission receivable or invented collection/enforcement terms; unresolved amounts/claims route to case review. Full-refund branches return all actual collected money, not a fictional total T.
 

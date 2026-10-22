@@ -1,0 +1,102 @@
+{
+  "fixtureVersion": "s0-fixtures-v1", "policyVersion": "s0-policy-v1", "status": "FROZEN_DESIGN", "sourceCompatibility":"NONE_IMPLEMENTATION_REQUIRED", "currency": "VND", "moneyUnit": "WHOLE_VND_MINOR_UNIT",
+  "quotes": [
+    {"id":"full-1m","input":{"roomCharges":1000000,"cleaningFee":0,"discount":0,"paymentMode":"FULL_PREPAY"},"expected":{"subtotal":1000000,"totalStay":1000000,"grossCommission":150000,"netRetention":150000,"dueOnline":1000000,"balanceDueHost":0,"platformHeldHostPayable":850000,"hostEntitlement":850000}},
+    {"id":"hybrid-1m","input":{"roomCharges":1000000,"cleaningFee":0,"discount":0,"paymentMode":"HYBRID_DEPOSIT"},"expected":{"subtotal":1000000,"totalStay":1000000,"grossCommission":150000,"netRetention":150000,"dueOnline":200000,"balanceDueHost":800000,"platformHeldHostPayable":50000,"hostEntitlement":850000}},
+    {"id":"full-6m8","input":{"roomCharges":7000000,"cleaningFee":0,"discount":200000,"paymentMode":"FULL_PREPAY"},"expected":{"subtotal":7000000,"totalStay":6800000,"grossCommission":1050000,"netRetention":850000,"dueOnline":6800000,"balanceDueHost":0,"platformHeldHostPayable":5950000,"hostEntitlement":5950000}},
+    {"id":"hybrid-6m8","input":{"roomCharges":7000000,"cleaningFee":0,"discount":200000,"paymentMode":"HYBRID_DEPOSIT"},"expected":{"subtotal":7000000,"totalStay":6800000,"grossCommission":1050000,"netRetention":850000,"dueOnline":1360000,"balanceDueHost":5440000,"platformHeldHostPayable":510000,"hostEntitlement":5950000}},
+    {"id":"cleaning-discount","input":{"roomCharges":900000,"cleaningFee":100000,"discount":100000,"paymentMode":"HYBRID_DEPOSIT"},"expected":{"subtotal":1000000,"totalStay":900000,"grossCommission":150000,"netRetention":50000,"dueOnline":180000,"balanceDueHost":720000,"platformHeldHostPayable":130000,"hostEntitlement":850000}},
+    {"id":"funding-excess","input":{"roomCharges":1000000,"cleaningFee":0,"discount":150001,"paymentMode":"HYBRID_DEPOSIT"},"expected":{"errorCode":"ERR_DISCOUNT_FUNDING"}},
+    {"id":"tiny-online-zero","input":{"roomCharges":1,"cleaningFee":0,"discount":0,"paymentMode":"HYBRID_DEPOSIT"},"expected":{"errorCode":"ERR_NONPOSITIVE_BOOKING_AMOUNT"}},
+    {"id":"zero-total","input":{"roomCharges":0,"cleaningFee":0,"discount":0,"paymentMode":"FULL_PREPAY"},"expected":{"errorCode":"ERR_NONPOSITIVE_BOOKING_AMOUNT"}},
+    {"id":"malformed-deposit-config","input":{"roomCharges":1000000,"cleaningFee":0,"discount":0,"paymentMode":"HYBRID_DEPOSIT","depositBps":1500},"expected":{"errorCode":"ERR_PAYMENT_CONFIG"}}
+  ],
+  "inventory": [
+    {"id":"all-items-happy","items":[{"roomTypeId":7,"quantity":2},{"roomTypeId":8,"quantity":1}],"remainingByType":{"7":[5,5],"8":[2,2]},"expected":{"accepted":true,"remainingByType":{"7":[3,3],"8":[1,1]}}},
+    {"id":"family-second-night-zero","items":[{"roomTypeId":7,"quantity":2},{"roomTypeId":8,"quantity":1}],"remainingByType":{"7":[5,5],"8":[2,0]},"expected":{"accepted":false,"remainingByType":{"7":[5,5],"8":[2,0]}}},
+    {"id":"plans-share-pool","items":[{"roomTypeId":7,"quantity":2},{"roomTypeId":7,"quantity":2}],"remainingByType":{"7":[3,3]},"expected":{"accepted":false,"remainingByType":{"7":[3,3]}}}
+  ],
+  "coverage": [
+    {"id":"net-not-gross-primitive","scope":"GUARD_UNIT_ONLY_NOT_VALID_MVP_QUOTE_CONFIG","dueOnline":900000,"grossCommission":1050000,"discount":200000,"netRetention":850000,"expected":true},
+    {"id":"under-net-primitive","scope":"GUARD_UNIT_ONLY_NOT_VALID_MVP_QUOTE_CONFIG","dueOnline":849999,"grossCommission":1050000,"discount":200000,"netRetention":850000,"expected":false}
+  ],
+  "allocations": [
+    {"id":"tie","charges":[1,1,1],"discount":1,"expected":[1,0,0]},
+    {"id":"cleaning","charges":[900000,100000],"discount":100000,"expected":[90000,10000]},
+    {"id":"zero-base","charges":[0,0],"discount":0,"expected":[0,0]}
+  ],
+  "refunds": [
+    {"id":"free-hybrid-uncollected","quote":"hybrid-1m","hours":48,"reason":"GUEST","actualStay":false,"online":200000,"direct":0,"expected":{"platformRefundable":200000,"hostDirectRefundResponsibility":0,"totalPolicyRefund":200000}},
+    {"id":"free-hybrid-direct","quote":"hybrid-1m","hours":49,"reason":"GUEST","actualStay":false,"online":200000,"direct":300000,"expected":{"platformRefundable":200000,"hostDirectRefundResponsibility":300000,"totalPolicyRefund":500000}},
+    {"id":"host-inability","quote":"hybrid-1m","hours":1,"reason":"HOST_INABILITY","actualStay":false,"online":200000,"direct":300000,"expected":{"platformRefundable":200000,"hostDirectRefundResponsibility":300000,"totalPolicyRefund":500000}},
+    {"id":"free-full","quote":"full-1m","hours":48,"reason":"GUEST","actualStay":false,"online":1000000,"direct":0,"expected":{"platformRefundable":1000000,"hostDirectRefundResponsibility":0,"totalPolicyRefund":1000000}},
+    {"id":"late-no-cleaning","quote":"hybrid-1m","hours":47,"reason":"GUEST","actualStay":false,"online":200000,"direct":0,"expected":{"platformRefundable":0,"hostDirectRefundResponsibility":0,"totalPolicyRefund":0}},
+    {"id":"late-cleaning-partial-direct","quote":"cleaning-discount","hours":1,"reason":"NO_SHOW","actualStay":false,"online":180000,"direct":360000,"expected":{"platformRefundable":18000,"hostDirectRefundResponsibility":36000,"totalPolicyRefund":54000}},
+    {"id":"late-cleaning-online-only","quote":"cleaning-discount","hours":0,"reason":"GUEST","actualStay":false,"online":180000,"direct":0,"expected":{"platformRefundable":18000,"hostDirectRefundResponsibility":0,"totalPolicyRefund":18000}},
+    {"id":"after-arrival","quote":"cleaning-discount","hours":0,"reason":"GUEST","actualStay":true,"online":180000,"direct":0,"expected":{"errorCode":"ERR_REFUND_CASE_REQUIRED"}}
+  ],
+  "pools": [
+    {"id":"cash-boundary","collected":200000,"policy":200000,"paid":50000,"reserved":20000,"request":130000,"liquid":130000,"expected":true},
+    {"id":"cash-over","collected":200000,"policy":200000,"paid":50000,"reserved":20000,"request":130001,"liquid":200000,"expected":false},
+    {"id":"policy-boundary","collected":180000,"policy":18000,"paid":5000,"reserved":2000,"request":11000,"liquid":180000,"expected":true},
+    {"id":"policy-over","collected":180000,"policy":18000,"paid":5000,"reserved":2000,"request":11001,"liquid":180000,"expected":false},
+    {"id":"no-liquidity","collected":200000,"policy":200000,"paid":0,"reserved":0,"request":100000,"liquid":99999,"expected":false}
+  ],
+  "attempts": [
+    {"id":"retry-success","quote":"hybrid-6m8","elapsedSeconds":899,"createdAttempts":2,"amount":1360000,"pending":true,"allFailed":false,"credited":false,"closed":false,"duplicate":false,"event":"SUCCESS","expected":"CONFIRM"},
+    {"id":"wrong-total-not-O","quote":"hybrid-6m8","elapsedSeconds":100,"createdAttempts":1,"amount":6800000,"pending":true,"allFailed":false,"credited":false,"closed":false,"duplicate":false,"event":"SUCCESS","expected":"RECONCILE"},
+    {"id":"exact-expiry","quote":"hybrid-6m8","elapsedSeconds":900,"createdAttempts":3,"amount":1360000,"pending":true,"allFailed":false,"credited":false,"closed":false,"duplicate":false,"event":"SUCCESS","expected":"RECONCILE"},
+    {"id":"resold-closed","quote":"hybrid-6m8","elapsedSeconds":1000,"createdAttempts":3,"amount":1360000,"pending":false,"allFailed":true,"credited":false,"closed":true,"duplicate":false,"event":"SUCCESS","expected":"RECONCILE"},
+    {"id":"extra-retry-success","quote":"hybrid-6m8","elapsedSeconds":200,"createdAttempts":2,"amount":1360000,"pending":true,"allFailed":false,"credited":true,"closed":false,"duplicate":false,"event":"SUCCESS","expected":"RECONCILE"},
+    {"id":"duplicate-winner","quote":"hybrid-6m8","elapsedSeconds":200,"createdAttempts":1,"amount":1360000,"pending":false,"allFailed":false,"credited":true,"closed":false,"duplicate":true,"event":"SUCCESS","expected":"NO_OP"},
+    {"id":"attempt-failure-retry","quote":"hybrid-1m","elapsedSeconds":100,"createdAttempts":1,"amount":0,"pending":false,"allFailed":true,"credited":false,"closed":false,"duplicate":false,"event":"FAILURE","expected":"ATTEMPT_ONLY"},
+    {"id":"worker-third-pending","quote":"hybrid-1m","elapsedSeconds":100,"createdAttempts":3,"amount":0,"pending":true,"allFailed":false,"credited":false,"closed":false,"duplicate":false,"event":"WORKER","expected":"KEEP"},
+    {"id":"worker-all-failed","quote":"hybrid-1m","elapsedSeconds":100,"createdAttempts":3,"amount":0,"pending":false,"allFailed":true,"credited":false,"closed":false,"duplicate":false,"event":"WORKER","expected":"RELEASE"},
+    {"id":"worker-expired","quote":"hybrid-1m","elapsedSeconds":900,"createdAttempts":1,"amount":0,"pending":true,"allFailed":false,"credited":false,"closed":false,"duplicate":false,"event":"WORKER","expected":"RELEASE"},
+    {"id":"fourth-creation","quote":"hybrid-1m","elapsedSeconds":100,"createdAttempts":3,"amount":0,"pending":true,"allFailed":false,"credited":false,"closed":false,"duplicate":false,"event":"CREATE","expected":"ERR_PAYMENT_ATTEMPTS_EXHAUSTED"},
+    {"id":"retry-original-deadline","quote":"hybrid-1m","elapsedSeconds":899,"createdAttempts":2,"amount":0,"pending":false,"allFailed":true,"credited":false,"closed":false,"duplicate":false,"event":"CREATE","expected":"CREATE_WITH_ORIGINAL_EXPIRY"}
+  ],
+  "occupancy": [
+    {"id":"child-boundaries","adults":1,"childrenAges":[0,17],"capacity":3,"expected":true},
+    {"id":"child18","adults":1,"childrenAges":[18],"capacity":3,"expected":false},
+    {"id":"fraction","adults":1,"childrenAges":[1.5],"capacity":3,"expected":false},
+    {"id":"no-adult","adults":0,"childrenAges":[7],"capacity":3,"expected":false},
+    {"id":"over-capacity","adults":2,"childrenAges":[0],"capacity":2,"expected":false}
+  ],
+  "dates": [
+    {"id":"before-cutoff","createdAt":"2030-12-10T19:59:00+07:00","checkIn":"2030-12-10","checkOut":"2030-12-11","expected":true},
+    {"id":"cutoff","createdAt":"2030-12-10T20:00:00+07:00","checkIn":"2030-12-10","checkOut":"2030-12-11","expected":false},
+    {"id":"future-after-cutoff","createdAt":"2030-12-10T20:00:00+07:00","checkIn":"2030-12-11","checkOut":"2030-12-12","expected":true},
+    {"id":"max-nights","createdAt":"2030-12-01T10:00:00+07:00","checkIn":"2030-12-10","checkOut":"2031-01-09","expected":true},
+    {"id":"too-long","createdAt":"2030-12-01T10:00:00+07:00","checkIn":"2030-12-10","checkOut":"2031-01-10","expected":false},
+    {"id":"zero-nights","createdAt":"2030-12-01T10:00:00+07:00","checkIn":"2030-12-10","checkOut":"2030-12-10","expected":false}
+  ],
+  "reviews": [
+    {"id":"review-before-end","elapsedSeconds":1209599,"completed":true,"actualStay":true,"existing":false,"expected":true},
+    {"id":"review-exact-end","elapsedSeconds":1209600,"completed":true,"actualStay":true,"existing":false,"expected":false},
+    {"id":"no-show-review","elapsedSeconds":1,"completed":true,"actualStay":false,"existing":false,"expected":false},
+    {"id":"second-review","elapsedSeconds":1,"completed":true,"actualStay":true,"existing":true,"expected":false}
+  ],
+  "arrivals": [
+    {"id":"all-arrived-boundary","actualSeconds":[100,200],"expectedRooms":2,"acknowledged":true,"adminCaseVerified":false,"nowSeconds":86600,"legal":true,"liquid":true,"dispute":false,"expected":true},
+    {"id":"before24h","actualSeconds":[100,200],"expectedRooms":2,"acknowledged":true,"adminCaseVerified":false,"nowSeconds":86599,"legal":true,"liquid":true,"dispute":false,"expected":false},
+    {"id":"partial-arrival","actualSeconds":[100],"expectedRooms":2,"acknowledged":true,"adminCaseVerified":false,"nowSeconds":100000,"legal":true,"liquid":true,"dispute":false,"expected":false},
+    {"id":"host-tap","actualSeconds":[100,200],"expectedRooms":2,"acknowledged":false,"adminCaseVerified":false,"nowSeconds":100000,"legal":true,"liquid":true,"dispute":false,"expected":false},
+    {"id":"admin-no-legal-bypass","actualSeconds":[100,200],"expectedRooms":2,"acknowledged":false,"adminCaseVerified":true,"nowSeconds":100000,"legal":false,"liquid":true,"dispute":false,"expected":false},
+    {"id":"actual-before-booking","actualSeconds":[-1,200],"expectedRooms":2,"acknowledged":true,"adminCaseVerified":false,"nowSeconds":100000,"legal":true,"liquid":true,"dispute":false,"expected":false},
+    {"id":"actual-future","actualSeconds":[100,100001],"expectedRooms":2,"acknowledged":true,"adminCaseVerified":false,"nowSeconds":100000,"legal":true,"liquid":true,"dispute":false,"expected":false}
+  ],
+  "completions": [
+    {"id":"early-checkout","secondsAfterScheduledCheckout":-1,"actualStay":true,"unresolvedCase":false,"expected":false},
+    {"id":"checkout-boundary","secondsAfterScheduledCheckout":0,"actualStay":true,"unresolvedCase":false,"expected":true},
+    {"id":"calendar-only","secondsAfterScheduledCheckout":1,"actualStay":false,"unresolvedCase":false,"expected":false},
+    {"id":"unresolved-case","secondsAfterScheduledCheckout":1,"actualStay":true,"unresolvedCase":true,"expected":false}
+  ],
+  "caps": [
+    {"id":"last-slot","quota":1,"consumedGlobal":0,"reservedGlobal":0,"consumedUser":0,"reservedUser":0,"expected":true},
+    {"id":"race-loser","quota":1,"consumedGlobal":0,"reservedGlobal":1,"consumedUser":0,"reservedUser":0,"expected":false},
+    {"id":"user-held","quota":10,"consumedGlobal":0,"reservedGlobal":1,"consumedUser":0,"reservedUser":1,"expected":false},
+    {"id":"consumed-cancel-no-restore","quota":10,"consumedGlobal":1,"reservedGlobal":0,"consumedUser":1,"reservedUser":0,"expected":false},
+    {"id":"missing-quota","quota":null,"consumedGlobal":0,"reservedGlobal":0,"consumedUser":0,"reservedUser":0,"expected":false}
+  ]
+}

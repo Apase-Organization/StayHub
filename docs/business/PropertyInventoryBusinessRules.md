@@ -1,5 +1,7 @@
 # Property inventory — canonical TARGET S0-097-v1
 
+**S0-109-v1 FROZEN_DESIGN:** [policy](contracts/s0-policy-v1.json), [fixtures](contracts/s0-fixtures-v1.json), [typed API](contracts/s0-api-v1.json) consolidate079/097/081/084/086/088/090/109 approvals; [handoff](S0DecisionLog.md#s0-final-handoff--tsk-109). No source compatibility/runtime/legal clearance. Whole integer VND; active fixture T6.800.000, no Guest service fee, platformD/Cnet coverage. All policy decisions frozen;095 paid activation BLOCKED.
+
 Ngày phê duyệt thiết kế: **2026-10-23**, version **S0-097-v1**, user as PO qua questionnaire, provenance tại [S0DecisionLog](S0DecisionLog.md). Đây là **thiết kế mục tiêu đã duyệt, chưa triển khai**; không chứng nhận schema/source/runtime. Multi-room và **cả FULL_PREPAY/HYBRID_DEPOSIT** là core MVP. [PaymentBusinessRules](PaymentBusinessRules.md) giữ contract tài chính riêng; TSK-097 không đóng implementation hay release gates.
 
 ## 1. Cơ sở nghiên cứu và giới hạn
@@ -67,9 +69,9 @@ Boundary examples (design, not runtime): same-day19:59 allowed/20:00 denied, tom
 
 Booking item lưu type/plan ID và tên/version lịch sử, quantity, guest allocation từng phòng; lưu từng đêm, từng phòng: giá, phí, thuế nếu áp dụng và policy snapshot. Header lưu tổng booking và booking-level fees/discount; không nhân phí booking một lần nữa theo items. Không đọc giá hiện hành để tính lịch sử.
 
-`subtotal = Σ nightly room charges + Σ item fees/taxes + booking fees/taxes`; `total = subtotal - discount >= 0`. Mỗi khoản có scope (per-room/per-stay/per-booking/per-night) rõ ràng. Giá trị thuế/phí, tax-inclusive hay exclusive, funding và refundability cần duyệt; không mặc định có thuế hoặc tỷ lệ nào.
+`subtotal = roomCharges + cleaningFee + reviewed named taxes`; `totalStay = subtotal - discount > 0`, no Guest service/booking fee. Cleaning scoped charge snapshot, no multiplication twice. Cgross15% prediscount room+clean excludingtax; platformD<=Cgross, Cnet=Cgross−D, hybridO20%T HALF_UP/coverageO>=Cnet. Tax unset/disabled/no rate inferred, paid activation blocked until legal/config review.
 
-Tính bằng decimal/minor currency units, không float. Phân bổ discount/refund theo eligible base snapshot; thuật toán largest remainder, tie-break bằng item/room/night ordinal ổn định; không phân bổ quá eligible charge. Tổng phân bổ phải bằng khoản header chính xác sau rounding. Base bằng 0 không chia 0: discount=0 nếu không có eligible amount, zero-total dùng settlement nội bộ idempotent theo policy được duyệt, không gửi payment sai amount. Caps reserve/consume/release atomic, một booking không consume theo số items/phòng. Refund tài chính một phần không đồng nghĩa hủy một item.
+Whole-VND HALF_UP once per total, stable largest remainder item/room/night/charge ordinal, exact sum/no overcharge/float. Zero eligible base coded checkout rejects/no divide0; zero T/O always rejects, no internal free settlement. Caps reserve/consume/release atomic original900s/max3 attempts, one consumption/booking not perroom. Financial partial refund does not mean partial inventory cancellation.
 
 Payment settlement là booking-level một currency, không phải mỗi type. Snapshot paymentMode/allowed modes/config/version/deposit base/rate/commission basis và allocations; `dueOnline + balanceDueHost = total`. Full dueOnline=total; hybrid deposit bắt buộc online, balance cash/bank trực tiếp Host lúc check-in. Ledger tách online provider-verified, direct Host-attested, refund, funding, commission due/earned/reserved và platform-held host payable; không gọi deposit/gross là revenue. Coverage thiếu phải reject/requote offer, không monthly commission invoice. Payout chỉ eligible actual check-in+24h, subject dispute/reconcile/refund/legal, không mặc định escrow hay automatic transfer.
 
@@ -95,7 +97,7 @@ Return URL/poll chỉ đọc; instant sau đủ required online amount và cả 
 
 **S0-081-v1 approved:** active only `t < expiresAt`, at/after expiry no confirmation even before worker runs. Count3 with pending attempt can settle within original window; early worker final-failure requires all three terminal unsuccessful/no credit. Callback cannot kill another pending attempt. Serialized expiry/IPN converts or releases all items/caps once; late/extra money reconciles/refunds, never resurrects released/resold stock. Hold TTL/retry approval supersedes old pending wording in section9; other policy deliverables remain separate.
 
-Tất cả hàng dưới là **TARGET pending implementation**, không phải kiểm chứng runtime. Boundaries đã duyệt tại097;079 ghi instant/hai modes đã duyệt; thời gian/children/check-in evidence tại090/112, Finance/Legal084/086/088/109 vẫn là deliverables riêng. Owner/sprint theo TaskList; policy docs không đóng implementation tasks.
+All rows **pending implementation**, not runtime proof. All eight S0 design deliverables frozen;112 and implementation tasks remain pending; actual Finance/Legal/operations evidence blocked095. Owners/sprints TaskList; docs do not close implementation tasks.
 
 | Domain | Tác động bắt buộc / gate |
 |---|---|
@@ -119,9 +121,9 @@ Tất cả hàng dưới là **TARGET pending implementation**, không phải ki
 
 Ví dụ minh họa (không phải bảng giá/policy): property có Twin quantity3 và Family quantity1. Hai booking Twin/Family cùng ngày hợp lệ; booking Twin quantity2 trong 2 đêm dùng 4 roomnights nhưng chỉ một booking. Hai plan của Twin vẫn chỉ có 3 phòng. Nếu remaining từng đêm Twin=[2,1], không bán quantity2 cho cả stay. Check-out ngày D và check-in D liền kề không xung đột.
 
-**Fixture xuyên API/DB/UI:** property 42 có Deluxe(type 7) quantity5 và Family(type 8) quantity2. Stay 2030-12-10 → 2030-12-12, Deluxe quantity2/plan70 (mỗi phòng 2 adults), Family quantity1/plan80 (2 adults + child age7): 3 phòng, 6 adults, 1 child, 6 roomnights. Deluxe mỗi phòng/đêm 1.000.000 VND, Family 1.500.000 VND → room charges 7.000.000; booking fee một lần 100.000; item fees/taxes 0 trong fixture; discount 200.000 → subtotal 7.100.000, total 6.900.000 VND. Đây là fixture arithmetic, không duyệt fee/tax/child policy. Trước commitments khác, mỗi đêm còn Deluxe3/Family1; plan71 cùng Deluxe dùng đúng pool này, không có 5 phòng riêng. Nếu Family đêm hai còn0 thì cả request rollback. Whole-home có 4 bedrooms vẫn chỉ một type quantity1; đặt nguyên căn chiếm1 mỗi đêm, không4.
+**s0-fixtures-v1:** property42 Deluxe(type7)5/Family(type8)2.2030-12-10→12, Deluxe2/plan70(each2adults), Family1/plan80(2adults+child7):3rooms/6adults/1child/6roomnights. Deluxe1m/room/night, Family1.5m → roomCharges7.000.000, cleaning0/taxes0 fixture, no Guest fee, platformD200.000 → subtotal7.000.000/totalStay6.800.000. Remaining eachnight Deluxe3/Family1, plan71 uses same pool; Family secondnight0 rolls back all. Wholehome4bedrooms stillone typequantity1, occupies1/night, not4. Tax0 fixture is not legal tax clearance.
 
-Payment counterpart: full O6.900.000/B0; hybrid **fixture20% không phải config duyệt** O1.380.000/B5.520.000. Fixture fee100.000 thuộc Host, discount200.000 Host-funded; commission fixture15% trên adjusted entitlement6.900.000 =1.035.000; held Host345.000 hybrid hoặc5.865.000 full. Host total5.865.000 cả hai, tax/provider cost0. Cả hai confirm cùng inventory sau đủ O; direct receipt/check-in/refund evidence theo payment canonical.
+Payment: Cgross1.050.000/Cnet850.000; fullO6.800.000/B0/held5.950.000; hybridO1.360.000/B5.440.000/held510.000; Host5.950.000 both. Approved20%/15% numeric choices, not activation. Both confirm same inventory after exactO/activehold. Providerfee fixture0 not actual contract value; earning/refund/source/legal gates Payment.
 
 ## 8a. Bản đồ tài liệu / precedence
 
@@ -141,6 +143,6 @@ QA phải chứng minh happy + critical edge bằng test nghiệp vụ/DB thật
 
 **Yêu cầu user đã xác nhận:** multi-room là core MVP; các phòng/types được nhóm theo property và guest xem danh sách phòng/types khả dụng. Không chờ quyết định có làm inventory hay không, không đưa yêu cầu này sang P2.
 
-**S0-097-v1 — toàn bộ inventory boundaries đã được user/PO phê duyệt:** whole-place một type quantity1 (bedrooms mô tả); exclusive WHOLE_PLACE/ROOM_BASED, không linked sale; pooled interchangeable types, PhysicalRoom assignment tương lai; shared-plan stock; một property/date range/VND mỗi booking; all-booking cancellation, không partial item/quantity cancellation. API/ERD là projections của freeze này, không evidence schema đã tồn tại. TSK-084 còn phải freeze refund policy, không reopen cancellation granularity.
+**S0-097-v1** inventory boundaries approved: wholeplace1/descriptive bedrooms/exclusive mode/interchangeablepool/sharedplans/oneproperty-date-VND/wholebookingcancel.084 refund and109 aggregate design now frozen; API/ERD projections not evidence existing schema.
 
-Instant/hai modes/online collection/+24h và S0-081-v1 hold15min/max3/no-extension/late-extra reconciliation đã duyệt. Các deliverables timezone/children/financial config/refund/discount/check-in/review và legal/liquidity/recovery vẫn thuộc tasks riêng; không reopen081 hay lùi core scope P2. Source/runtime/release evidence chưa hoàn tất.
+All eight S0 designs frozen; implementation/source evidence/DB races and095 contractual/legal/ops/calendar/tax/liquidity release clearance remain outstanding. No core deferment/reopening decisions.
