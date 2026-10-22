@@ -26,4 +26,6 @@ public class BookingCreateRequest implements DateRangeRequest {
     private Integer guests;
 
     private String discountCode;
+
+    private String paymentMode = "FULL_PREPAY";
 }

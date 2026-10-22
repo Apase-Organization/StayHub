@@ -1,24 +1,73 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VNPay result - StayHub</title>
+    <title>Kết quả thanh toán VNPay - StayHub</title>
     <link th:href="@{/css/tailwind.css}" rel="stylesheet">
 </head>
-<body class="min-h-screen bg-bg-light text-text-900">
+<body class="min-h-screen bg-bg-light text-text-900 flex flex-col justify-between">
 <div th:replace="~{fragments/navbar :: navbar}"></div>
 
-<main class="mx-auto max-w-3xl px-5 py-12 lg:px-10">
-    <section class="rounded-[2rem] bg-white p-8 text-center shadow-xl shadow-slate-200/60">
-        <p class="text-sm font-bold uppercase tracking-[0.18em] text-primary-500">VNPay payment</p>
-        <h1 class="mt-3 text-3xl font-black tracking-tight md:text-5xl">Verifying your payment</h1>
-        <p id="status-message" class="mt-4 text-text-gray">VNPay returned to StayHub. Waiting for server confirmation from IPN.</p>
-        <div class="mt-8 rounded-3xl bg-bg-light p-5 text-left text-sm">
-            <p><strong>Transaction ref:</strong> <span id="txn-ref" th:text="${txnRef}">N/A</span></p>
-            <p class="mt-2"><strong>VNPay response:</strong> <span th:text="${responseCode}">N/A</span></p>
+<main class="mx-auto max-w-3xl px-5 py-12 lg:px-10 flex-grow">
+    <section class="rounded-[2rem] bg-white p-8 md:p-12 text-center shadow-xl shadow-slate-200/60 border border-slate-100">
+        <p class="text-xs font-bold uppercase tracking-[0.2em] text-primary-500">Cổng thanh toán VNPay</p>
+        
+        <!-- Icon Container -->
+        <div id="icon-container" class="mt-6 flex justify-center">
+            <div id="icon-spinner" class="h-16 w-16 animate-spin rounded-full border-4 border-primary-500 border-t-transparent"></div>
+            <div id="icon-success" class="hidden h-16 w-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center">
+                <svg class="h-10 w-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+            </div>
+            <div id="icon-failed" class="hidden h-16 w-16 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center">
+                <svg class="h-10 w-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </div>
         </div>
-        <a id="booking-link" th:href="${localBookingsUrl}" class="mt-8 inline-flex rounded-2xl bg-primary-500 px-6 py-4 font-bold text-white hover:bg-primary-600">Go to my bookings</a>
+
+        <h1 id="headline-title" class="mt-6 text-2xl font-black tracking-tight md:text-4xl">Đang đối soát giao dịch</h1>
+        <p id="status-message" class="mt-3 text-base text-text-gray max-w-md mx-auto">
+            Trình duyệt đã chuyển về StayHub. Hệ thống đang lắng nghe xác thực thanh toán chính thức từ máy chủ VNPay (IPN)...
+        </p>
+
+        <!-- Status Badges -->
+        <div class="mt-6 flex flex-wrap justify-center gap-2">
+            <span id="badge-payment" class="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3.5 py-1 text-xs font-semibold text-amber-700 border border-amber-200">
+                Thanh toán: <span id="text-payment-status">PENDING (Chờ xác nhận)</span>
+            </span>
+            <span id="badge-booking" class="inline-flex items-center gap-1.5 rounded-full bg-slate-50 px-3.5 py-1 text-xs font-semibold text-slate-700 border border-slate-200">
+                Booking: <span id="text-booking-status">Đang đối soát</span>
+            </span>
+        </div>
+
+        <!-- Transaction Details -->
+        <div class="mt-8 rounded-2xl bg-slate-50 p-6 text-left text-sm border border-slate-100 space-y-2">
+            <div class="flex justify-between items-center py-1 border-b border-slate-200/60">
+                <span class="text-text-gray">Mã giao dịch tham chiếu:</span>
+                <span id="txn-ref" class="font-mono font-bold text-slate-800" th:text="${txnRef}">N/A</span>
+            </div>
+            <div class="flex justify-between items-center py-1 border-b border-slate-200/60">
+                <span class="text-text-gray">Mã kết quả VNPay Gateway:</span>
+                <span id="response-code-span" class="font-mono font-bold text-slate-800" th:text="${responseCode}">N/A</span>
+            </div>
+            <div class="flex justify-between items-center py-1">
+                <span class="text-text-gray">Nguồn xác nhận hợp lệ:</span>
+                <span class="text-xs font-medium text-slate-500">Chỉ chấp nhận chữ ký số server-to-server (IPN)</span>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
+            <a id="booking-link" th:href="${localBookingsUrl}" class="inline-flex items-center justify-center rounded-xl bg-primary-500 px-6 py-3.5 font-bold text-white shadow-md shadow-primary-500/20 hover:bg-primary-600 transition-colors">
+                Xem danh sách phòng đã đặt
+            </a>
+            <a th:href="@{/}" class="inline-flex items-center justify-center rounded-xl border border-slate-200 px-6 py-3.5 font-bold text-slate-700 hover:bg-slate-50 transition-colors">
+                Trang chủ
+            </a>
+        </div>
     </section>
 </main>
 
@@ -26,28 +75,86 @@
 
 <script th:inline="javascript">
     const txnRef = /*[[${txnRef}]]*/ '';
+    const responseCode = /*[[${responseCode}]]*/ '';
     const message = document.getElementById('status-message');
-    const bookingId = txnRef && txnRef.startsWith('STAYHUB-') ? txnRef.substring('STAYHUB-'.length) : null;
+    const headline = document.getElementById('headline-title');
+    const paymentStatusSpan = document.getElementById('text-payment-status');
+    const bookingStatusSpan = document.getElementById('text-booking-status');
+    const badgePayment = document.getElementById('badge-payment');
+    const badgeBooking = document.getElementById('badge-booking');
+    const iconSpinner = document.getElementById('icon-spinner');
+    const iconSuccess = document.getElementById('icon-success');
+    const iconFailed = document.getElementById('icon-failed');
+
+    let pollAttempts = 0;
+    const maxPollAttempts = 15;
+
+    function renderFailed(reason) {
+        iconSpinner.classList.add('hidden');
+        iconFailed.classList.remove('hidden');
+        iconSuccess.classList.add('hidden');
+        headline.textContent = 'Giao dịch không thành công';
+        headline.classList.add('text-rose-600');
+        message.textContent = reason || 'Giao dịch đã bị huỷ hoặc thanh toán không thành công trên VNPay.';
+        badgePayment.className = 'inline-flex items-center gap-1.5 rounded-full bg-rose-50 px-3.5 py-1 text-xs font-semibold text-rose-700 border border-rose-200';
+        paymentStatusSpan.textContent = 'FAILED / CANCELLED';
+    }
+
+    function renderSuccess(bookingStatus) {
+        iconSpinner.classList.add('hidden');
+        iconFailed.classList.add('hidden');
+        iconSuccess.classList.remove('hidden');
+        headline.textContent = 'Thanh toán thành công!';
+        headline.classList.remove('text-rose-600');
+        headline.classList.add('text-emerald-600');
+        message.textContent = 'VNPay IPN đã xác thực thành công số tiền. Đơn đặt phòng của bạn đã được ghi nhận an toàn!';
+        badgePayment.className = 'inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3.5 py-1 text-xs font-semibold text-emerald-700 border border-emerald-200';
+        paymentStatusSpan.textContent = 'SUCCESS (Đã xác minh)';
+        badgeBooking.className = 'inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3.5 py-1 text-xs font-semibold text-emerald-700 border border-emerald-200';
+        bookingStatusSpan.textContent = bookingStatus || 'CONFIRMED';
+    }
 
     async function pollStatus() {
-        if (!bookingId) {
-            message.textContent = 'Unable to identify the booking. Please check My bookings.';
+        if (!txnRef) {
+            renderFailed('Không tìm thấy thông tin mã giao dịch.');
             return;
         }
+
+        // Nếu mã trả về của VNPay không phải 00 ngay từ gateway
+        if (responseCode && responseCode !== '00') {
+            renderFailed('Cổng VNPay thông báo giao dịch bị từ chối hoặc bị huỷ (Mã: ' + responseCode + ').');
+            return;
+        }
+
+        pollAttempts++;
         try {
             const response = await fetch(`/api/v1/payments/vnpay/status?txnRef=${encodeURIComponent(txnRef)}`);
-            const payload = await response.json();
-            if (!payload.success) {
-                message.textContent = payload.message || 'Unable to read payment status yet.';
-                return;
+            if (!response.ok) {
+                throw new Error('HTTP ' + response.status);
             }
-            const data = payload.data;
-            message.textContent = `Payment: ${data.paymentStatus}. Booking: ${data.bookingStatus}.`;
-            if (data.paymentStatus === 'PENDING') {
-                setTimeout(pollStatus, 2500);
+            const payload = await response.json();
+            if (payload.success && payload.data) {
+                const data = payload.data;
+                paymentStatusSpan.textContent = data.paymentStatus;
+                bookingStatusSpan.textContent = data.bookingStatus;
+
+                if (data.paymentStatus === 'SUCCESS') {
+                    renderSuccess(data.bookingStatus);
+                    return;
+                } else if (data.paymentStatus === 'FAILED' || data.paymentStatus === 'CANCELLED') {
+                    renderFailed('Hệ thống máy chủ xác nhận giao dịch thất bại.');
+                    return;
+                }
             }
         } catch (error) {
-            message.textContent = 'Still waiting for payment confirmation. Refresh or check My bookings shortly.';
+            console.warn('Lỗi khi kiểm tra trạng thái thanh toán:', error);
+        }
+
+        if (pollAttempts < maxPollAttempts) {
+            setTimeout(pollStatus, 2000);
+        } else {
+            iconSpinner.classList.add('hidden');
+            message.textContent = 'Quá trình xác thực IPN mất nhiều thời gian hơn dự kiến. Bạn có thể bấm vào "Xem danh sách phòng đã đặt" bên dưới để kiểm tra lại trạng thái cập nhật.';
         }
     }
 

@@ -10,7 +10,7 @@
 <div th:replace="~{fragments/navbar :: navbar}"></div>
 
 <main class="mx-auto max-w-7xl px-5 py-8 lg:px-10">
-    <form th:action="@{/properties}" method="get" class="grid gap-3 rounded-3xl border border-border bg-white p-4 shadow-sm lg:grid-cols-[1.4fr_1fr_1fr_0.7fr_auto] lg:items-end">
+    <form th:action="@{/properties}" method="get" class="grid gap-3 rounded-3xl border border-border bg-white p-4 shadow-sm lg:grid-cols-[1.2fr_1fr_1fr_0.7fr_0.7fr_auto] lg:items-end">
         <label>
             <span class="text-xs font-bold uppercase tracking-wide text-text-gray">Where</span>
             <input name="location" th:value="${criteria.location}" placeholder="City, address or title" class="mt-2 w-full rounded-2xl border border-border px-4 py-3 outline-none focus:border-primary-500">
@@ -26,6 +26,10 @@
         <label>
             <span class="text-xs font-bold uppercase tracking-wide text-text-gray">Guests</span>
             <input name="guests" type="number" min="1" th:value="${criteria.guests}" class="mt-2 w-full rounded-2xl border border-border px-4 py-3 outline-none focus:border-primary-500">
+        </label>
+        <label>
+            <span class="text-xs font-bold uppercase tracking-wide text-text-gray">Rooms</span>
+            <input name="rooms" type="number" min="1" th:value="${criteria.rooms}" placeholder="1" class="mt-2 w-full rounded-2xl border border-border px-4 py-3 outline-none focus:border-primary-500">
         </label>
         <button class="rounded-2xl bg-primary-500 px-6 py-4 font-bold text-white hover:bg-primary-600">Search</button>
     </form>
@@ -130,7 +134,16 @@
                             <span class="shrink-0 text-sm font-bold"><span class="text-rating-500">&#9733;</span> <span th:text="${property.ratingAvg}">0.0</span></span>
                         </div>
                         <p class="mt-2 text-sm text-text-gray" th:text="|${property.city} · ${#strings.replace(property.propertyType.name(), '_', ' ')}|">City</p>
-                        <p class="mt-4"><strong th:text="${#numbers.formatDecimal(property.pricePerNight, 0, 'COMMA', 0, 'POINT')}">0</strong> <span class="text-text-gray">/ night</span></p>
+                        <div class="mt-4">
+                            <div th:if="${property.totalStay != null}">
+                                <span class="text-base font-black text-primary-600" th:text="|${#numbers.formatDecimal(property.totalStay, 0, 'COMMA', 0, 'POINT')} VND|">0 VND</span>
+                                <span class="block text-xs font-medium text-text-gray" th:text="|tổng cho ${property.nights} đêm (${#numbers.formatDecimal(property.pricePerNight, 0, 'COMMA', 0, 'POINT')} VND / đêm)|">0 VND / đêm</span>
+                            </div>
+                            <div th:unless="${property.totalStay != null}">
+                                <span class="text-base font-bold text-text-900" th:text="|${#numbers.formatDecimal(property.pricePerNight, 0, 'COMMA', 0, 'POINT')} VND|">0 VND</span>
+                                <span class="block text-xs text-text-gray">giá tham khảo / đêm</span>
+                            </div>
+                        </div>
                     </div>
                 </a>
             </div>

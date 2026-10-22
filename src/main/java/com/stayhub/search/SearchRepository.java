@@ -1,5 +1,7 @@
 package com.stayhub.search;
 
+import com.stayhub.booking.Booking;
+import com.stayhub.booking.BookingStatus;
 import com.stayhub.property.Amenity;
 import com.stayhub.property.Property;
 import com.stayhub.property.PropertyRepository;
@@ -8,6 +10,8 @@ import com.stayhub.search.dto.SearchCriteria;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
+import jakarta.persistence.criteria.Subquery;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -42,6 +46,27 @@ public class SearchRepository {
                 }
                 if (criteria.getGuests() != null) {
                     predicates.add(builder.greaterThanOrEqualTo(root.get("maxGuests"), criteria.getGuests()));
+                }
+                if (criteria.getRooms() != null) {
+                    predicates.add(builder.greaterThanOrEqualTo(root.get("bedrooms"), criteria.getRooms()));
+                }
+                if (criteria.getCheckIn() != null && criteria.getCheckOut() != null) {
+                    Subquery<Long> conflictSubquery = query.subquery(Long.class);
+                    Root<Booking> bookingRoot = conflictSubquery.from(Booking.class);
+                    conflictSubquery.select(bookingRoot.get("property").get("id"));
+
+                    Predicate activeBooking = bookingRoot.get("status").in(List.of(
+                            BookingStatus.CONFIRMED,
+                            BookingStatus.PENDING,
+                            BookingStatus.PENDING_PAYMENT
+                    ));
+                    Predicate overlapDates = builder.and(
+                            builder.lessThan(bookingRoot.get("checkInDate"), criteria.getCheckOut()),
+                            builder.greaterThan(bookingRoot.get("checkOutDate"), criteria.getCheckIn())
+                    );
+                    conflictSubquery.where(builder.and(activeBooking, overlapDates));
+
+                    predicates.add(builder.not(root.get("id").in(conflictSubquery)));
                 }
                 if (criteria.getMinPrice() != null) {
                     predicates.add(builder.greaterThanOrEqualTo(root.get("pricePerNight"), criteria.getMinPrice()));

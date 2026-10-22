@@ -26,7 +26,7 @@ public class PaymentController {
 
     @GetMapping("/payments/vnpay/return")
     public String vnpayReturn(@RequestParam Map<String, String> params, Model model) {
-        paymentService.handleVnpayIpn(params);
+        // TSK-080: Return URL is strictly READ-ONLY. Financial mutation is handled exclusively by verified IPN webhook.
         model.addAttribute("txnRef", params.get("vnp_TxnRef"));
         model.addAttribute("responseCode", params.get("vnp_ResponseCode"));
         model.addAttribute("localBookingsUrl", appLocalUrl.replaceAll("/+$", "") + "/bookings");

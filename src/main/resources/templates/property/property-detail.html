@@ -97,14 +97,18 @@
             </div>
         </aside>
     </div>
-</main>
 
-<div class="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-white p-4 shadow-2xl lg:hidden">
-    <div class="mx-auto flex max-w-7xl items-center justify-between gap-4">
-        <p><strong th:text="${#numbers.formatDecimal(property.pricePerNight, 0, 'COMMA', 0, 'POINT')}">0</strong> <span class="text-sm text-text-gray">/ night</span></p>
-        <a th:href="@{/properties/{id}/book(id=${property.id})}" class="rounded-2xl bg-primary-500 px-5 py-3 font-bold text-white">Reserve</a>
+    <!-- Mobile Sticky Bottom Bar (TSK-101 / UXUI DesignSystem) -->
+    <div class="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-white px-5 py-3.5 shadow-lg lg:hidden flex items-center justify-between">
+        <div>
+            <p class="text-lg font-black text-text-900"><strong th:text="${#numbers.formatDecimal(property.pricePerNight, 0, 'COMMA', 0, 'POINT')}">0</strong> <span class="text-xs font-normal text-text-gray">VND / đêm</span></p>
+            <p class="text-xs text-text-gray">Giá tham khảo cơ sở</p>
+        </div>
+        <a th:href="@{/properties/{id}/book(id=${property.id})}" class="rounded-xl bg-primary-500 px-6 py-3 font-bold text-white hover:bg-primary-600 shadow-md shadow-primary-500/20">
+            Đặt phòng ngay
+        </a>
     </div>
-</div>
+</main>
 
 <div th:replace="~{fragments/footer :: footer}"></div>
 </body>

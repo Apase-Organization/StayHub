@@ -179,6 +179,29 @@ class BookingWebIntegrationTest extends PostgreSqlIntegrationTest {
     }
 
     @Test
+    void mvcBookingFlowSupportsDualPaymentModeSelection() throws Exception {
+        mockMvc.perform(get("/properties/{id}/book", property.getId())
+                        .param("checkInDate", LocalDate.now().plusDays(15).toString())
+                        .param("checkOutDate", LocalDate.now().plusDays(17).toString())
+                        .param("guests", "2")
+                        .with(authentication(authentication)))
+                .andExpect(status().isOk())
+                .andExpect(view().name("booking/booking"))
+                .andExpect(model().attributeExists("property", "bookingRequest", "priceQuote"));
+
+        mockMvc.perform(post("/bookings")
+                        .with(authentication(authentication))
+                        .with(csrf())
+                        .param("propertyId", property.getId().toString())
+                        .param("checkInDate", LocalDate.now().plusDays(15).toString())
+                        .param("checkOutDate", LocalDate.now().plusDays(17).toString())
+                        .param("guests", "2")
+                        .param("paymentMode", "HYBRID_DEPOSIT"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrlPattern("https://sandbox.vnpayment.vn/paymentv2/vpcpay.html?*"));
+    }
+
+    @Test
     void hostCanReadRequestsAndAcceptBookingThroughApiAndMvc() throws Exception {
         var booking = createExistingBooking(LocalDate.now().plusDays(20), LocalDate.now().plusDays(22));
 
