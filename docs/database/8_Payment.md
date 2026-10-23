@@ -1,6 +1,60 @@
 # Payment
 
-## TARGET v2 — cả hai modes bắt buộc, chưa có migration
+## V15 internal primitives — independently accepted foundation
+
+Independent re-review approved the corrected internal foundation and rollback
+design with no findings after the foreign-XID fix. Acceptance is limited to the
+primitives and evidence below; runtime composition and real-money release remain
+pending/blocked. No checkout, provider verification or transfer permission implied.
+
+TSK-110 adds `V15__add_payment_ledger_primitives.sql` and internal Spring JDBC
+`payment.ledger.PaymentPrimitivesService` / `LedgerService`; [scope and actual test
+evidence](../tasklist/evidence/TSK-110.md). This is additive foundation, not a
+checkout/IPN cutover or public financial mutator. V14 and legacy `payments`
+(`UNIQUE booking_id`, mutable `NUMERIC(12,2)`) remain untouched and isolated.
+`BookingMapper` still projects legacy FULL_PREPAY; it does not read this ledger.
+
+Actual new tables: `booking_financial_snapshots`, `payment_settlement_locks`,
+`payment_primitive_keys`, `payment_attempts`, `payment_attempt_outcomes`,
+`payment_collections`, `ledger_journals`, `ledger_lines`, `ledger_reservations`,
+`ledger_reserve_movements`. `ledger_vnd` is unconstrained NUMERIC plus explicit
+whole/nonnegative/range checks, **not a scale-0 typmod that rounds fractions**.
+The snapshot freezes original booking/guest/actor, versions/hash format, mode and
+approved20%/15%/platform-funded amounts, with original createdAt+900s deadline.
+No historical snapshots/backfill, quote authentication, fees or taxes invented.
+
+Attempts allocate1..3 under booking lock before external work, binding O/currency/
+merchant/config/ref/deadline. Creation failure still consumes its ordinal. Only
+creation outcomes exist here; provider callback outcomes and booking state belong082.
+Trusted verified input may record ACCEPTED or RECONCILE; only one accepted exact O
+before deadline is credited. Caller082 must supply the active-hold/lifecycle guard
+and verified provider evidence in the same transaction. Late/extra/wrong-O receipts
+remain reconciliation records, not accepted collections or automatic refunds.
+
+POSTED headers/lines reject UPDATE/DELETE; new lines after the construction
+transaction reject. Deferred DB checks require at least2 positive-one-side lines,
+balanced wholeVND, scoped booking/currency, exact collection funding, and inverse
+reversal accounts. Memo journals and their reversal chains cannot use cash or any
+platform account. Journal event conflicts compare server-computed semantic hashes,
+including actor and booking. Keys scope actor/operation/booking/key; JSON semantic
+hashes normalize whole amounts and sort nested fields. The supplied quote hash is
+validated for format only, not represented as server-authenticated consent.
+
+Reserve availability comes from accepted online collections or separately typed
+Host-attested memo collections, never arbitrary cash journals or uncollected B.
+Booking→settlement lock/version protects sums, also forcing stale-snapshot writers
+to abort at stronger isolation. Reserves and full RELEASE/CONSUME adjustments are
+append-only; payout reserves are additionally capped by platform-held entitlement
+and exclude Host direct. Trusted future085/112 callers supply cumulative reviewed
+source policy/eligible bound, current liquidity bound and evidence digest under the
+same lock/version. Those inputs are not authorization tokens and this primitive
+does not evaluate arrival/dispute/legal eligibility or prove bank liquidity.
+CONSUME is accounting only, not a transfer/PAID transition. Journal reversals do
+not change collection provenance, receipt acknowledgments or bank cash;111/085
+must compose source corrections and responsibility decisions, not infer them from
+a reversed accounting memo. No earnings are posted automatically.
+
+## TARGET v2 — both modes required; runtime composition pending
 
 **S0-109-v1 FROZEN_DESIGN** [typed API](../business/contracts/s0-api-v1.json)/[policy](../business/contracts/s0-policy-v1.json)/[fixtures](../business/contracts/s0-fixtures-v1.json). API camelCase and DB snake_case are mappings, not competing DTO aliases; Money whole integer VND/SQL scale0 (conceptual columns below,099 reviews actual migration). policy_version/fixture_version/quote_hash and immutable consent/actor/amount/selection/expiry snapshot required. hold_expires_at=originalcreated+900s, max3creations; quote_expires_at distinct explicit server instant/no stock. No Guestfee, platformD<=Cgross, coverageO>=Cnet.095 legal/tax/calendar/providercontract/signedops/liquidity/runtime still BLOCKED; JSON design not environment activation.
 

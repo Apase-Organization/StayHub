@@ -19,7 +19,26 @@ header fields below are still TARGET, **not** implemented by V14. Independent
 review accepted the corrected foundation and rollback design on2026-10-23;
 TSK-099 is complete only for this subset. Backfill/cutover remain blocked.
 
-## TARGET — conceptual fields, chưa có schema/migration
+## V15 actual additive financial primitives — independently accepted foundation
+
+Independent re-review approved the corrected internal foundation and rollback
+design with no findings after the foreign-XID fix. This accepts only the additive
+primitives; downstream runtime workflows, cutover and real-money release remain
+pending/blocked.
+
+TSK-110 adds `booking_financial_snapshots` (one immutable optional snapshot per
+booking), `payment_settlement_locks`, scoped `payment_primitive_keys`, many
+`payment_attempts` plus append-only `payment_attempt_outcomes`, and
+`payment_collections` (unique accepted online credit; extra receipts reconcile;
+Host attestation memo-only). `ledger_journals` → `ledger_lines` has deferred DB
+balancing, immutable history, booking/currency-scoped reversal links and protected
+memo namespaces. `ledger_reservations` → `ledger_reserve_movements` records atomic
+source pools and append-only full consumption/release, not financial execution.
+No modification to V14, legacy payment uniqueness, exclusion or existing DTOs.
+[Exact schema/service/test manifest and acceptance limits](../tasklist/evidence/TSK-110.md).
+The conceptual receipt/refund/payout/check-in workflows below remain future scope.
+
+## TARGET — remaining conceptual fields and workflows
 
 Theo [canonical](../business/PropertyInventoryBusinessRules.md); names dưới là đề xuất DB review TSK-099, không map tự động sang entity hiện tại. `type_day_inventory` là tên thống nhất cho type/date inventory (canonical từng gọi `type_date_inventory`).
 
