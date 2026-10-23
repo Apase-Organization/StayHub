@@ -1,5 +1,24 @@
 # Core ERD
 
+## V14 actual additive subset — independently accepted TSK-099
+
+TSK-099 adds the seven inventory tables shown below, nullable legacy sale_mode,
+HCM timezone, composite FKs, deferred graph-shape checks and DB capacity triggers.
+See [exact schema/lock/test/rollback evidence](../tasklist/evidence/TSK-099.md).
+Classification maps to existing `properties.property_type` (not a new column).
+Money uses an exact NUMERIC domain with whole/range checks to reject fractions
+before SQL typmod rounding. Whole-place type identity is conservatively unique
+even after archive (same identity can reactivate). Type scope, item selection and
+nightly snapshots are immutable; snapshot DELETE-and-replace is forbidden.
+Current occupancy limits remain editable: items capture immutable max-adults /
+max-occupants rights; new admission checks current limits under type/plan SHARE
+locks, while existing holds can convert/release after archive or limit changes.
+Capacity primitives exist, but no checkout cutover/backfill is implied.
+The property-wide legacy exclusion remains. Financial/evidence records and extra
+header fields below are still TARGET, **not** implemented by V14. Independent
+review accepted the corrected foundation and rollback design on2026-10-23;
+TSK-099 is complete only for this subset. Backfill/cutover remain blocked.
+
 ## TARGET — conceptual fields, chưa có schema/migration
 
 Theo [canonical](../business/PropertyInventoryBusinessRules.md); names dưới là đề xuất DB review TSK-099, không map tự động sang entity hiện tại. `type_day_inventory` là tên thống nhất cho type/date inventory (canonical từng gọi `type_date_inventory`).

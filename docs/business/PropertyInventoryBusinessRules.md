@@ -4,6 +4,17 @@
 
 Ngày phê duyệt thiết kế: **2026-10-23**, version **S0-097-v1**, user as PO qua questionnaire, provenance tại [S0DecisionLog](S0DecisionLog.md). Đây là **thiết kế mục tiêu đã duyệt, chưa triển khai**; không chứng nhận schema/source/runtime. Multi-room và **cả FULL_PREPAY/HYBRID_DEPOSIT** là core MVP. [PaymentBusinessRules](PaymentBusinessRules.md) giữ contract tài chính riêng; TSK-097 không đóng implementation hay release gates.
 
+**Accepted implementation subset — TSK-099,2026-10-23:** independent scoped review
+approved the corrected additive inventory schema/capacity primitives and rollback
+design with no scoped blocker. [Exact scope and PostgreSQL evidence](../tasklist/evidence/TSK-099.md).
+This supersedes blanket “not implemented” wording only for that foundation, not
+the complete flows below. Shared stock, scoped references, serialized admission /
+archive / capacity changes and immutable nightly history are protected. Current
+Host occupancy limits can change without rewriting captured booking rights;
+whole-place identity remains durable with same-identity archive/reactivation.
+Legacy property exclusion remains unchanged. Backfill/reconciliation/cutover,
+Host APIs, checkout/payment composition and release095 remain pending/blocked.
+
 ## 1. Cơ sở nghiên cứu và giới hạn
 
 Các nguồn chính thức đã truy cập thành công (ngày trên là ngày review, không phải ngày website cập nhật):
@@ -97,7 +108,11 @@ Return URL/poll chỉ đọc; instant sau đủ required online amount và cả 
 
 **S0-081-v1 approved:** active only `t < expiresAt`, at/after expiry no confirmation even before worker runs. Count3 with pending attempt can settle within original window; early worker final-failure requires all three terminal unsuccessful/no credit. Callback cannot kill another pending attempt. Serialized expiry/IPN converts or releases all items/caps once; late/extra money reconciles/refunds, never resurrects released/resold stock. Hold TTL/retry approval supersedes old pending wording in section9; other policy deliverables remain separate.
 
-All rows **pending implementation**, not runtime proof. All eight S0 design deliverables frozen;112 and implementation tasks remain pending; actual Finance/Legal/operations evidence blocked095. Owners/sprints TaskList; docs do not close implementation tasks.
+The TSK-099 foundation subset above is implemented and independently accepted;
+the remaining flows in these rows are **pending implementation**, not runtime
+proof from this document. All eight S0 design deliverables frozen;112 and other
+implementation tasks remain pending; actual Finance/Legal/operations evidence
+blocked095. Owners/sprints TaskList; documentation alone does not close tasks.
 
 | Domain | Tác động bắt buộc / gate |
 |---|---|
@@ -111,7 +126,7 @@ All rows **pending implementation**, not runtime proof. All eight S0 design deli
 
 ## 7. Migration và rollout (kế hoạch, không thực thi)
 
-1. Additive schema conceptual: room_types, rate_plans, type_date_inventory, booking_items, per-room allocation/nightly snapshots; constraints FK cùng property và nonnegative commitments. Thiết kế cụ thể/locking phải được DB review, không xem bảng này là migration đã có.
+1. TSK-099 additive foundation is now independently accepted: room_types, rate_plans, type_day_inventory, booking_items, room_allocations, nightly_snapshots and inventory_commitments with scoped FKs, capacity/lock guards and reviewed rollback design. This is not a backfill or production cutover; steps2–5 remain pending.
 2. Mỗi property hiện tại → default type quantity1 + default plan; giữ property/booking/payment/review IDs. Backfill historic items bằng snapshots đã lưu, không lấy giá hôm nay; thiếu lịch sử phải gắn provenance/unknown và reconcile, không bịa nightly tax breakdown.
 3. Không auto-merge cùng địa chỉ. Host xác nhận mapping listing trùng riêng, giữ links/history và chứng minh không double-sell.
 4. Đối soát counts, totals, currency, dates, active commitments; tạo capacity protection type/date và chạy shadow read/so sánh trước khi thay exclusion property. **Chỉ bỏ exclusion property sau** backfill, reconciliation và protection mới có hiệu lực; không bỏ constraint trước rồi trông vào app check.

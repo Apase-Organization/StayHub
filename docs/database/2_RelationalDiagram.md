@@ -1,5 +1,10 @@
 # Relational projections
 
+**V14 additive subset (independently accepted TSK-099):** property/type/plan/day/item/allocation/
+nightly/commitment links now have an actual migration and capacity primitives;
+[manifest and limitations](../tasklist/evidence/TSK-099.md). Payment/ledger/arrival
+links below remain TARGET. Legacy exclusion remains; no active multi-room cutover.
+
 ## TARGET — proposed, chưa migration
 
 ```mermaid

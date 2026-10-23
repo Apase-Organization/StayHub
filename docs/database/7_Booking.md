@@ -1,5 +1,12 @@
 # Bookings
 
+**V14 actual additive subset (independently accepted TSK-099):** booking_items, room_allocations,
+nightly_snapshots, inventory_commitments plus internal transactional capacity
+primitives; [schema/tests/rollback](../tasklist/evidence/TSK-099.md). Composite
+references and deferred shape guards do not replace checkout/lifecycle/financial
+validation. Legacy active property exclusion is preserved. No active multi-room
+cutover/backfill, extra financial header snapshot or payment composition is claimed.
+
 > **S0-109-v1 FROZEN_DESIGN**, source compatibility none: [policy](../business/contracts/s0-policy-v1.json)/[typed API](../business/contracts/s0-api-v1.json). Header oneproperty/date/VND, wholebookingcancel approved, sharedplanstock/all-itematomicity. Store policyVersion/fixtureVersion/quoteHash/consent/selection/amount/actor immutable; quoteExpiresAt distinct originalcreated+900s hold/max3. Money wholeVND, no Guestfee, platformD/Cnet coverage, active6.800.000 fixture. Legacy singleunit schema/flows below not runtime evidence; preserve exclusion until additive protection/backfill/reconcile.
 
 **TARGET financial/evidence:** exact typed fields s0-api-v1, multiple attempts/direct receipts/checkin/ledger/refund/payout/cases [Payment](8_Payment.md). SUCCESS not directpaid, hybrid does not waitB.090 perallocation Host+Guestack or auditedAdmincase, maxactual+24hALLARRIVED/allgates; completion checkout11+actualstay/resolvedcase, review once within exclusive14days. Source implementation/095 clearance blocked; hostapproval restoration note below legacy only.

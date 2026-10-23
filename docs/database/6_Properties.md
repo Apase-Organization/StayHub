@@ -1,5 +1,16 @@
 # Properties
 
+**V14 actual additive foundation, independently accepted TSK-099:** nullable `sale_mode`, fixed HCM
+`timezone`, explicit-mode room_types, shared-stock rate_plans and type_day_inventory
+with DB capacity guards now exist. Existing `property_type` is classification.
+Whole-place type identity remains unique including archive; same-identity
+reactivation is allowed. Current max_adults/max_occupants/base_quantity are editable
+with DB checks; booking items capture occupancy rights, so changes cannot rewrite
+history. New holds serialize with status/occupancy UPDATE using FOR SHARE, not
+FOR KEY SHARE. Day total/OOO changes still cannot break existing commitments.
+No inferred legacy mode/backfill. [Exact limitations/evidence](../tasklist/evidence/TSK-099.md).
+Host mutation/ownership APIs and live offer reads are not delivered by this subset.
+
 **S0-109-v1 FROZEN_DESIGN** [policy](../business/contracts/s0-policy-v1.json)/[API](../business/contracts/s0-api-v1.json): exclusiveWHOLE_PLACE/ROOM_BASED/interchangeablepool/sharedplans/wholeplace1/descriptivebedrooms approved. Plan policyVersion/allowedmodes snapshot, MoneywholeVND/noGuestfee/O>=Cnet, HCM090 time/occupancy. No propertytax/providerfee rate invented;095paidpublishingblocked. Legacy singleunit columns below remain history, not sourcecompatibility.
 
 **TARGET payment v2:** RatePlan allowedPaymentModes/paymentPolicyVersion server-validated; selected mode frozen tại quote/booking, không sinh stock riêng. Full và hybrid bắt buộc trong release MVP; invalid coverage offer bị reject/requote chứ không đẩy hybrid sang later. Actual check-in theo booking room allocation, không cần PhysicalRoom schema; payout gate không lấy ngày property calendar làm evidence. Xem [Payment rules](../business/PaymentBusinessRules.md).
