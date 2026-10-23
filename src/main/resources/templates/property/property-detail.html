@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title th:text="|${property.title} - StayHub|">Property - StayHub</title>
     <link th:href="@{/css/tailwind.css}" rel="stylesheet">
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
 </head>
 <body class="min-h-screen bg-white pb-28 text-text-900 lg:pb-0">
 <div th:replace="~{fragments/navbar :: navbar}"></div>
@@ -56,15 +58,25 @@
                 </div>
             </section>
 
-            <section class="border-b border-border py-8">
-                <h2 class="text-xl font-black">Availability</h2>
-                <form th:action="@{/properties/{id}/book(id=${property.id})}" method="get" class="mt-5 grid gap-3 rounded-3xl bg-bg-light p-5 sm:grid-cols-[1fr_1fr_0.7fr_auto] sm:items-end">
-                    <label><span class="text-sm font-bold text-text-gray">Check-in</span><input name="checkInDate" type="date" class="mt-2 w-full rounded-2xl border border-border px-4 py-3"></label>
-                    <label><span class="text-sm font-bold text-text-gray">Check-out</span><input name="checkOutDate" type="date" class="mt-2 w-full rounded-2xl border border-border px-4 py-3"></label>
-                    <label><span class="text-sm font-bold text-text-gray">Guests</span><input name="guests" type="number" min="1" th:max="${property.maxGuests}" value="1" class="mt-2 w-full rounded-2xl border border-border px-4 py-3"></label>
-                    <button class="rounded-2xl bg-text-900 px-5 py-3 font-bold text-white hover:bg-black">Check</button>
+            <section id="room-offers" class="border-b border-border py-8">
+                <h2 class="text-xl font-black">Room types and rate plans</h2>
+                <p class="mt-2 text-sm text-text-gray">Select dates and occupancy for each room. Prices are per room per night; a stay total includes the property cleaning fee once. No dates means no live availability check.</p>
+                <form id="offer-search" class="mt-5 space-y-4 rounded-3xl bg-bg-light p-5">
+                    <div class="grid gap-3 sm:grid-cols-3">
+                        <label><span class="text-sm font-bold text-text-gray">Check-in</span><input id="offer-check-in" type="date" class="mt-2 w-full rounded-2xl border border-border px-4 py-3"></label>
+                        <label><span class="text-sm font-bold text-text-gray">Check-out</span><input id="offer-check-out" type="date" class="mt-2 w-full rounded-2xl border border-border px-4 py-3"></label>
+                        <label><span class="text-sm font-bold text-text-gray">Payment mode</span><select id="offer-payment-mode" class="mt-2 w-full rounded-2xl border border-border px-4 py-3"><option value="FULL_PREPAY">Full prepay</option><option value="HYBRID_DEPOSIT">Hybrid deposit</option></select></label>
+                    </div>
+                    <label class="block max-w-xs"><span class="text-sm font-bold text-text-gray">Rooms requested</span><select id="offer-room-count" class="mt-2 w-full rounded-2xl border border-border px-4 py-3"><option th:each="count : ${#numbers.sequence(1, 20)}" th:value="${count}" th:text="${count}">1</option></select></label>
+                    <div id="room-occupancies" class="grid gap-3 md:grid-cols-2"></div>
+                    <button id="search-offers-button" type="submit" class="rounded-2xl bg-text-900 px-5 py-3 font-bold text-white hover:bg-black">Find eligible offers</button>
                 </form>
-                <p class="mt-3 text-sm text-text-gray">Availability is checked again before payment to prevent duplicate bookings.</p>
+                <p id="offer-status" role="status" aria-live="polite" class="mt-3 text-sm text-text-gray">Choose dates and configure each room, or leave dates blank to see indicative rate plans.</p>
+                <div id="offer-results" class="mt-4 space-y-3"></div>
+                <div id="selection-summary" class="mt-5 hidden rounded-2xl border border-primary-200 bg-primary-50 p-4">
+                    <h3 class="font-black">Selected rooms</h3><ul id="selected-offers" class="mt-2 list-disc space-y-1 pl-5 text-sm"></ul>
+                    <p class="mt-3 text-xs text-text-gray">Selections are advisory. A server quote and explicit consent are required before checkout; booking/checkout is not enabled on this screen yet.</p>
+                </div>
             </section>
 
             <section class="py-8">
@@ -87,29 +99,127 @@
 
         <aside class="hidden lg:block lg:sticky lg:top-28 lg:self-start">
             <div class="rounded-3xl border border-border bg-white p-6 shadow-xl shadow-slate-200/60">
-                <p><strong class="text-3xl" th:text="${#numbers.formatDecimal(property.pricePerNight, 0, 'COMMA', 0, 'POINT')}">0</strong> <span class="text-text-gray">/ night</span></p>
-                <div class="mt-5 space-y-3 rounded-2xl border border-border p-4 text-sm">
-                    <div class="flex justify-between"><span class="text-text-gray">Cleaning fee</span><strong th:text="${#numbers.formatDecimal(property.cleaningFee, 0, 'COMMA', 0, 'POINT')}">0</strong></div>
-                    <div class="flex justify-between"><span class="text-text-gray">Service fee</span><strong>Calculated at checkout</strong></div>
-                </div>
-                <a th:href="@{/properties/{id}/book(id=${property.id})}" class="mt-5 block rounded-2xl bg-primary-500 px-5 py-4 text-center font-bold text-white hover:bg-primary-600">Reserve</a>
-                <p class="mt-3 text-center text-xs text-text-gray">You will review dates and price before payment.</p>
+                <p class="text-lg font-black">Choose a room type and rate plan</p>
+                <p class="mt-2 text-sm leading-6 text-text-gray">The old property-wide guide price is not a room offer. Use the room selector for server-owned rates and date-specific stock.</p>
+                <a href="#room-offers" class="mt-5 block rounded-2xl bg-primary-500 px-5 py-4 text-center font-bold text-white hover:bg-primary-600">Choose room offers</a>
+                <p class="mt-3 text-center text-xs text-text-gray">Availability is advisory until a server quote is confirmed.</p>
             </div>
         </aside>
     </div>
 
     <!-- Mobile Sticky Bottom Bar (TSK-101 / UXUI DesignSystem) -->
-    <div class="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-white px-5 py-3.5 shadow-lg lg:hidden flex items-center justify-between">
+     <div class="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-white px-5 py-3.5 shadow-lg lg:hidden flex items-center justify-between">
         <div>
-            <p class="text-lg font-black text-text-900"><strong th:text="${#numbers.formatDecimal(property.pricePerNight, 0, 'COMMA', 0, 'POINT')}">0</strong> <span class="text-xs font-normal text-text-gray">VND / đêm</span></p>
-            <p class="text-xs text-text-gray">Giá tham khảo cơ sở</p>
+            <p class="text-sm font-black text-text-900">Chọn loại phòng</p>
+            <p class="text-xs text-text-gray">Xem giá và tình trạng theo ngày</p>
         </div>
-        <a th:href="@{/properties/{id}/book(id=${property.id})}" class="rounded-xl bg-primary-500 px-6 py-3 font-bold text-white hover:bg-primary-600 shadow-md shadow-primary-500/20">
-            Đặt phòng ngay
+         <a href="#room-offers" class="rounded-xl bg-primary-500 px-6 py-3 font-bold text-white hover:bg-primary-600 shadow-md shadow-primary-500/20">
+             Chọn loại phòng
         </a>
     </div>
 </main>
 
 <div th:replace="~{fragments/footer :: footer}"></div>
+<script th:inline="javascript">
+    const propertyId = /*[[${property.id}]]*/ 0;
+    const csrfToken = document.querySelector('meta[name="_csrf"]').content;
+    const csrfHeader = document.querySelector('meta[name="_csrf_header"]').content;
+    const occupancyRoot = document.getElementById('room-occupancies');
+    const roomCount = document.getElementById('offer-room-count');
+    const offerStatus = document.getElementById('offer-status');
+    const offerResults = document.getElementById('offer-results');
+    const selectedOffers = [];
+    const formatVnd = value => Number(value).toLocaleString('en-US', {maximumFractionDigits: 0});
+
+    function renderOccupancies() {
+        occupancyRoot.replaceChildren();
+        for (let i = 0; i < Number(roomCount.value); i++) {
+            const box = document.createElement('div');
+            box.className = 'grid gap-3 rounded-2xl border border-border bg-white p-4 sm:grid-cols-2';
+            box.innerHTML = `<strong class="sm:col-span-2">Room ${i + 1}</strong><label class="text-sm">Adults<input data-adults type="number" min="1" value="1" class="mt-1 w-full rounded-xl border border-border px-3 py-2"></label><label class="text-sm">Children ages (comma separated)<input data-children placeholder="e.g. 4, 7" class="mt-1 w-full rounded-xl border border-border px-3 py-2"></label>`;
+            occupancyRoot.append(box);
+        }
+        invalidateOffers();
+    }
+    function invalidateOffers() {
+        offerResults.replaceChildren();
+        selectedOffers.length = 0;
+        document.getElementById('selected-offers').replaceChildren();
+        document.getElementById('selection-summary').classList.add('hidden');
+        offerStatus.textContent = 'Selection changed. Search again to refresh eligible offers.';
+    }
+    function getOccupancies() {
+        return [...occupancyRoot.children].map((box, index) => {
+        const ageText = box.querySelector('[data-children]').value.trim();
+        const childrenAges = ageText ? ageText.split(',').map(value => Number(value.trim())) : [];
+            const adults = Number(box.querySelector('[data-adults]').value);
+            if (!Number.isInteger(adults) || adults < 1) throw new Error(`Enter at least one adult for room ${index + 1}.`);
+            if (childrenAges.some(age => !Number.isInteger(age) || age < 0 || age > 17)) throw new Error(`Enter whole child ages from 0 to 17 for room ${index + 1}.`);
+            return {adults, childrenAges};
+        });
+    }
+    function addOffer(offer, occupancies) {
+        selectedOffers.push({offer, occupancies});
+        const summary = document.getElementById('selection-summary');
+        const item = document.createElement('li');
+        item.textContent = `${offer.requestedQuantity} × ${offer.roomTypeName} · ${offer.ratePlanName} · ${offer.priceBasis}`;
+        document.getElementById('selected-offers').append(item);
+        summary.classList.remove('hidden');
+        offerStatus.textContent = 'Selection saved locally. Search again after any change; final stock and price require a server quote.';
+    }
+    document.getElementById('offer-search').addEventListener('submit', async event => {
+        event.preventDefault();
+        invalidateOffers();
+        let roomOccupancies;
+        try { roomOccupancies = getOccupancies(); }
+        catch (error) { offerStatus.textContent = error.message; return; }
+        const checkIn = document.getElementById('offer-check-in').value || null;
+        const checkOut = document.getElementById('offer-check-out').value || null;
+        if (Boolean(checkIn) !== Boolean(checkOut)) { offerStatus.textContent = 'Enter both dates, or leave both blank for indicative prices.'; return; }
+        offerStatus.textContent = 'Checking room offers…';
+        try {
+            const response = await fetch(`/api/v1/properties/${propertyId}/availability`, {
+                method: 'POST', headers: {'Content-Type': 'application/json', [csrfHeader]: csrfToken},
+                body: JSON.stringify({checkIn, checkOut, currency: 'VND', paymentMode: document.getElementById('offer-payment-mode').value, roomOccupancies})
+            });
+            const payload = await response.json();
+            if (!response.ok || !payload.success) throw new Error(response.status === 409 ? `409: ${payload.message}` : (payload.message || 'Unable to load offers. Search again.'));
+            const data = payload.data;
+            if (!data.offers.length) { offerStatus.textContent = 'No active room offers match this occupancy and payment mode.'; return; }
+            offerStatus.textContent = data.liveAvailabilityChecked ? 'Availability checked for every night. Stock is advisory and can change.' : 'Indicative rates only — select dates to check live availability.';
+            data.offers.forEach(offer => {
+                const card = document.createElement('article');
+                card.className = 'rounded-2xl border border-border bg-white p-4';
+                const availability = data.liveAvailabilityChecked ? (offer.eligible ? `Available: ${offer.availableQuantity} for this stay` : offer.unavailableReason) : 'Live stock not checked';
+                const total = offer.totalStay == null ? 'Indicative total shown after dates are selected' : `${formatVnd(offer.totalStay)} VND total for ${offer.requestedQuantity} room(s), ${offer.nights} night(s)`;
+                const heading = document.createElement('h3'); heading.className = 'font-black';
+                heading.textContent = `${offer.roomTypeName} · ${offer.ratePlanName}`;
+                const price = document.createElement('span'); price.className = 'text-sm font-bold';
+                price.textContent = `${formatVnd(offer.nightlyPerRoom)} VND / room / night`;
+                const meta = document.createElement('p'); meta.className = 'mt-1 text-sm text-text-gray';
+                meta.textContent = `${offer.requestedQuantity} room(s) · ${offer.priceBasis}`;
+                const totalLine = document.createElement('p'); totalLine.className = 'mt-3 text-sm'; totalLine.textContent = total;
+                const stockLine = document.createElement('p'); stockLine.className = 'mt-1 text-xs text-text-gray'; stockLine.textContent = availability;
+                const top = document.createElement('div'); top.className = 'flex flex-wrap items-start justify-between gap-3';
+                const details = document.createElement('div'); details.append(heading, meta);
+                top.append(details, price);
+                card.append(top, totalLine, stockLine);
+                if (offer.eligible && data.liveAvailabilityChecked) {
+                    const button = document.createElement('button');
+                    button.type = 'button'; button.className = 'mt-3 rounded-xl border border-primary-500 px-4 py-2 font-bold text-primary-700';
+                    button.textContent = 'Add selection'; button.addEventListener('click', () => addOffer(offer, roomOccupancies));
+                    card.append(button);
+                }
+                offerResults.append(card);
+            });
+        } catch (error) {
+            offerStatus.textContent = error.message.includes('409') ? 'Inventory changed. Search again and review the updated offer.' : error.message;
+        }
+    });
+    roomCount.addEventListener('change', renderOccupancies);
+    occupancyRoot.addEventListener('input', invalidateOffers);
+    ['offer-check-in', 'offer-check-out', 'offer-payment-mode'].forEach(id => document.getElementById(id).addEventListener('change', invalidateOffers));
+    renderOccupancies();
+</script>
 </body>
 </html>

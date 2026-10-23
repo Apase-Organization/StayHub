@@ -12,15 +12,21 @@
 
 **Inventory boundary freeze S0-097-v1 (2026-10-23):** user/PO approved exclusive WHOLE_PLACE or ROOM_BASED (no linked sale), truly interchangeable RoomType pools with shared-plan stock, whole-place one type quantity1 (bedrooms descriptive), one property/date range/VND per booking and all-booking cancellation only. PhysicalRoom assignment is future scope. Paths/DTO details remain proposed implementation contracts; these approved domain boundaries are not proposals or runtime evidence. Provenance: [S0DecisionLog](../business/S0DecisionLog.md).
 
-**Implemented Sprint 2 subset (not yet independently accepted):** Host inventory
+**Sprint 2 implementation (controller review accepted at scoped boundary):** Host inventory
 mutations are available at `/api/v1/host/properties/{propertyId}/inventory` for
 room types, rate plans, and per-day calendar rows. Mutations require HOST/ADMIN
 session authorization, property ownership, CSRF, and expected versions; archive is
 soft and does not erase future rights. Rate-plan nightly prices are server-owned
-integer VND. TSK-102 now has an internal transactional booking/item/hold core and
-expiry worker, but intentionally no public POST `/api/v1/bookings` because quote,
-explicit expiry, immutable consent revalidation and payment-mode amount allocation
-are still required by TSK-103/082. The existing MVC `POST /bookings` remains legacy.
+integer VND. Read-only `POST /api/v1/properties/{propertyId}/availability` returns
+all matching room-type/rate-plan offers and uses all-night minimum stock plus
+per-room occupancy; without dates it returns indicative prices only. The property
+detail page consumes this endpoint with per-room adults/child ages and shows
+eligible/sold-out offers. Host plan mutation serializes optional `stopSaleDates`
+under `pricing_restrictions`; this only hides that offer and never changes shared
+stock. TSK-102 has an internal transactional booking/item/hold
+core and expiry worker, but no public `POST /api/v1/bookings`: quote, explicit
+expiry, immutable consent revalidation and payment-mode amount allocation are still
+required by TSK-103/082. The existing MVC `POST /bookings` remains legacy.
 
 **v2 payment precedence:** [PaymentBusinessRules](../business/PaymentBusinessRules.md) duyệt cả FULL_PREPAY/HYBRID_DEPOSIT core MVP, instant sau required online amount; không Host approval. Tất cả amount verification dưới đây theo **dueOnline của attempt**, không booking total. Legacy mục1–8 chỉ archive, không override v2.
 

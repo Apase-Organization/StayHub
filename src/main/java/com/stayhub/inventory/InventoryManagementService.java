@@ -8,6 +8,7 @@ import com.stayhub.common.exception.ResourceNotFoundException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
+import java.util.Map;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
@@ -54,9 +55,10 @@ public class InventoryManagementService {
         try {
             String json = mapper.writeValueAsString(modes);
             return jdbc.queryForObject("""
-                    INSERT INTO rate_plans(property_id,room_type_id,name,policy_version,nightly_price,allowed_payment_modes)
-                    VALUES (?,?,?,?,?::inventory_vnd,?::jsonb) RETURNING id
-                    """, Long.class, propertyId, typeId, request.name().trim(), request.policyVersion().trim(), request.nightlyPrice(), json);
+                    INSERT INTO rate_plans(property_id,room_type_id,name,policy_version,nightly_price,allowed_payment_modes,pricing_restrictions)
+                    VALUES (?,?,?,?,?::inventory_vnd,?::jsonb,?::jsonb) RETURNING id
+                    """, Long.class, propertyId, typeId, request.name().trim(), request.policyVersion().trim(),
+                    request.nightlyPrice(), json, restrictionsJson(request.stopSaleDates()));
         } catch (JsonProcessingException exception) {
             throw new IllegalStateException("Unable to encode payment modes", exception);
         }
@@ -85,9 +87,11 @@ public class InventoryManagementService {
         try {
             String json = mapper.writeValueAsString(modes);
             int changed = jdbc.update("""
-                    UPDATE rate_plans SET name=?,policy_version=?,nightly_price=?::inventory_vnd,allowed_payment_modes=?::jsonb,version=version+1
+                    UPDATE rate_plans SET name=?,policy_version=?,nightly_price=?::inventory_vnd,allowed_payment_modes=?::jsonb,
+                        pricing_restrictions=?::jsonb,version=version+1
                     WHERE id=? AND version=? AND status='ACTIVE'
-                    """, request.name().trim(), request.policyVersion().trim(), request.nightlyPrice(), json, planId, request.expectedVersion());
+                    """, request.name().trim(), request.policyVersion().trim(), request.nightlyPrice(), json,
+                    restrictionsJson(request.stopSaleDates()), planId, request.expectedVersion());
             if (changed != 1) throw new ConflictException("ERR_VERSION_CONFLICT", "The rate plan is archived or its version is stale.");
         } catch (JsonProcessingException exception) {
             throw new IllegalStateException("Unable to encode payment modes", exception);
@@ -146,7 +150,7 @@ public class InventoryManagementService {
     public List<RatePlanView> listPlans(long hostId, long propertyId, long typeId) {
         requireOwnedProperty(hostId, propertyId);
         requireType(propertyId, typeId);
-        return jdbc.query("SELECT id,name,policy_version,nightly_price,allowed_payment_modes::text,status,version FROM rate_plans WHERE property_id=? AND room_type_id=? ORDER BY id",
+        return jdbc.query("SELECT id,name,policy_version,nightly_price,allowed_payment_modes::text,pricing_restrictions::text,status,version FROM rate_plans WHERE property_id=? AND room_type_id=? ORDER BY id",
                 (rs, row) -> planView(rs), propertyId, typeId);
     }
 
@@ -163,7 +167,8 @@ public class InventoryManagementService {
 
     private RatePlanView planView(ResultSet rs) throws SQLException {
         return new RatePlanView(rs.getLong("id"), rs.getString("name"), rs.getString("policy_version"),
-                rs.getBigDecimal("nightly_price"), rs.getString("allowed_payment_modes"), rs.getString("status"), rs.getLong("version"));
+                rs.getBigDecimal("nightly_price"), rs.getString("allowed_payment_modes"),
+                rs.getString("pricing_restrictions"), rs.getString("status"), rs.getLong("version"));
     }
     private void lockOwnedProperty(long hostId, long propertyId) {
         if (jdbc.query("SELECT id FROM properties WHERE id=? AND host_id=? FOR UPDATE", (rs, row) -> rs.getLong(1), propertyId, hostId).isEmpty())
@@ -192,8 +197,12 @@ public class InventoryManagementService {
         if (!"s0-policy-v1".equals(version)) invalid("ERR_POLICY_VERSION", "Only the current approved inventory policy is supported.");
     }
 
+    private String restrictionsJson(Set<LocalDate> stopSaleDates) throws JsonProcessingException {
+        return mapper.writeValueAsString(Map.of("stopSaleDates", stopSaleDates == null ? List.of() : new TreeSet<>(stopSaleDates)));
+    }
+
     public record RoomTypeView(long id, String name, String saleMode, int quantity, int maxAdults, int maxOccupants, String status, long version) {}
     public record RatePlanView(long id, String name, String policyVersion, java.math.BigDecimal nightlyPrice,
-                               String allowedPaymentModes, String status, long version) {}
+                               String allowedPaymentModes, String pricingRestrictions, String status, long version) {}
     public record CalendarView(LocalDate date, int total, int outOfOrder, boolean stopSale, long version) {}
 }

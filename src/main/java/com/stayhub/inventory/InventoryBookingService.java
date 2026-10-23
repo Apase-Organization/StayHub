@@ -80,13 +80,15 @@ public class InventoryBookingService {
                     SELECT t.id AS type_id,t.name AS type_name,t.sale_mode,t.status AS type_status,
                            t.max_adults,t.max_occupants,t.base_quantity,t.version AS type_version,
                            p.id AS plan_id,p.name AS plan_name,p.policy_version,p.nightly_price,
-                           p.allowed_payment_modes::text AS allowed_modes,p.status AS plan_status,p.version AS plan_version
+                           p.allowed_payment_modes::text AS allowed_modes,p.pricing_restrictions::text AS restrictions,
+                           p.status AS plan_status,p.version AS plan_version
                     FROM room_types t JOIN rate_plans p ON p.room_type_id=t.id AND p.property_id=t.property_id
                     WHERE t.id=? AND p.id=? AND t.property_id=?
                     """, (rs, row) -> new PlanSnapshot(rs.getLong("type_id"), rs.getString("type_name"),
                     rs.getString("sale_mode"), rs.getString("type_status"), rs.getInt("max_adults"), rs.getInt("max_occupants"),
                     rs.getInt("base_quantity"), rs.getLong("type_version"), rs.getLong("plan_id"), rs.getString("plan_name"),
                     rs.getString("policy_version"), rs.getBigDecimal("nightly_price"), rs.getString("allowed_modes"),
+                    rs.getString("restrictions"),
                     rs.getString("plan_status"), rs.getLong("plan_version")), item.roomTypeId(), item.ratePlanId(), request.propertyId())
                     .stream().findFirst().orElseThrow(() -> new ResourceNotFoundException("Room type or rate plan not found"));
             if (!"ACTIVE".equals(plan.typeStatus()) || !"ACTIVE".equals(plan.planStatus()) || plan.nightlyPrice() == null)
@@ -96,6 +98,8 @@ public class InventoryBookingService {
             if (item.quantity() > plan.baseQuantity()) invalid("ERR_ROOM_NOT_AVAILABLE", "Requested room quantity exceeds the type's configured capacity.");
             if (!plan.allowedModes().contains("\"" + request.paymentMode().name() + "\""))
                 invalid("ERR_PAYMENT_MODE_NOT_ALLOWED", "The selected rate plan does not allow this payment mode.");
+            if (planStopSale(plan.pricingRestrictions(), request.checkIn(), request.checkOut()))
+                invalid("ERR_ROOM_NOT_AVAILABLE", "The selected rate plan is not selling for every night.");
             for (InventoryBookingRequest.RoomAllocation allocation : item.roomAllocations()) {
                 if (allocation.childrenAges() == null || allocation.adults() < 1 || allocation.adults() > plan.maxAdults()
                         || allocation.childrenAges().stream().anyMatch(age -> age == null || age < 0 || age > 17)
@@ -211,6 +215,18 @@ public class InventoryBookingService {
         try { return mapper.writeValueAsString(value); }
         catch (JsonProcessingException e) { throw new IllegalStateException("Cannot encode inventory snapshot", e); }
     }
+    private boolean planStopSale(String json, LocalDate checkIn, LocalDate checkOut) {
+        try {
+            var dates = mapper.readTree(json).path("stopSaleDates");
+            for (var date : dates) {
+                LocalDate blocked = LocalDate.parse(date.asText());
+                if (!blocked.isBefore(checkIn) && blocked.isBefore(checkOut)) return true;
+            }
+            return false;
+        } catch (JsonProcessingException | java.time.format.DateTimeParseException e) {
+            throw new IllegalStateException("Stored rate-plan restrictions are invalid", e);
+        }
+    }
     private static long advisoryKey(long guestId, String key) {
         byte[] bytes = (guestId + ":" + key).getBytes(java.nio.charset.StandardCharsets.UTF_8);
         try { return ByteBuffer.wrap(MessageDigest.getInstance("SHA-256").digest(bytes)).getLong(); }
@@ -221,7 +237,8 @@ public class InventoryBookingService {
     private record PropertySnapshot(long id, String saleMode, BigDecimal cleaningFee, String timezone) {}
     private record PlanSnapshot(long typeId, String typeName, String saleMode, String typeStatus, int maxAdults,
                                 int maxOccupants, int baseQuantity, long typeVersion, long planId, String planName,
-                                String policyVersion, BigDecimal nightlyPrice, String allowedModes, String planStatus,
+                                String policyVersion, BigDecimal nightlyPrice, String allowedModes,
+                                String pricingRestrictions, String planStatus,
                                 long planVersion) {}
     private record PolicySnapshot(String policyVersion, String timezone, String saleMode, String currency,
                                   InventoryBookingRequest.PaymentMode paymentMode, String roomTypeName, String ratePlanName,

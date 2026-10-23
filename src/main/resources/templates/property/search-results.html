@@ -134,16 +134,10 @@
                             <span class="shrink-0 text-sm font-bold"><span class="text-rating-500">&#9733;</span> <span th:text="${property.ratingAvg}">0.0</span></span>
                         </div>
                         <p class="mt-2 text-sm text-text-gray" th:text="|${property.city} · ${#strings.replace(property.propertyType.name(), '_', ' ')}|">City</p>
-                        <div class="mt-4">
-                            <div th:if="${property.totalStay != null}">
-                                <span class="text-base font-black text-primary-600" th:text="|${#numbers.formatDecimal(property.totalStay, 0, 'COMMA', 0, 'POINT')} VND|">0 VND</span>
-                                <span class="block text-xs font-medium text-text-gray" th:text="|tổng cho ${property.nights} đêm (${#numbers.formatDecimal(property.pricePerNight, 0, 'COMMA', 0, 'POINT')} VND / đêm)|">0 VND / đêm</span>
-                            </div>
-                            <div th:unless="${property.totalStay != null}">
-                                <span class="text-base font-bold text-text-900" th:text="|${#numbers.formatDecimal(property.pricePerNight, 0, 'COMMA', 0, 'POINT')} VND|">0 VND</span>
-                                <span class="block text-xs text-text-gray">giá tham khảo / đêm</span>
-                            </div>
-                        </div>
+                         <div class="mt-4">
+                             <span class="text-sm font-bold text-primary-700">View eligible room types and rate plans</span>
+                             <span class="block text-xs text-text-gray">Live availability and total stay appear after per-room occupancy is selected.</span>
+                         </div>
                     </div>
                 </a>
             </div>

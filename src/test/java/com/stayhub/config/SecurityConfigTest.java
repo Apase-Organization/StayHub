@@ -76,6 +76,19 @@ class SecurityConfigTest {
     }
 
     @Test
+    void publicReadOnlyOfferSearchStillRequiresCsrfForPost() throws Exception {
+        mockMvc.perform(post("/api/v1/properties/1/availability"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.errorCode").value("ERR_CSRF"));
+    }
+
+    @Test
+    void readOnlyOfferSearchDoesNotRequireLogin() throws Exception {
+        mockMvc.perform(post("/api/v1/properties/1/availability").with(csrf()))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
     void bookingPageIsNotCoveredByPublicPropertyMatcher() throws Exception {
         mockMvc.perform(get("/properties/1/book"))
                 .andExpect(status().is3xxRedirection())

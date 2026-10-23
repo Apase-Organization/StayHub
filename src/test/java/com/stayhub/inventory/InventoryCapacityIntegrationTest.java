@@ -23,6 +23,7 @@ class InventoryCapacityIntegrationTest {
     static InventoryCapacityService capacity;
     static InventoryManagementService management;
     static InventoryBookingService bookings;
+    static InventoryOfferService offers;
     static long host;
     long property, type, plan, booking, item;
     static final LocalDate DAY = LocalDate.of(2030, 12, 10);
@@ -51,6 +52,7 @@ class InventoryCapacityIntegrationTest {
         bookingProxy.addAdvice(new org.springframework.transaction.interceptor.TransactionInterceptor(manager,
                 new org.springframework.transaction.annotation.AnnotationTransactionAttributeSource()));
         bookings = (InventoryBookingService) bookingProxy.getProxy();
+        offers = new InventoryOfferService(db, new com.fasterxml.jackson.databind.ObjectMapper().findAndRegisterModules());
         host = db.queryForObject("INSERT INTO users(email,password_hash,full_name,role,status) VALUES ('inventory099@test.local','hash','Inventory099','HOST','ACTIVE') RETURNING id", Long.class);
     }
     @AfterAll static void stop() { PG.stop(); }
@@ -103,17 +105,22 @@ class InventoryCapacityIntegrationTest {
 
         long planId = management.createPlan(host, property, type,
                 new RatePlanRequest("Flexible", "s0-policy-v1", new java.math.BigDecimal("1200000"), Set.of(RatePlanRequest.PaymentMode.FULL_PREPAY,
-                        RatePlanRequest.PaymentMode.HYBRID_DEPOSIT)));
+                        RatePlanRequest.PaymentMode.HYBRID_DEPOSIT), Set.of()));
         management.updatePlan(host, property, type, planId,
                 new RatePlanUpdateRequest("Flexible v2", "s0-policy-v1", new java.math.BigDecimal("1300000"),
-                        Set.of(RatePlanRequest.PaymentMode.FULL_PREPAY), 0L));
+                        Set.of(RatePlanRequest.PaymentMode.FULL_PREPAY), Set.of(), 0L));
         assertThat(management.listPlans(host, property, type).getLast().version()).isEqualTo(1L);
         assertThatThrownBy(() -> management.updatePlan(host, property, type, planId,
                 new RatePlanUpdateRequest("stale", "s0-policy-v1", new java.math.BigDecimal("1300000"),
-                        Set.of(RatePlanRequest.PaymentMode.FULL_PREPAY), 0L)))
+                        Set.of(RatePlanRequest.PaymentMode.FULL_PREPAY), Set.of(), 0L)))
                 .isInstanceOf(com.stayhub.common.exception.ConflictException.class);
 
         capacity.holdAll(booking, java.time.Instant.now().plusSeconds(900));
+        long nextNightBooking = booking("CANCELLED");
+        db.update("UPDATE bookings SET check_in_date=?,check_out_date=? WHERE id=?", DAY.plusDays(1), DAY.plusDays(2), nextNightBooking);
+        item(nextNightBooking, plan);
+        db.update("INSERT INTO type_day_inventory(room_type_id,stay_date,total) VALUES (?,?,1)", type, DAY.plusDays(1));
+        capacity.holdAll(nextNightBooking, java.time.Instant.now().plusSeconds(900));
         assertThatThrownBy(() -> management.updateCalendar(host, property, type,
                 new InventoryDayRequest(DAY, 1, 1, false,
                         db.queryForObject("SELECT version FROM type_day_inventory WHERE room_type_id=? AND stay_date=?", Long.class, type, DAY))))
@@ -154,7 +161,7 @@ class InventoryCapacityIntegrationTest {
                 new RoomTypeRequest("Family", RoomTypeRequest.InventorySaleMode.ROOM_BASED, 1, 3, 4));
         long secondPlan = management.createPlan(host, property, secondType,
                 new RatePlanRequest("Family standard", "s0-policy-v1", new java.math.BigDecimal("1600000"),
-                        Set.of(RatePlanRequest.PaymentMode.FULL_PREPAY)));
+                        Set.of(RatePlanRequest.PaymentMode.FULL_PREPAY), Set.of()));
         db.update("INSERT INTO type_day_inventory(room_type_id,stay_date,total) VALUES (?, ?, 0)", secondType, DAY);
         var request = new InventoryBookingRequest(property, DAY, DAY.plusDays(1), "VND",
                 InventoryBookingRequest.PaymentMode.FULL_PREPAY, "rollback-all",
@@ -166,6 +173,92 @@ class InventoryCapacityIntegrationTest {
         assertThatThrownBy(() -> bookings.create(host, request)).hasMessageContaining("capacity");
         assertThat(db.queryForObject("SELECT count(*) FROM bookings WHERE inventory_idempotency_key='rollback-all'", Integer.class)).isZero();
         assertThat(db.queryForObject("SELECT count(*) FROM inventory_commitments WHERE room_type_id IN (?,?)", Integer.class, type, secondType)).isZero();
+    }
+    @Test void readOnlyOffersUseMinNightStockOccupancyAndNeverClaimStockWithoutDates() {
+        db.update("UPDATE properties SET status='ACTIVE' WHERE id=?", property);
+        db.update("UPDATE rate_plans SET nightly_price=1000000 WHERE id=?", plan);
+        db.update("UPDATE type_day_inventory SET total=2 WHERE room_type_id=? AND stay_date=?", type, DAY);
+        db.update("INSERT INTO type_day_inventory(room_type_id,stay_date,total) VALUES (?,?,1)", type, DAY.plusDays(1));
+        var request = new InventoryOfferRequest(DAY, DAY.plusDays(2), "VND",
+                InventoryBookingRequest.PaymentMode.FULL_PREPAY,
+                java.util.List.of(new InventoryOfferRequest.RoomOccupancy(2, java.util.List.of(7))));
+        var result = offers.search(property, request);
+        assertThat(result.liveAvailabilityChecked()).isTrue();
+        assertThat(result.offers()).singleElement().satisfies(offer -> {
+            assertThat(offer.availableQuantity()).isEqualTo(1);
+            assertThat(offer.totalStay()).isEqualByComparingTo("2000000");
+            assertThat(offer.eligible()).isTrue();
+        });
+
+        db.update("DELETE FROM type_day_inventory WHERE room_type_id=? AND stay_date=?", type, DAY.plusDays(1));
+        var missingCalendar = offers.search(property, request);
+        assertThat(missingCalendar.offers()).singleElement().satisfies(offer -> {
+            assertThat(offer.availableQuantity()).isZero();
+            assertThat(offer.eligible()).isFalse();
+            assertThat(offer.unavailableReason()).contains("not configured");
+        });
+        db.update("INSERT INTO type_day_inventory(room_type_id,stay_date,total) VALUES (?,?,1)", type, DAY.plusDays(1));
+
+        var noDates = offers.search(property, new InventoryOfferRequest(null, null, "VND",
+                InventoryBookingRequest.PaymentMode.FULL_PREPAY,
+                java.util.List.of(new InventoryOfferRequest.RoomOccupancy(2, java.util.List.of(7)))));
+        assertThat(noDates.liveAvailabilityChecked()).isFalse();
+        assertThat(noDates.offers()).allSatisfy(offer -> assertThat(offer.availableQuantity()).isNull());
+
+        capacity.holdAll(booking, java.time.Instant.now().plusSeconds(900));
+        long secondNightBooking = booking("CANCELLED");
+        db.update("UPDATE bookings SET check_in_date=?,check_out_date=? WHERE id=?", DAY.plusDays(1), DAY.plusDays(2), secondNightBooking);
+        item(secondNightBooking, plan);
+        capacity.holdAll(secondNightBooking, java.time.Instant.now().plusSeconds(900));
+        var held = offers.search(property, request);
+        assertThat(held.offers()).singleElement().satisfies(offer -> {
+            assertThat(offer.availableQuantity()).isZero();
+            assertThat(offer.eligible()).isFalse();
+        });
+    }
+    @Test void offerSearchUsesPerRoomOccupancySharedPlanStockAndFailsClosed() {
+        db.update("UPDATE properties SET status='ACTIVE' WHERE id=?", property);
+        db.update("UPDATE rate_plans SET nightly_price=1000000 WHERE id=?", plan);
+        long sharedPlan = db.queryForObject("INSERT INTO rate_plans(property_id,room_type_id,name,policy_version,nightly_price) VALUES (?,?,?,'s0-policy-v1',?) RETURNING id",
+                Long.class, property, type, "Other plan", new java.math.BigDecimal("1200000"));
+        db.update("INSERT INTO type_day_inventory(room_type_id,stay_date,total) VALUES (?,?,1)", type, DAY.plusDays(1));
+
+        var request = new InventoryOfferRequest(DAY, DAY.plusDays(2), "VND",
+                InventoryBookingRequest.PaymentMode.FULL_PREPAY,
+                java.util.List.of(new InventoryOfferRequest.RoomOccupancy(2, java.util.List.of(7))));
+        var result = offers.search(property, request);
+        assertThat(result.liveAvailabilityChecked()).isTrue();
+        assertThat(result.offers()).hasSize(2);
+        assertThat(result.offers()).allSatisfy(offer -> {
+            assertThat(offer.eligible()).isTrue();
+            assertThat(offer.availableQuantity()).isEqualTo(1);
+            assertThat(offer.requestedQuantity()).isEqualTo(1);
+            assertThat(offer.totalStay()).isGreaterThanOrEqualTo(offer.nightlyPerRoom().multiply(new java.math.BigDecimal("2")));
+        });
+
+        db.update("UPDATE rate_plans SET pricing_restrictions=?::jsonb WHERE id=?",
+                "{\"stopSaleDates\":[\"2030-12-11\"]}", sharedPlan);
+        var planStopped = offers.search(property, request);
+        assertThat(planStopped.offers()).filteredOn(offer -> offer.ratePlanId() == sharedPlan).singleElement().satisfies(offer -> {
+            assertThat(offer.availableQuantity()).isZero();
+            assertThat(offer.eligible()).isFalse();
+        });
+        assertThat(planStopped.offers()).filteredOn(offer -> offer.ratePlanId() == plan).singleElement()
+                .satisfies(offer -> assertThat(offer.availableQuantity()).isEqualTo(1));
+
+        var indicative = offers.search(property, new InventoryOfferRequest(null, null, "VND",
+                InventoryBookingRequest.PaymentMode.FULL_PREPAY,
+                java.util.List.of(new InventoryOfferRequest.RoomOccupancy(2, java.util.List.of(7)))));
+        assertThat(indicative.liveAvailabilityChecked()).isFalse();
+        assertThat(indicative.offers()).allSatisfy(offer -> assertThat(offer.availableQuantity()).isNull());
+
+        capacity.holdAll(booking, java.time.Instant.now().plusSeconds(900));
+        var held = offers.search(property, request);
+        assertThat(held.offers()).allSatisfy(offer -> {
+            assertThat(offer.availableQuantity()).isZero();
+            assertThat(offer.eligible()).isFalse();
+        });
+        assertThat(sharedPlan).isPositive();
     }
     @Test void holdConversionReleaseAndStopSale() {
         hold(item);

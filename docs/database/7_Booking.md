@@ -7,7 +7,7 @@ references and deferred shape guards do not replace checkout/lifecycle/financial
 validation. Legacy active property exclusion is preserved. No active multi-room
 cutover/backfill, extra financial header snapshot or payment composition is claimed.
 
-**V16 Sprint 2 implementation (pending scoped acceptance):** inventory holds use
+**V16 Sprint 2 implementation (scoped task acceptance):** inventory holds use
 server-configured whole-VND rate-plan nightly prices; the internal booking core
 persists currency/payment-mode/policy/idempotency/deadline metadata and item,
 room-allocation, and per-night snapshots atomically with every inventory hold.

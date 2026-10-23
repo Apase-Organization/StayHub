@@ -38,7 +38,7 @@ No modification to V14, legacy payment uniqueness, exclusion or existing DTOs.
 [Exact schema/service/test manifest and acceptance limits](../tasklist/evidence/TSK-110.md).
 The conceptual receipt/refund/payout/check-in workflows below remain future scope.
 
-## V16 actual Sprint 2 inventory core — pending scoped acceptance
+## V16 Sprint 2 inventory core — accepted scoped implementation
 
 V16 adds whole-VND `rate_plans.nightly_price` (nullable until a Host configures a
 plan), booking-level VND/payment-mode/policy/idempotency/15-minute hold metadata,

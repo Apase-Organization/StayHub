@@ -2,6 +2,13 @@
 
 ## TARGET screen/component contract — chưa triển khai
 
+**Sprint 2 selection scope (controller review accepted):** the property-detail screen
+now supports per-room adult/child allocations, date/payment-mode offer search,
+eligible/sold-out plan cards and a local selection summary. It clears results and
+selection when inputs change. Offers are advisory and always revalidated; without
+dates, the UI/API shows indicative rates and explicitly does not claim live stock.
+Checkout/quote consent remains intentionally unavailable until TSK-103 is wired.
+
 **S0-109-v1 FROZEN_DESIGN** [typed DTO/errors](../business/contracts/s0-api-v1.json)/[fixtures](../business/contracts/s0-fixtures-v1.json) are field authority. Whole integer VND, policyVersion/fixtureVersion/quoteHash and immutable consent; explicit quoteExpiresAt separate original booking createdAt+900s/max3hold. Servererrors fieldlabels, no trusted clientamount.090 HCM14/11/1..30/sameday<20 creation/childinteger0..17/everyroomadult; actualevidence/checkoutcompletion/review14days endexclusive frozen. No Hosttap/earlycompletion/calendaronly/zeroamount exception;095activation blocked.
 
 ### Payment v2 — FULL_PREPAY và HYBRID_DEPOSIT đều core MVP
