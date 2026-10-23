@@ -38,6 +38,21 @@ No modification to V14, legacy payment uniqueness, exclusion or existing DTOs.
 [Exact schema/service/test manifest and acceptance limits](../tasklist/evidence/TSK-110.md).
 The conceptual receipt/refund/payout/check-in workflows below remain future scope.
 
+## V16 actual Sprint 2 inventory core — pending scoped acceptance
+
+V16 adds whole-VND `rate_plans.nightly_price` (nullable until a Host configures a
+plan), booking-level VND/payment-mode/policy/idempotency/15-minute hold metadata,
+and an internal JDBC flow that writes immutable item/allocation/night snapshots,
+then calls the V14 all-item capacity primitive in the same transaction. Host
+mutations now expose owned room-type/plan/calendar CRUD/archive APIs with optimistic
+versions; calendar reductions remain guarded by active commitments. Expiry cancels
+and releases holds atomically. [Implementation evidence](../tasklist/evidence/TSK-098-102.md).
+
+This is not the quote/consent or dual-mode settlement implementation (TSK-103),
+does not create payment attempts or confirm bookings, and is not a checkout/release
+or cutover claim. No public inventory-booking POST is enabled before the frozen
+quote/consent validator exists; legacy property exclusion remains unchanged.
+
 ## TARGET — remaining conceptual fields and workflows
 
 Theo [canonical](../business/PropertyInventoryBusinessRules.md); names dưới là đề xuất DB review TSK-099, không map tự động sang entity hiện tại. `type_day_inventory` là tên thống nhất cho type/date inventory (canonical từng gọi `type_date_inventory`).
@@ -92,6 +107,7 @@ erDiagram
         bigint room_type_id FK
         string currency
         string policy_version
+        decimal nightly_price wholeVND
         json pricing_restrictions
         json allowed_payment_modes
         string payment_policy_version
@@ -116,6 +132,12 @@ erDiagram
         decimal discount
         decimal total
         string payment_mode
+        string inventory_currency
+        string inventory_policy_version
+        string inventory_idempotency_key
+        string inventory_request_hash
+        datetime inventory_hold_expires_at
+        bigint inventory_version
         decimal due_online
         decimal balance_due_host
         json payment_commission_funding_snapshot

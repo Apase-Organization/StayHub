@@ -295,10 +295,10 @@ Sprint labels below replace old track headings **only for unchecked work**; chec
 | TSK-109 | S0 | A | 8 | TSK-079, TSK-084, TSK-086, TSK-088, TSK-090 | COMPLETED FROZEN_DESIGN s0-policy-v1/s0-fixtures-v1/s0-api-v1 + tracked verifier and durable handoff; no source/release clearance |
 | TSK-099 | S1 | A | 1 | TSK-097, TSK-109 | DONE scoped foundation; V14 +InventoryCapacityService +30PostgreSQL cases +rollback design independently accepted; evidence/TSK-099.md; exclusion retained/cutover pending |
 | TSK-110 | S1 | A | 2 | TSK-099, TSK-109 | DONE scoped internal foundation; corrected V15/JDBC primitives +27PostgreSQL cases/128full passes +rollback design independently accepted; evidence/TSK-110.md; runtime/downstream acceptance not implied |
-| TSK-098 | S2 | A | 1 | TSK-097, TSK-099, TSK-109 | property mutation core/DTO; types/plans/calendar ownership/version tests |
+| TSK-098 | S2 | A | 1 | TSK-097, TSK-099, TSK-109 | property mutation core/DTO; types/plans/calendar ownership/version tests; [implementation evidence pending independent review](evidence/TSK-098-102.md) |
 | TSK-100 | S2 | B | 2 | TSK-099, TSK-098 | property read-only adapters/controllers +templates/property; eligible offers fixture→accepted API |
 | TSK-101 | S2 | B | 3 | TSK-100, TSK-109 | templates/property,booking +static; inventory selection UI happy/soldout/stale evidence |
-| TSK-102 | S2 | A | 4 | TSK-099, TSK-081, TSK-110, TSK-098 | booking core/items/DTO/holds; DB all-item rollback/expiry protocol |
+| TSK-102 | S2 | A | 4 | TSK-099, TSK-081, TSK-110, TSK-098 | booking core/items/DTO/holds; DB all-item rollback/expiry protocol; [implementation evidence pending independent review](evidence/TSK-098-102.md) |
 | TSK-083 | S3 | A | 1 | TSK-079, TSK-081, TSK-099, TSK-102 | booking/property DB invariant cases; capacity proof, no premature exclusion drop |
 | TSK-091 | S3 | B | 2 | TSK-090, TSK-083, TSK-100, TSK-101 | read-only property adapters/templates; shared date engine boundary evidence |
 | TSK-103 | S3 | A | 3 | TSK-102, TSK-084, TSK-088, TSK-109, TSK-110 | booking/payment pricing+DTO; both modes exact allocations/coverage fixture |
