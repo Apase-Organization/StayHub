@@ -263,6 +263,14 @@ def dto(value, kind, api):
     if kind == "hash":
         return type(value) is str and re.fullmatch(r"[a-f0-9]{64}", value) is not None
     if kind in {"date","instant"}:
+        if type(value) is not str:
+            return False
+        # Uppercase RFC3339 profile; lexical gate before calendar/time parsing.
+        pattern = r"[0-9]{4}-[0-9]{2}-[0-9]{2}"
+        if kind == "instant":
+            pattern += r"T(?:[01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](?:\.[0-9]+)?(?:Z|[+-](?:[01][0-9]|2[0-3]):[0-5][0-9])"
+        if re.fullmatch(pattern, value) is None:
+            return False
         try:
             parsed = date.fromisoformat(value) if kind == "date" else datetime.fromisoformat(value.replace("Z", "+00:00"))
             return kind == "date" or parsed.tzinfo is not None
@@ -501,6 +509,33 @@ def self_test(p, f):
     return caught
 
 
+def wire_self_test(a):
+    """Isolated scalar and nested DTO regression cases; no external services."""
+    cases = []
+    for kind, good, bad in [
+        ("date", ["2030-12-10", "2032-02-29"],
+         ["20301210", "2030-W50-2", "2030-02-29", "2032-02-30", "2030-13-01", "0000-01-01", "2030-12-10\n"]),
+        ("instant", ["2032-02-29T00:00:00Z", "2030-12-10T23:59:59.123456789+07:00", "2030-12-10T00:00:00-05:30"],
+         ["20301210T000000Z", "2030-W50-2T00:00:00Z", "2030-12-10 00:00:00Z", "2030-12-10T00:00:00", "2030-12-10T00:00Z", "2030-02-29T00:00:00Z", "2030-12-10T24:00:00Z", "2030-12-10T00:00:60Z", "2030-12-10T00:00:00+24:00", "2030-12-10T00:00:00+07:60", "2030-12-10t00:00:00z", "2030-12-10T00:00:00Z\n"]),
+    ]:
+        cases.extend((kind, value, True) for value in good)
+        cases.extend((kind, value, False) for value in bad + [None, True, False, 1, 1.5, [], {}])
+    for kind, value, expected in cases:
+        require(dto(value, kind, a) is expected, f"wire {kind} {value!r}")
+    nested = 0
+    for value in ["2032-02-29", "20301210", None, True, [], {}]:
+        payload = {"date": value, "roomCharge": 1}
+        require(dto(payload, "NightlyPrice[]", a) is False, "nested array shape")
+        require(dto([payload], "NightlyPrice[]", a) is (value == "2032-02-29"), "nested date scalar")
+        nested += 2
+    for value in ["2032-02-29T00:00:00Z", "2030-12-10 00:00:00Z", None, True, [], {}]:
+        payload = dict(amount=1, currency="VND", method="CASH", paidAt=value,
+                       reference="test", evidenceHandle="test", expectedVersion=1)
+        require(dto(payload, "DirectReceiptRequest", a) is (value == "2032-02-29T00:00:00Z"), "DTO instant scalar")
+        nested += 1
+    return len(cases), nested
+
+
 def main():
     start = time.perf_counter()
     require(sys.argv[1:] in ([],["--self-test"]), "usage: verify_s0_contracts.py [--self-test]")
@@ -508,9 +543,11 @@ def main():
     pins = policy_checks(p)
     cases = validate_fixtures(f,p)
     errors,dtos,digest = api_checks(a,p,f)
+    wire, nested = wire_self_test(a) if "--self-test" in sys.argv else (0, 0)
     tasks,links,jsons,anchors = docs_checks(f,a)
     mutations = self_test(p,f) if "--self-test" in sys.argv else 0
     print(f"PASS FROZEN_DESIGN policyPins={pins} fixtureCases={cases} groups={len(GROUP_IDS)} DTOs={dtos} errors={errors} mutationRejections={mutations}")
+    print(f"PASS wireScalarCases={wire} nestedDTOCases={nested}")
     print(f"PASS docs={len(DOCS)} JSON/JSONC={jsons} relativeLinks={links} scopedAnchors={anchors}; IDs={tasks} checked79 unchecked35 activeDone8/42 remaining34 optional096; DAG/ranks/S0history")
     print(f"PASS immutable example quoteHash={digest}; exact O not total, funded D, source pools; NOT application/DB/concurrency/legal proof")
     print(f"Duration {time.perf_counter()-start:.3f}s")
