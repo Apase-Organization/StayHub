@@ -8,6 +8,7 @@ import com.stayhub.booking.dto.BookingResponse;
 import com.stayhub.common.exception.BusinessException;
 import com.stayhub.common.exception.InvalidStateTransitionException;
 import com.stayhub.common.exception.ResourceNotFoundException;
+import com.stayhub.common.validation.StayDatePolicy;
 import com.stayhub.discount.AppliedDiscount;
 import com.stayhub.discount.DiscountService;
 import com.stayhub.notification.NotificationService;
@@ -20,6 +21,7 @@ import com.stayhub.user.UserRepository;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
@@ -199,12 +201,7 @@ public class BookingServiceImpl implements BookingService {
     }
 
     private void validateDates(LocalDate checkInDate, LocalDate checkOutDate) {
-        if (checkInDate == null || checkOutDate == null || !checkInDate.isBefore(checkOutDate)) {
-            throw new BusinessException("ERR_INVALID_DATE_RANGE", "Check-out date must be after check-in date.");
-        }
-        if (checkInDate.isBefore(LocalDate.now())) {
-            throw new BusinessException("ERR_INVALID_DATE_RANGE", "Check-in date cannot be in the past.");
-        }
+        StayDatePolicy.validate(checkInDate, checkOutDate, ZonedDateTime.now(StayDatePolicy.ZONE));
     }
 
     private void validateGuests(Property property, Integer guests) {

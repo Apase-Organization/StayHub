@@ -2,7 +2,10 @@ package com.stayhub.inventory;
 
 import static org.assertj.core.api.Assertions.*;
 
+import com.stayhub.payment.quote.BookingQuoteRequest;
+import com.stayhub.payment.quote.BookingQuoteService;
 import java.time.LocalDate;
+import java.time.Instant;
 import java.util.concurrent.*;
 import java.util.Set;
 import org.flywaydb.core.Flyway;
@@ -24,6 +27,7 @@ class InventoryCapacityIntegrationTest {
     static InventoryManagementService management;
     static InventoryBookingService bookings;
     static InventoryOfferService offers;
+    static BookingQuoteService quotes;
     static long host;
     long property, type, plan, booking, item;
     static final LocalDate DAY = LocalDate.of(2030, 12, 10);
@@ -53,6 +57,7 @@ class InventoryCapacityIntegrationTest {
                 new org.springframework.transaction.annotation.AnnotationTransactionAttributeSource()));
         bookings = (InventoryBookingService) bookingProxy.getProxy();
         offers = new InventoryOfferService(db, new com.fasterxml.jackson.databind.ObjectMapper().findAndRegisterModules());
+        quotes = new BookingQuoteService(db, offers, 300);
         host = db.queryForObject("INSERT INTO users(email,password_hash,full_name,role,status) VALUES ('inventory099@test.local','hash','Inventory099','HOST','ACTIVE') RETURNING id", Long.class);
     }
     @AfterAll static void stop() { PG.stop(); }
@@ -69,8 +74,11 @@ class InventoryCapacityIntegrationTest {
         return db.queryForObject("INSERT INTO bookings(property_id,guest_id,check_in_date,check_out_date,guests,nightly_price,cleaning_fee,service_fee,subtotal_price,total_price,status,cancelled_at) VALUES (?,?,?,? ,1,1000000,0,0,1000000,1000000,?,CASE WHEN ?='CANCELLED' THEN now() END) RETURNING id",Long.class,property,host,DAY,DAY.plusDays(1),status,status);
     }
     long item(long b, long p) {
+        return item(b, type, p);
+    }
+    long item(long b, long typeId, long planId) {
         return tx.execute(s -> {
-            long i = db.queryForObject("INSERT INTO booking_items(booking_id,property_id,room_type_id,rate_plan_id,quantity,type_plan_policy_snapshot) VALUES (?,?,?,?,1,'{}') RETURNING id",Long.class,b,property,type,p);
+            long i = db.queryForObject("INSERT INTO booking_items(booking_id,property_id,room_type_id,rate_plan_id,quantity,type_plan_policy_snapshot) VALUES (?,?,?,?,1,'{}') RETURNING id",Long.class,b,property,typeId,planId);
             db.update("INSERT INTO room_allocations(item_id,room_ordinal,adults,children_ages) VALUES (?,1,1,'[0,17]')",i);
             db.update("INSERT INTO nightly_snapshots(item_id,room_ordinal,stay_date,room_charge,policy_snapshot) SELECT ?,1,d::date,1000000,'{}' FROM bookings b CROSS JOIN LATERAL generate_series(b.check_in_date::timestamp,(b.check_out_date-1)::timestamp,interval '1 day') d WHERE b.id=?",i,b);
             return i;
@@ -189,6 +197,15 @@ class InventoryCapacityIntegrationTest {
             assertThat(offer.totalStay()).isEqualByComparingTo("2000000");
             assertThat(offer.eligible()).isTrue();
         });
+        var twoRooms = offers.search(property, new InventoryOfferRequest(DAY, DAY.plusDays(2), "VND",
+                InventoryBookingRequest.PaymentMode.FULL_PREPAY,
+                java.util.List.of(new InventoryOfferRequest.RoomOccupancy(2, java.util.List.of(7)),
+                        new InventoryOfferRequest.RoomOccupancy(2, java.util.List.of(7)))));
+        assertThat(twoRooms.offers()).singleElement().satisfies(offer -> {
+            assertThat(offer.availableQuantity()).isEqualTo(1);
+            assertThat(offer.eligible()).isFalse();
+            assertThat(offer.totalStay()).isNull();
+        });
 
         db.update("DELETE FROM type_day_inventory WHERE room_type_id=? AND stay_date=?", type, DAY.plusDays(1));
         var missingCalendar = offers.search(property, request);
@@ -215,6 +232,33 @@ class InventoryCapacityIntegrationTest {
             assertThat(offer.availableQuantity()).isZero();
             assertThat(offer.eligible()).isFalse();
         });
+    }
+    @Test void oneBookingCanHoldDifferentTypesOnSamePropertyWithoutDoubleCountingPools() {
+        long secondType = management.createType(host, property,
+                new RoomTypeRequest("Family", RoomTypeRequest.InventorySaleMode.ROOM_BASED, 1, 3, 4));
+        long secondPlan = management.createPlan(host, property, secondType,
+                new RatePlanRequest("Family plan", "s0-policy-v1", new java.math.BigDecimal("1500000"),
+                        Set.of(RatePlanRequest.PaymentMode.FULL_PREPAY), Set.of()));
+        db.update("INSERT INTO type_day_inventory(room_type_id,stay_date,total) VALUES (?,?,1)", secondType, DAY);
+        item(booking, secondType, secondPlan);
+
+        capacity.holdAll(booking, java.time.Instant.now().plusSeconds(900));
+
+        assertThat(db.queryForObject("SELECT count(DISTINCT room_type_id) FROM inventory_commitments WHERE state='HELD' AND item_id IN (SELECT id FROM booking_items WHERE booking_id=?)", Integer.class, booking)).isEqualTo(2);
+        assertThat(db.queryForObject("SELECT sum(quantity) FROM inventory_commitments WHERE room_type_id=? AND stay_date=? AND state='HELD'", Integer.class, type, DAY)).isEqualTo(1);
+        assertThat(db.queryForObject("SELECT sum(quantity) FROM inventory_commitments WHERE room_type_id=? AND stay_date=? AND state='HELD'", Integer.class, secondType, DAY)).isEqualTo(1);
+    }
+    @Test void halfOpenAdjacentInventoryStaysCanBothHold() {
+        capacity.holdAll(booking,java.time.Instant.now().plusSeconds(900));
+        long adjacent=booking("CANCELLED");
+        db.update("UPDATE bookings SET check_in_date=?,check_out_date=? WHERE id=?",DAY.plusDays(1),DAY.plusDays(2),adjacent);
+        long adjacentItem=item(adjacent,plan);
+        db.update("INSERT INTO type_day_inventory(room_type_id,stay_date,total) VALUES (?,?,1)",type,DAY.plusDays(1));
+
+        capacity.holdAll(adjacent,java.time.Instant.now().plusSeconds(900));
+
+        assertThat(db.queryForObject("SELECT count(*) FROM inventory_commitments WHERE room_type_id=? AND state='HELD'",Integer.class,type)).isEqualTo(2);
+        assertThat(db.queryForObject("SELECT count(DISTINCT stay_date) FROM inventory_commitments WHERE item_id IN (?,?)",Integer.class,item,adjacentItem)).isEqualTo(2);
     }
     @Test void offerSearchUsesPerRoomOccupancySharedPlanStockAndFailsClosed() {
         db.update("UPDATE properties SET status='ACTIVE' WHERE id=?", property);
@@ -259,6 +303,71 @@ class InventoryCapacityIntegrationTest {
             assertThat(offer.eligible()).isFalse();
         });
         assertThat(sharedPlan).isPositive();
+    }
+    @Test void expiryAndHoldConversionRaceCannotResurrectReleasedInventory() throws Exception {
+        long pending = booking("PENDING_PAYMENT");
+        long selectedItem = item(pending, plan);
+        Instant deadline = java.time.Instant.now().minusSeconds(1);
+        capacity.holdAll(pending, deadline);
+        db.update("""
+                UPDATE bookings SET payment_mode='FULL_PREPAY',inventory_policy_version='s0-policy-v1',
+                    inventory_idempotency_key='expiry-race',inventory_request_hash=?,inventory_hold_expires_at=?
+                WHERE id=?
+                """, "a".repeat(64), java.sql.Timestamp.from(deadline), pending);
+
+        var gate = new CyclicBarrier(2);
+        var pool = Executors.newFixedThreadPool(2);
+        try {
+            Future<?> expiry = pool.submit(() -> tx.execute(status -> {
+                await(gate);
+                bookings.expire(pending);
+                return null;
+            }));
+            Future<Boolean> conversion = pool.submit(() -> {
+                try {
+                    tx.execute(status -> {
+                        await(gate);
+                        capacity.confirmAll(pending);
+                        return null;
+                    });
+                    return true;
+                } catch (RuntimeException expectedAfterExpiry) {
+                    return false;
+                }
+            });
+            expiry.get(8, TimeUnit.SECONDS);
+            assertThat(conversion.get(8, TimeUnit.SECONDS)).isFalse();
+        } finally {
+            pool.shutdownNow();
+            assertThat(pool.awaitTermination(8, TimeUnit.SECONDS)).isTrue();
+        }
+        assertThat(db.queryForObject("SELECT status FROM bookings WHERE id=?", String.class, pending)).isEqualTo("CANCELLED");
+        assertThat(db.queryForObject("SELECT state FROM inventory_commitments WHERE item_id=?", String.class, selectedItem)).isEqualTo("RELEASED");
+    }
+    @Test void quoteIsServerPricedModeBoundAndDoesNotReserveInventory() {
+        db.update("UPDATE properties SET status='ACTIVE' WHERE id=?", property);
+        db.update("UPDATE rate_plans SET nightly_price=1000000 WHERE id=?", plan);
+        long guest = db.queryForObject("INSERT INTO users(email,password_hash,full_name,role,status) VALUES (?,?, 'Quote guest','GUEST','ACTIVE') RETURNING id",
+                Long.class, "quote-" + java.util.UUID.randomUUID() + "@test.local", "hash");
+        var request = new BookingQuoteRequest(property, DAY, DAY.plusDays(1), "VND",
+                InventoryBookingRequest.PaymentMode.HYBRID_DEPOSIT, 1, 2, java.util.List.of(7),
+                java.util.List.of(new InventoryBookingRequest.Item(type, plan, 1,
+                        java.util.List.of(new InventoryBookingRequest.RoomAllocation(2, java.util.List.of(7))))), null);
+
+        var quote = quotes.quote(guest, request);
+
+        assertThat(quote.paymentMode()).isEqualTo(InventoryBookingRequest.PaymentMode.HYBRID_DEPOSIT);
+        assertThat(quote.totalStay()).isEqualByComparingTo("1000000");
+        assertThat(quote.dueOnline()).isEqualByComparingTo("200000");
+        assertThat(quote.balanceDueHost()).isEqualByComparingTo("800000");
+        assertThat(quote.quoteHash()).matches("[a-f0-9]{64}");
+        assertThat(quote.quoteExpiresAt()).isAfter(java.time.Instant.now());
+        var accepted = quotes.verifyConsent(guest, quote.quoteId(), quote.policyVersion(), quote.fixtureVersion(), quote.quoteHash());
+        assertThat(accepted.quote()).isEqualTo(quote);
+        assertThatThrownBy(() -> quotes.verifyConsent(guest, quote.quoteId(), quote.policyVersion(), quote.fixtureVersion(), "0".repeat(64)))
+                .isInstanceOf(com.stayhub.common.exception.ConflictException.class);
+        assertThat(db.queryForObject("SELECT count(*) FROM inventory_quotes WHERE quote_id=?", Integer.class, quote.quoteId())).isEqualTo(1);
+        assertThat(db.queryForObject("SELECT count(*) FROM inventory_commitments WHERE item_id=?", Integer.class, item)).isZero();
     }
     @Test void holdConversionReleaseAndStopSale() {
         hold(item);
@@ -415,6 +524,10 @@ class InventoryCapacityIntegrationTest {
             Thread.sleep(5);
         } while (System.nanoTime()<end);
         throw new AssertionError("PostgreSQL did not observe backend "+waiter+" blocked by "+blocker);
+    }
+    void await(CyclicBarrier gate) {
+        try { gate.await(3, TimeUnit.SECONDS); }
+        catch (Exception exception) { throw new IllegalStateException(exception); }
     }
 
     void archive(boolean typeArchive) {

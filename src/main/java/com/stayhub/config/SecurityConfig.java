@@ -41,11 +41,11 @@ public class SecurityConfig {
                 .requestMatchers("/", "/home", "/css/**", "/js/**", "/images/**", "/uploads/**").permitAll()
                 .requestMatchers("/login", "/register", "/register/verify", "/payments/vnpay/return").permitAll()
                 .requestMatchers(HttpMethod.GET,
-                        "/properties", "/properties/*",
-                        "/api/v1/properties", "/api/v1/properties/*",
-                        "/api/v1/amenities",
-                        "/api/v1/payments/vnpay/ipn",
-                        "/api/v1/payments/vnpay/status").permitAll()
+                         "/properties", "/properties/*",
+                         "/api/v1/properties", "/api/v1/properties/*",
+                         "/api/v1/amenities",
+                         "/api/v1/payments/vnpay/ipn").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/payments/vnpay/status").authenticated()
                 .requestMatchers(HttpMethod.POST, "/api/v1/bookings/check-availability").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/v1/properties/*/availability").permitAll()
                 .requestMatchers("/admin/**", "/api/v1/admin/**").hasRole("ADMIN")                

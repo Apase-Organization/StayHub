@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.stayhub.common.exception.BusinessException;
 import com.stayhub.common.exception.ConflictException;
 import com.stayhub.common.exception.ResourceNotFoundException;
+import com.stayhub.common.validation.StayDatePolicy;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.nio.ByteBuffer;
@@ -12,13 +13,14 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalTime;
 import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.Set;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,17 +32,40 @@ public class InventoryBookingService {
     private final JdbcTemplate jdbc;
     private final InventoryCapacityService capacity;
     private final ObjectMapper mapper;
+    private final InventoryDiscountReservationService discounts;
 
-    public InventoryBookingService(JdbcTemplate jdbc, InventoryCapacityService capacity, ObjectMapper mapper) {
+    @Autowired
+    public InventoryBookingService(JdbcTemplate jdbc, InventoryCapacityService capacity, ObjectMapper mapper,
+                                   InventoryDiscountReservationService discounts) {
         this.jdbc = jdbc;
         this.capacity = capacity;
         this.mapper = mapper;
+        this.discounts = discounts;
+    }
+
+    public InventoryBookingService(JdbcTemplate jdbc, InventoryCapacityService capacity, ObjectMapper mapper) {
+        this(jdbc,capacity,mapper,null);
     }
 
     @Transactional
     public HoldCreated create(long guestId, InventoryBookingRequest request) {
+        return createInternal(guestId, request, null);
+    }
+
+    @Transactional
+    public HoldCreated createQuoted(long guestId, InventoryBookingRequest request, BookingPricing pricing) {
+        if (pricing == null || pricing.quoteHash() == null) throw new IllegalArgumentException("verified quote pricing required");
+        HoldCreated created=createInternal(guestId, request, pricing);
+        if(pricing.discountCodeId()!=null && pricing.discount().signum()>0) {
+            if(discounts==null) throw new IllegalStateException("discount reservation service unavailable");
+            discounts.reserve(created.bookingId(),guestId,pricing.discountCodeId(),pricing.discountCode(),pricing.discount(),created.expiresAt());
+        }
+        return created;
+    }
+
+    private HoldCreated createInternal(long guestId, InventoryBookingRequest request, BookingPricing pricing) {
         validate(request);
-        String requestHash = hash(request);
+        String requestHash = pricing == null || pricing.requestHash() == null ? hash(request) : pricing.requestHash();
         jdbc.execute("SELECT pg_advisory_xact_lock(" + advisoryKey(guestId, request.idempotencyKey()) + ")");
         List<HoldCreated> replay = jdbc.query("""
                 SELECT id,inventory_request_hash,inventory_hold_expires_at FROM bookings
@@ -59,12 +84,7 @@ public class InventoryBookingService {
                 rs.getBigDecimal("cleaning_fee"), rs.getString("timezone")), request.propertyId()).stream().findFirst()
                 .orElseThrow(() -> new ResourceNotFoundException("Property not found"));
         if (property.saleMode() == null) invalid("ERR_ROOM_NOT_AVAILABLE", "The property has no configured room inventory.");
-        int nights = Math.toIntExact(request.checkOut().toEpochDay() - request.checkIn().toEpochDay());
-        LocalDate today = LocalDate.now(ZoneId.of("Asia/Ho_Chi_Minh"));
-        if (nights < 1 || nights > 30 || request.checkIn().isBefore(today))
-            invalid("ERR_INVALID_DATES", "Stay dates must be 1 to 30 nights and cannot start in the past.");
-        if (request.checkIn().equals(today) && !LocalTime.now(ZoneId.of("Asia/Ho_Chi_Minh")).isBefore(LocalTime.of(20, 0)))
-            invalid("ERR_SAME_DAY_CUTOFF", "Same-day bookings must be created before 20:00 local time.");
+        int nights = StayDatePolicy.validate(request.checkIn(), request.checkOut(), ZonedDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh")));
 
         List<PlanSnapshot> plans = new ArrayList<>();
         Set<Long> types = new HashSet<>();
@@ -123,17 +143,32 @@ public class InventoryBookingService {
         try { cleaningFee = property.cleaningFee().setScale(0, RoundingMode.UNNECESSARY); }
         catch (ArithmeticException e) { invalid("ERR_INVALID_AMOUNT", "The property cleaning fee must use whole VND."); return null; }
         BigDecimal subtotal = roomTotal.add(cleaningFee);
-        if (roomTotal.signum() <= 0 || subtotal.signum() <= 0) invalid("ERR_NONPOSITIVE_BOOKING_AMOUNT", "A booking total must be positive.");
+        BigDecimal discountAmount = BigDecimal.ZERO;
+        BigDecimal totalPrice = subtotal;
+        if (pricing != null) {
+            if (roomTotal.compareTo(pricing.roomCharges())!=0 || cleaningFee.compareTo(pricing.cleaningFee())!=0
+                    || !POLICY_VERSION.equals(pricing.policyVersion()) || !"s0-fixtures-v1".equals(pricing.fixtureVersion()))
+                throw new ConflictException("ERR_QUOTE_STALE", "Current inventory price no longer matches the accepted quote.");
+            discountAmount = pricing.discount();
+            subtotal = pricing.subtotal();
+            totalPrice = pricing.totalStay();
+            if (subtotal.compareTo(roomTotal.add(cleaningFee))!=0 || discountAmount.signum()<0
+                    || totalPrice.compareTo(subtotal.subtract(discountAmount))!=0)
+                invalid("ERR_INVALID_AMOUNT", "Quoted booking totals do not reconcile.");
+        }
+        if (roomTotal.signum() <= 0 || subtotal.signum() <= 0 || totalPrice.signum() <= 0)
+            invalid("ERR_NONPOSITIVE_BOOKING_AMOUNT", "A booking total must be positive.");
         BigDecimal headerNightly = roomTotal.divide(BigDecimal.valueOf(roomNights), 2, RoundingMode.HALF_UP);
 
         Long bookingId = jdbc.queryForObject("""
                 INSERT INTO bookings(property_id,guest_id,check_in_date,check_out_date,guests,nightly_price,cleaning_fee,
-                    service_fee,subtotal_price,discount_amount,total_price,status,payment_mode,inventory_policy_version,
+                    service_fee,subtotal_price,discount_code_id,discount_amount,total_price,status,payment_mode,inventory_policy_version,
                     inventory_idempotency_key,inventory_request_hash,inventory_hold_expires_at)
-                VALUES (?,?,?,?,?,?,?,0,?,0,?,'PENDING_PAYMENT',?,?,?, ?,CURRENT_TIMESTAMP+interval '15 minutes')
+                VALUES (?,?,?,?,?,?,?,0,?,?,?,?, 'PENDING_PAYMENT',?,?,?, ?,CURRENT_TIMESTAMP+interval '15 minutes')
                 RETURNING id
                 """, Long.class, request.propertyId(), guestId, request.checkIn(), request.checkOut(), adults + children,
-                headerNightly, cleaningFee, subtotal, subtotal, request.paymentMode().name(), POLICY_VERSION,
+                headerNightly, cleaningFee, subtotal, pricing == null ? null : pricing.discountCodeId(), discountAmount,
+                totalPrice, request.paymentMode().name(), POLICY_VERSION,
                 request.idempotencyKey(), requestHash);
 
         // Establish the global order before row triggers and the hold service: booking, sorted types, sorted plans, sorted days.
@@ -143,11 +178,13 @@ public class InventoryBookingService {
         List<InventoryBookingRequest.Item> sortedItems = request.items().stream().sorted(
                 java.util.Comparator.comparingLong(InventoryBookingRequest.Item::roomTypeId)
                         .thenComparingLong(InventoryBookingRequest.Item::ratePlanId)).toList();
+        List<SnapshotRow> snapshots = new ArrayList<>();
         for (InventoryBookingRequest.Item item : sortedItems) {
             PlanSnapshot plan = plans.stream().filter(p -> p.typeId() == item.roomTypeId() && p.planId() == item.ratePlanId()).findFirst().orElseThrow();
             String policySnapshot = json(new PolicySnapshot(POLICY_VERSION, property.timezone(), property.saleMode(),
                     request.currency(), request.paymentMode(), plan.typeName(), plan.planName(), plan.policyVersion(),
-                    plan.allowedModes(), plan.nightlyPrice(), plan.typeVersion(), plan.planVersion()));
+                    plan.allowedModes(), plan.nightlyPrice(), plan.typeVersion(), plan.planVersion(),
+                    pricing == null ? null : pricing.quoteHash()));
             long itemId = jdbc.queryForObject("""
                     INSERT INTO booking_items(booking_id,property_id,room_type_id,rate_plan_id,quantity,
                         max_adults_snapshot,max_occupants_snapshot,type_plan_policy_snapshot)
@@ -160,12 +197,20 @@ public class InventoryBookingService {
                 jdbc.update("INSERT INTO room_allocations(item_id,room_ordinal,adults,children_ages) VALUES (?,?,?,?::jsonb)",
                         itemId, ordinal, allocation.adults(), json(allocation.childrenAges()));
                 for (LocalDate date = request.checkIn(); date.isBefore(request.checkOut()); date = date.plusDays(1)) {
-                    jdbc.update("""
-                            INSERT INTO nightly_snapshots(item_id,room_ordinal,stay_date,room_charge,fees,taxes,discount_allocation,policy_snapshot)
-                            VALUES (?,?,?,?::inventory_vnd,0,0,0,?::jsonb)
-                            """, itemId, ordinal, date, plan.nightlyPrice(), policySnapshot);
+                    snapshots.add(new SnapshotRow(itemId, ordinal, date, plan.nightlyPrice(), BigDecimal.ZERO,
+                            BigDecimal.ZERO, policySnapshot));
                 }
             }
+        }
+        if (!snapshots.isEmpty()) snapshots.set(0, snapshots.getFirst().withFees(cleaningFee));
+        List<BigDecimal> discountAllocations = allocateDiscount(snapshots, discountAmount, subtotal);
+        for (int index = 0; index < snapshots.size(); index++) {
+            SnapshotRow row = snapshots.get(index);
+            jdbc.update("""
+                    INSERT INTO nightly_snapshots(item_id,room_ordinal,stay_date,room_charge,fees,taxes,discount_allocation,policy_snapshot)
+                    VALUES (?,?,?,?::inventory_vnd,?::inventory_vnd,?::inventory_vnd,?::inventory_vnd,?::jsonb)
+                    """, row.itemId(), row.ordinal(), row.date(), row.roomCharge(), row.fees(), row.taxes(),
+                    discountAllocations.get(index), row.policySnapshot());
         }
         Instant expires = jdbc.queryForObject("SELECT inventory_hold_expires_at FROM bookings WHERE id=?", java.sql.Timestamp.class, bookingId).toInstant();
         capacity.holdAll(bookingId, expires);
@@ -180,22 +225,58 @@ public class InventoryBookingService {
                 """, bookingId, guestId);
         if (changed != 1) throw new ResourceNotFoundException("Active booking hold not found");
         capacity.releaseAll(bookingId);
+        if(discounts!=null) discounts.release(bookingId);
     }
 
     @Transactional
     public void expire(long bookingId) {
         int changed = jdbc.update("""
                 UPDATE bookings SET status='CANCELLED',cancelled_at=clock_timestamp(),inventory_version=inventory_version+1
-                WHERE id=? AND status='PENDING_PAYMENT' AND inventory_hold_expires_at<=clock_timestamp()
+                WHERE id=? AND status='PENDING_PAYMENT' AND inventory_hold_expires_at IS NOT NULL AND (
+                    inventory_hold_expires_at<=clock_timestamp() OR (
+                        (SELECT count(*) FROM payment_attempts a WHERE a.booking_id=bookings.id)=3
+                        AND NOT EXISTS (SELECT 1 FROM payment_collections c WHERE c.booking_id=bookings.id AND c.disposition='ACCEPTED')
+                        AND NOT EXISTS (SELECT 1 FROM payment_attempts a WHERE a.booking_id=bookings.id AND NOT (
+                            EXISTS (SELECT 1 FROM payment_attempt_outcomes o WHERE o.attempt_id=a.id AND o.outcome='CREATION_FAILED')
+                            OR EXISTS (SELECT 1 FROM inventory_provider_events e WHERE e.attempt_id=a.id AND e.disposition='FAILED')
+                        ))
+                    )
+                )
                 """, bookingId);
-        if (changed == 1) capacity.releaseAll(bookingId);
+        if (changed == 1) {
+            jdbc.update("""
+                    UPDATE payments SET status=CASE
+                        WHEN (SELECT inventory_hold_expires_at FROM bookings WHERE id=?)<=clock_timestamp()
+                        THEN 'EXPIRED' ELSE 'FAILED' END
+                    WHERE booking_id=? AND status='PENDING'
+                    """,bookingId,bookingId);
+            List<String> paymentStatuses=jdbc.queryForList("SELECT status FROM payments WHERE booking_id=? AND status IN ('FAILED','EXPIRED')",String.class,bookingId);
+            if(!paymentStatuses.isEmpty()) {
+                String paymentStatus=paymentStatuses.getFirst();
+                String eventType="EXPIRED".equals(paymentStatus)?"PAYMENT_EXPIRED":"PAYMENT_FAILED";
+                jdbc.update("""
+                        INSERT INTO inventory_payment_outbox(booking_id,event_type,event_key,payment_status)
+                        VALUES (?,?,?,?) ON CONFLICT (event_key) DO NOTHING
+                        """,bookingId,eventType,"booking-terminal:"+bookingId,paymentStatus);
+            }
+            capacity.releaseAll(bookingId);
+            if(discounts!=null) discounts.release(bookingId);
+        }
     }
 
     @Transactional(readOnly = true)
     public List<Long> findExpired(int limit) {
         return jdbc.queryForList("""
-                SELECT id FROM bookings WHERE status='PENDING_PAYMENT' AND inventory_hold_expires_at<=clock_timestamp()
-                ORDER BY inventory_hold_expires_at,id LIMIT ?
+                SELECT b.id FROM bookings b WHERE b.status='PENDING_PAYMENT' AND b.inventory_hold_expires_at IS NOT NULL AND (
+                    b.inventory_hold_expires_at<=clock_timestamp() OR (
+                        (SELECT count(*) FROM payment_attempts a WHERE a.booking_id=b.id)=3
+                        AND NOT EXISTS (SELECT 1 FROM payment_collections c WHERE c.booking_id=b.id AND c.disposition='ACCEPTED')
+                        AND NOT EXISTS (SELECT 1 FROM payment_attempts a WHERE a.booking_id=b.id AND NOT (
+                            EXISTS (SELECT 1 FROM payment_attempt_outcomes o WHERE o.attempt_id=a.id AND o.outcome='CREATION_FAILED')
+                            OR EXISTS (SELECT 1 FROM inventory_provider_events e WHERE e.attempt_id=a.id AND e.disposition='FAILED')
+                        ))
+                    )
+                ) ORDER BY b.inventory_hold_expires_at,b.id LIMIT ?
                 """, Long.class, Math.max(1, Math.min(limit, 500)));
     }
 
@@ -214,6 +295,24 @@ public class InventoryBookingService {
     private String json(Object value) {
         try { return mapper.writeValueAsString(value); }
         catch (JsonProcessingException e) { throw new IllegalStateException("Cannot encode inventory snapshot", e); }
+    }
+    private List<BigDecimal> allocateDiscount(List<SnapshotRow> rows, BigDecimal discount, BigDecimal subtotal) {
+        List<BigDecimal> allocations = new ArrayList<>(rows.size());
+        List<DiscountRemainder> remainders = new ArrayList<>(rows.size());
+        BigDecimal allocated = BigDecimal.ZERO;
+        for (int index=0; index<rows.size(); index++) {
+            SnapshotRow row=rows.get(index);
+            BigDecimal base=row.roomCharge().add(row.fees()).add(row.taxes());
+            BigDecimal numerator=discount.multiply(base);
+            BigDecimal floor=numerator.divide(subtotal,0,RoundingMode.DOWN);
+            allocations.add(floor);
+            allocated=allocated.add(floor);
+            remainders.add(new DiscountRemainder(index,numerator.subtract(floor.multiply(subtotal))));
+        }
+        int remaining=discount.subtract(allocated).intValueExact();
+        remainders.sort(java.util.Comparator.comparing(DiscountRemainder::remainder).reversed().thenComparingInt(DiscountRemainder::index));
+        for(int i=0;i<remaining;i++) allocations.set(remainders.get(i).index(),allocations.get(remainders.get(i).index()).add(BigDecimal.ONE));
+        return allocations;
     }
     private boolean planStopSale(String json, LocalDate checkIn, LocalDate checkOut) {
         try {
@@ -234,6 +333,10 @@ public class InventoryBookingService {
     }
     private static void invalid(String code, String message) { throw new BusinessException(code, message); }
     public record HoldCreated(long bookingId, Instant expiresAt, boolean replayed) {}
+    public record BookingPricing(BigDecimal roomCharges, BigDecimal cleaningFee, BigDecimal subtotal,
+                                 BigDecimal discount, BigDecimal totalStay, Long discountCodeId,
+                                 String discountCode, String quoteHash, String policyVersion,
+                                 String fixtureVersion, String requestHash) {}
     private record PropertySnapshot(long id, String saleMode, BigDecimal cleaningFee, String timezone) {}
     private record PlanSnapshot(long typeId, String typeName, String saleMode, String typeStatus, int maxAdults,
                                 int maxOccupants, int baseQuantity, long typeVersion, long planId, String planName,
@@ -243,5 +346,10 @@ public class InventoryBookingService {
     private record PolicySnapshot(String policyVersion, String timezone, String saleMode, String currency,
                                   InventoryBookingRequest.PaymentMode paymentMode, String roomTypeName, String ratePlanName,
                                   String planPolicyVersion, String allowedPaymentModes, BigDecimal nightlyPrice,
-                                  long typeVersion, long planVersion) {}
+                                  long typeVersion, long planVersion, String quoteHash) {}
+    private record SnapshotRow(long itemId,int ordinal,LocalDate date,BigDecimal roomCharge,BigDecimal fees,
+                               BigDecimal taxes,String policySnapshot) {
+        SnapshotRow withFees(BigDecimal value) { return new SnapshotRow(itemId,ordinal,date,roomCharge,value,taxes,policySnapshot); }
+    }
+    private record DiscountRemainder(int index,BigDecimal remainder) {}
 }

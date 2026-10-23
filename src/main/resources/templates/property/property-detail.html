@@ -75,7 +75,13 @@
                 <div id="offer-results" class="mt-4 space-y-3"></div>
                 <div id="selection-summary" class="mt-5 hidden rounded-2xl border border-primary-200 bg-primary-50 p-4">
                     <h3 class="font-black">Selected rooms</h3><ul id="selected-offers" class="mt-2 list-disc space-y-1 pl-5 text-sm"></ul>
-                    <p class="mt-3 text-xs text-text-gray">Selections are advisory. A server quote and explicit consent are required before checkout; booking/checkout is not enabled on this screen yet.</p>
+                    <p class="mt-3 text-xs text-text-gray">Selection is advisory. Ask for a server quote before confirming; the quote will be revalidated when submitted.</p>
+                    <button id="request-quote" type="button" class="mt-4 rounded-xl bg-text-900 px-4 py-3 font-bold text-white">Review server quote</button>
+                    <div id="quote-panel" class="mt-4 hidden space-y-3 rounded-xl border border-primary-200 bg-white p-4">
+                        <p id="quote-summary" class="text-sm font-semibold"></p>
+                        <label class="flex items-start gap-3 text-sm"><input id="quote-consent" type="checkbox" class="mt-1"><span>I reviewed and accept this quote and its policy version.</span></label>
+                        <button id="confirm-quote" type="button" disabled class="rounded-xl bg-primary-500 px-4 py-3 font-bold text-white disabled:cursor-not-allowed disabled:bg-slate-300">Confirm and continue to payment</button>
+                    </div>
                 </div>
             </section>
 
@@ -129,6 +135,8 @@
     const offerStatus = document.getElementById('offer-status');
     const offerResults = document.getElementById('offer-results');
     const selectedOffers = [];
+    let acceptedQuote = null;
+    let checkoutKey = null;
     const formatVnd = value => Number(value).toLocaleString('en-US', {maximumFractionDigits: 0});
 
     function renderOccupancies() {
@@ -144,8 +152,13 @@
     function invalidateOffers() {
         offerResults.replaceChildren();
         selectedOffers.length = 0;
+        acceptedQuote = null;
+        checkoutKey = null;
         document.getElementById('selected-offers').replaceChildren();
         document.getElementById('selection-summary').classList.add('hidden');
+        document.getElementById('quote-panel').classList.add('hidden');
+        document.getElementById('quote-consent').checked = false;
+        document.getElementById('confirm-quote').disabled = true;
         offerStatus.textContent = 'Selection changed. Search again to refresh eligible offers.';
     }
     function getOccupancies() {
@@ -158,14 +171,36 @@
             return {adults, childrenAges};
         });
     }
-    function addOffer(offer, occupancies) {
-        selectedOffers.push({offer, occupancies});
+    function addOffer(offer, selections) {
+        const alreadySelected = selectedOffers.filter(item => item.offer.roomTypeId === offer.roomTypeId)
+            .reduce((sum, item) => sum + item.roomOccupancies.length, 0);
+        if (alreadySelected + selections.length > offer.availableQuantity) {
+            offerStatus.textContent = 'The combined room quantity exceeds the shared stock. Search again.';
+            return;
+        }
+        const existing=selectedOffers.find(item=>item.offer.roomTypeId===offer.roomTypeId && item.offer.ratePlanId===offer.ratePlanId);
+        if(existing) existing.roomOccupancies.push(...selections);
+        else selectedOffers.push({offer, roomOccupancies: selections});
+        acceptedQuote = null;
+        checkoutKey = null;
         const summary = document.getElementById('selection-summary');
-        const item = document.createElement('li');
-        item.textContent = `${offer.requestedQuantity} × ${offer.roomTypeName} · ${offer.ratePlanName} · ${offer.priceBasis}`;
-        document.getElementById('selected-offers').append(item);
+        document.getElementById('selected-offers').replaceChildren();
+        selectedOffers.forEach(selection => {
+            const item = document.createElement('li');
+            item.textContent = `${selection.roomOccupancies.length} × ${selection.offer.roomTypeName} · ${selection.offer.ratePlanName} · ${selection.offer.priceBasis}`;
+            document.getElementById('selected-offers').append(item);
+        });
         summary.classList.remove('hidden');
-        offerStatus.textContent = 'Selection saved locally. Search again after any change; final stock and price require a server quote.';
+        const assignedRooms = new Set(selectedOffers.flatMap(selection => selection.roomOccupancies.map(room => room.index)));
+        offerResults.querySelectorAll('[data-room-index]').forEach(input => {
+            if (assignedRooms.has(Number(input.dataset.roomIndex))) input.disabled = true;
+        });
+        document.getElementById('quote-panel').classList.add('hidden');
+        document.getElementById('quote-consent').checked = false;
+        document.getElementById('confirm-quote').disabled = true;
+        offerStatus.textContent = assignedRooms.size === Number(roomCount.value)
+            ? 'All rooms are assigned. Review the selected items and request a server quote.'
+            : `Selection saved. Assign ${Number(roomCount.value)-assignedRooms.size} remaining room(s).`;
     }
     document.getElementById('offer-search').addEventListener('submit', async event => {
         event.preventDefault();
@@ -191,7 +226,9 @@
                 const card = document.createElement('article');
                 card.className = 'rounded-2xl border border-border bg-white p-4';
                 const availability = data.liveAvailabilityChecked ? (offer.eligible ? `Available: ${offer.availableQuantity} for this stay` : offer.unavailableReason) : 'Live stock not checked';
-                const total = offer.totalStay == null ? 'Indicative total shown after dates are selected' : `${formatVnd(offer.totalStay)} VND total for ${offer.requestedQuantity} room(s), ${offer.nights} night(s)`;
+                const total = offer.totalStay == null
+                    ? (data.liveAvailabilityChecked ? `Choose up to ${offer.availableQuantity} compatible room(s); total updates for your selection.` : 'Indicative total shown after dates are selected')
+                    : `${formatVnd(offer.totalStay)} VND total for ${offer.requestedQuantity} room(s), ${offer.nights} night(s)`;
                 const heading = document.createElement('h3'); heading.className = 'font-black';
                 heading.textContent = `${offer.roomTypeName} · ${offer.ratePlanName}`;
                 const price = document.createElement('span'); price.className = 'text-sm font-bold';
@@ -205,10 +242,29 @@
                 top.append(details, price);
                 card.append(top, totalLine, stockLine);
                 if (offer.eligible && data.liveAvailabilityChecked) {
+                    const allocationPicker = document.createElement('fieldset');
+                    allocationPicker.className = 'mt-3 flex flex-wrap gap-3';
+                    const legend = document.createElement('legend'); legend.className = 'mb-2 text-sm font-bold';
+                    legend.textContent = 'Assign rooms to this type'; allocationPicker.append(legend);
+                    roomOccupancies.forEach((room,index) => {
+                        const alreadyUsed=selectedOffers.some(selection=>selection.roomOccupancies.some(selected=>selected.index===index));
+                        const label=document.createElement('label'); label.className='flex items-center gap-2 text-sm';
+                        const checkbox=document.createElement('input'); checkbox.type='checkbox'; checkbox.dataset.roomIndex=String(index);
+                        checkbox.checked=false; checkbox.disabled=alreadyUsed || !offer.eligibleRoomOrdinals.includes(index+1); checkbox.className='h-4 w-4';
+                        const text=document.createElement('span');
+                        text.textContent=`Room ${index+1}: ${room.adults} adult(s), ${room.childrenAges.length} child(ren)`;
+                        label.append(checkbox,text); allocationPicker.append(label);
+                    });
                     const button = document.createElement('button');
                     button.type = 'button'; button.className = 'mt-3 rounded-xl border border-primary-500 px-4 py-2 font-bold text-primary-700';
-                    button.textContent = 'Add selection'; button.addEventListener('click', () => addOffer(offer, roomOccupancies));
-                    card.append(button);
+                    button.textContent = 'Add selected rooms';
+                    button.addEventListener('click', () => {
+                        const indices=[...allocationPicker.querySelectorAll('input:checked')].map(input=>Number(input.dataset.roomIndex));
+                        if(!indices.length) { offerStatus.textContent='Select at least one room allocation for this item.'; return; }
+                        const selected=indices.map(index=>({...roomOccupancies[index],index}));
+                        addOffer(offer,selected);
+                    });
+                    card.append(allocationPicker,button);
                 }
                 offerResults.append(card);
             });
@@ -219,6 +275,65 @@
     roomCount.addEventListener('change', renderOccupancies);
     occupancyRoot.addEventListener('input', invalidateOffers);
     ['offer-check-in', 'offer-check-out', 'offer-payment-mode'].forEach(id => document.getElementById(id).addEventListener('change', invalidateOffers));
+    document.getElementById('quote-consent').addEventListener('change', event => {
+        document.getElementById('confirm-quote').disabled = !event.target.checked || !acceptedQuote;
+    });
+    document.getElementById('request-quote').addEventListener('click', async () => {
+        if (!selectedOffer) return;
+        if (!selectedOffers.length) return;
+        const items=selectedOffers.map(selection=>({roomTypeId:selection.offer.roomTypeId,
+            ratePlanId:selection.offer.ratePlanId,quantity:selection.roomOccupancies.length,
+            roomAllocations:selection.roomOccupancies.map(({index,...room})=>room)}));
+        const occupancies=items.flatMap(item=>item.roomAllocations);
+        const childrenAges = occupancies.flatMap(room => room.childrenAges).sort((a,b) => a-b);
+        const quoteRequest = {
+            propertyId, checkIn: document.getElementById('offer-check-in').value,
+            checkOut: document.getElementById('offer-check-out').value, currency: 'VND',
+            paymentMode: document.getElementById('offer-payment-mode').value,
+            rooms: occupancies.length, adults: occupancies.reduce((sum, room) => sum + room.adults, 0),
+            childrenAges,
+            items
+        };
+        offerStatus.textContent = 'Creating a server quote…';
+        try {
+            const response = await fetch('/api/v1/booking-quotes', {method:'POST',
+                headers:{'Content-Type':'application/json',[csrfHeader]:csrfToken}, body:JSON.stringify(quoteRequest)});
+            const payload = await response.json();
+            if (!response.ok || !payload.success) throw new Error(response.status === 409 ? `409: ${payload.message}` : payload.message || 'Unable to create a quote.');
+            acceptedQuote = payload.data;
+            checkoutKey = crypto.randomUUID();
+            document.getElementById('quote-summary').textContent =
+                `${formatVnd(acceptedQuote.totalStay)} VND total · Pay online ${formatVnd(acceptedQuote.dueOnline)} VND · Direct Host balance ${formatVnd(acceptedQuote.balanceDueHost)} VND · expires ${acceptedQuote.quoteExpiresAt}`;
+            document.getElementById('quote-panel').classList.remove('hidden');
+            document.getElementById('quote-consent').checked = false;
+            document.getElementById('confirm-quote').disabled = true;
+            offerStatus.textContent = 'Review the server total and consent before continuing.';
+        } catch (error) {
+            acceptedQuote = null;
+            offerStatus.textContent = error.message.includes('409') ? 'The quote is stale or coverage is unavailable. Search again and review a new offer.' : error.message;
+        }
+    });
+    document.getElementById('confirm-quote').addEventListener('click', async () => {
+        if (!acceptedQuote || !document.getElementById('quote-consent').checked || !checkoutKey) return;
+        try {
+            const response = await fetch('/api/v1/bookings', {method:'POST',
+                headers:{'Content-Type':'application/json',[csrfHeader]:csrfToken,'Idempotency-Key':checkoutKey},
+                body:JSON.stringify({quoteId:acceptedQuote.quoteId,acceptedPolicyVersion:acceptedQuote.policyVersion,
+                    acceptedFixtureVersion:acceptedQuote.fixtureVersion,acceptedQuoteHash:acceptedQuote.quoteHash})});
+            const payload = await response.json();
+            if (!response.ok || !payload.success) throw new Error(response.status === 409 ? `409: ${payload.message}` : payload.message || 'Unable to create the booking.');
+            window.location.assign(payload.data.checkoutUrl);
+        } catch (error) {
+            if (error.message.includes('409')) {
+                acceptedQuote = null;
+                checkoutKey = null;
+                document.getElementById('quote-panel').classList.add('hidden');
+                offerStatus.textContent = 'Inventory or quote changed. Search again and consent to a fresh quote.';
+            } else {
+                offerStatus.textContent = 'Checkout response was not received. Retry with the same quote; the same idempotency key prevents duplicate bookings.';
+            }
+        }
+    });
     renderOccupancies();
 </script>
 </body>

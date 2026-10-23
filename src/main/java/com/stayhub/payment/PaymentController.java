@@ -20,6 +20,8 @@ import org.springframework.web.bind.annotation.ResponseBody;
 @RequiredArgsConstructor
 public class PaymentController {
     private final PaymentService paymentService;
+    private final InventoryPaymentLifecycleService inventoryPaymentLifecycle;
+    private final InventoryPaymentStatusService inventoryPaymentStatus;
 
     @Value("${APP_LOCAL_URL:http://localhost:8080}")
     private String appLocalUrl;
@@ -36,19 +38,26 @@ public class PaymentController {
     @ResponseBody
     @GetMapping("/api/v1/payments/vnpay/ipn")
     public VnpayIpnResponse vnpayIpn(@RequestParam Map<String, String> params) {
+        VnpayIpnResponse inventoryResponse=inventoryPaymentLifecycle.handleInventoryIpn(params);
+        if(inventoryResponse!=null) return inventoryResponse;
         return paymentService.handleVnpayIpn(params);
     }
 
     @ResponseBody
     @GetMapping("/api/v1/payments/bookings/{bookingId}/status")
     public ApiResponse<PaymentStatusResponse> bookingPaymentStatus(@PathVariable Long bookingId,
-                                                                    @AuthenticationPrincipal UserPrincipal principal) {
+                                                                     @AuthenticationPrincipal UserPrincipal principal) {
+        PaymentStatusResponse inventoryStatus=inventoryPaymentStatus.findForGuest(principal.getId(),bookingId);
+        if(inventoryStatus!=null) return ApiResponse.success(inventoryStatus,"Payment status retrieved successfully.");
         return ApiResponse.success(paymentService.getPaymentStatus(principal.getId(), bookingId), "Payment status retrieved successfully.");
     }
 
     @ResponseBody
     @GetMapping("/api/v1/payments/vnpay/status")
-    public ApiResponse<PaymentStatusResponse> vnpayPaymentStatus(@RequestParam String txnRef) {
-        return ApiResponse.success(paymentService.getPaymentStatusByTxnRef(txnRef), "Payment status retrieved successfully.");
+    public ApiResponse<PaymentStatusResponse> vnpayPaymentStatus(@RequestParam String txnRef,
+                                                                 @AuthenticationPrincipal UserPrincipal principal) {
+        PaymentStatusResponse inventoryStatus=inventoryPaymentStatus.findByAttemptReference(principal.getId(),txnRef);
+        if(inventoryStatus!=null) return ApiResponse.success(inventoryStatus,"Payment status retrieved successfully.");
+        return ApiResponse.success(paymentService.getPaymentStatusByTxnRef(principal.getId(),txnRef), "Payment status retrieved successfully.");
     }
 }

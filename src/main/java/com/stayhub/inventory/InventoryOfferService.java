@@ -5,11 +5,11 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.stayhub.common.exception.BusinessException;
 import com.stayhub.common.exception.ResourceNotFoundException;
+import com.stayhub.common.validation.StayDatePolicy;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
-import java.time.ZoneId;
-import java.time.temporal.ChronoUnit;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -32,11 +32,8 @@ public class InventoryOfferService {
         boolean withDates = request.checkIn() != null || request.checkOut() != null;
         int nights = 0;
         if (withDates) {
-            LocalDate today = LocalDate.now(ZoneId.of("Asia/Ho_Chi_Minh"));
-            if (request.checkIn() == null || request.checkOut() == null || !request.checkIn().isBefore(request.checkOut())
-                    || request.checkIn().isBefore(today)) invalid("ERR_INVALID_DATES", "Provide a valid, future date range.");
-            nights = Math.toIntExact(ChronoUnit.DAYS.between(request.checkIn(), request.checkOut()));
-            if (nights > 30) invalid("ERR_INVALID_DATES", "Stay length must not exceed 30 nights.");
+            if (request.checkIn() == null || request.checkOut() == null) invalid("ERR_INVALID_DATES", "Provide both check-in and check-out dates.");
+            nights = StayDatePolicy.validate(request.checkIn(), request.checkOut(), ZonedDateTime.now(StayDatePolicy.ZONE));
         }
         if (!"VND".equals(request.currency())) invalid("ERR_INVALID_CURRENCY", "Only VND is supported.");
         PropertyContext property = jdbc.query("""
@@ -66,13 +63,16 @@ public class InventoryOfferService {
                     || type.nightlyPrice() == null) continue;
             List<String> modes = paymentModes(type.allowedModes());
             if (!modes.contains(request.paymentMode().name())) continue;
-            boolean occupancyFits = fits(type, request.roomOccupancies());
+            List<Integer> eligibleRooms = eligibleRoomOrdinals(type, request.roomOccupancies());
             Integer available = null;
             BigDecimal totalStay = null;
-            boolean eligible = occupancyFits;
-            String reason = occupancyFits ? null : "Room occupancy exceeds this type's per-room limits.";
+            boolean eligible = !eligibleRooms.isEmpty();
+            String reason = eligible ? null : "Room occupancy exceeds this type's per-room limits.";
             if (withDates) {
                 DayStock stock = stock(type.typeId(), request.checkIn(), request.checkOut(), nights);
+                // Report live stock independently of the number of occupancy rows
+                // in this search request. eligibleRoomOrdinals describes only the
+                // requested rooms; it is not an inventory capacity ceiling.
                 available = Math.min(type.baseQuantity(), stock.available());
                 if (planStopSale(type.pricingRestrictions(), request.checkIn(), request.checkOut())) {
                     available = 0;
@@ -90,12 +90,13 @@ public class InventoryOfferService {
                     eligible = false;
                     reason = "Not enough units are available for every night.";
                 }
-                if (eligible) totalStay = type.nightlyPrice().multiply(BigDecimal.valueOf(nights))
+                if (eligible) totalStay = type.nightlyPrice()
+                        .multiply(BigDecimal.valueOf(nights))
                         .multiply(BigDecimal.valueOf(request.roomOccupancies().size())).add(cleaningFee);
             }
             offers.add(new Offer(type.typeId(), type.typeName(), type.planId(), type.planName(),
                     type.nightlyPrice(), "VND per room per night; total includes one cleaning fee; tax not enabled",
-                    request.roomOccupancies().size(), type.baseQuantity(), available, nights, cleaningFee,
+                    request.roomOccupancies().size(), eligibleRooms, type.baseQuantity(), available, nights, cleaningFee,
                     BigDecimal.ZERO, totalStay, modes, eligible, reason));
         }
         offers.sort(java.util.Comparator.comparing(Offer::totalStay, java.util.Comparator.nullsLast(BigDecimal::compareTo))
@@ -122,11 +123,15 @@ public class InventoryOfferService {
                 Math.max(0, rs.getInt("available")), rs.getBoolean("stop_sale")), checkIn, checkOut, typeId, typeId);
     }
 
-    private boolean fits(TypeRow type, List<InventoryOfferRequest.RoomOccupancy> rooms) {
-        if ("WHOLE_PLACE".equals(type.saleMode()) && rooms.size() != 1) return false;
-        return rooms.stream().allMatch(room -> room.adults() >= 1 && room.adults() <= type.maxAdults()
-                && room.childrenAges() != null && room.childrenAges().stream().allMatch(age -> age != null && age >= 0 && age <= 17)
-                && room.adults() + room.childrenAges().size() <= type.maxOccupants());
+    private List<Integer> eligibleRoomOrdinals(TypeRow type, List<InventoryOfferRequest.RoomOccupancy> rooms) {
+        List<Integer> eligible=new ArrayList<>();
+        for(int index=0;index<rooms.size();index++) {
+            InventoryOfferRequest.RoomOccupancy room=rooms.get(index);
+            if(room.adults()>=1 && room.adults()<=type.maxAdults() && room.childrenAges()!=null
+                    && room.childrenAges().stream().allMatch(age->age!=null && age>=0 && age<=17)
+                    && room.adults()+room.childrenAges().size()<=type.maxOccupants()) eligible.add(index+1);
+        }
+        return eligible;
     }
 
     private List<String> paymentModes(String json) {
@@ -152,7 +157,7 @@ public class InventoryOfferService {
                                     List<Offer> offers) {}
     public record Offer(long roomTypeId, String roomTypeName, long ratePlanId, String ratePlanName,
                         BigDecimal nightlyPerRoom, String priceBasis, int requestedQuantity,
-                        int configuredBaseQuantity, Integer availableQuantity, int nights,
+                        List<Integer> eligibleRoomOrdinals, int configuredBaseQuantity, Integer availableQuantity, int nights,
                         BigDecimal cleaningFee, BigDecimal taxes, BigDecimal totalStay,
                         List<String> allowedPaymentModes, boolean eligible, String unavailableReason) {}
     private record PropertyContext(long id, String title, String city, String saleMode, BigDecimal cleaningFee) {}

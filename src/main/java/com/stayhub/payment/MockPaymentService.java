@@ -130,9 +130,11 @@ public class MockPaymentService implements PaymentService {
 
     @Override
     @Transactional(readOnly = true)
-    public PaymentStatusResponse getPaymentStatusByTxnRef(String txnRef) {
+    public PaymentStatusResponse getPaymentStatusByTxnRef(Long guestId, String txnRef) {
         Payment payment = paymentRepository.findByProviderTxnRefWithBooking(txnRef)
                 .orElseThrow(() -> new ResourceNotFoundException("Payment not found"));
+        if(!payment.getBooking().getGuest().getId().equals(guestId))
+            throw new ResourceNotFoundException("Payment not found");
         return toStatusResponse(payment);
     }
 
