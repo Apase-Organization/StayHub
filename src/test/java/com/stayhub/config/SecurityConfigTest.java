@@ -76,6 +76,34 @@ class SecurityConfigTest {
     }
 
     @Test
+    void publicReadOnlyOfferSearchStillRequiresCsrfForPost() throws Exception {
+        mockMvc.perform(post("/api/v1/properties/1/availability"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.errorCode").value("ERR_CSRF"));
+    }
+
+    @Test
+    void readOnlyOfferSearchDoesNotRequireLogin() throws Exception {
+        mockMvc.perform(post("/api/v1/properties/1/availability").with(csrf()))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void providerIpnDoesNotRequireGuestSession() throws Exception {
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                        .get("/api/v1/payments/vnpay/ipn").param("vnp_TxnRef", "missing"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void paymentStatusPollingRequiresAuthentication() throws Exception {
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                        .get("/api/v1/payments/vnpay/status").param("txnRef", "opaque-ref"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.errorCode").value("ERR_UNAUTHORIZED"));
+    }
+
+    @Test
     void bookingPageIsNotCoveredByPublicPropertyMatcher() throws Exception {
         mockMvc.perform(get("/properties/1/book"))
                 .andExpect(status().is3xxRedirection())

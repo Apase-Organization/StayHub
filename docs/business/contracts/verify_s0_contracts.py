@@ -28,6 +28,7 @@ DOCS = [
     "database/7_Booking.md", "database/8_Payment.md", "database/9_Reviews.md",
     "database/10_Discounts.md", "ui/UXUI_DesignSystem.md", "ui/ApplicationDesigned.md",
     "contributors/Rules.md", "contributors/FirstStep.md",
+    "tasklist/evidence/TSK-110.md",
 ]
 S0 = {79, 97, 81, 84, 86, 88, 90, 109}
 GROUP_IDS = {
@@ -352,6 +353,36 @@ def api_checks(a, p, f):
     return len(a["errors"]), len(a["dtos"]), digest
 
 
+def completion_evidence(n, description, evidence):
+    require(f"](evidence/TSK-{n:03d}.md)" in description, f"completion evidence link {n}")
+    require(re.search(rf"^# TSK-{n:03d}(?:\s|$)", evidence, re.M), f"task-specific evidence heading {n}")
+    require(re.search(r"^Status: ACCEPTED$", evidence, re.M), f"accepted evidence status {n}")
+    for field in ("Command:", "Result:", "Duration:", "Skipped:"):
+        require(field in evidence, f"accepted evidence {n}: {field}")
+    require(re.search(r"^Reviewer: \S.+$", evidence, re.M), f"named reviewer {n}")
+
+
+def completion_evidence_self_test():
+    rejected = 0
+    # Exercise every actual downstream ID, not a special 099 completion whitelist.
+    # Synthetic metadata only: this does not claim any of these tasks completed.
+    downstream = (set(range(49,53)) | set(range(76,115)))-S0
+    for n in sorted(downstream):
+        good = f"# TSK-{n:03d}\nStatus: ACCEPTED\nCommand: example\nResult: PASS\nDuration: 1s\nSkipped: none\nReviewer: example-controller\n"
+        link = f"[evidence](evidence/TSK-{n:03d}.md)"
+        completion_evidence(n, link, good)
+        for description, evidence in [("no link", good), (link, good.replace("ACCEPTED", "READY_FOR_REVIEW")),
+                                      (link, good.replace("Reviewer: example-controller", "Reviewer: ")),
+                                      (link, good.replace(f"# TSK-{n:03d}", "# TSK-000"))]:
+            try:
+                completion_evidence(n, description, evidence)
+            except ValueError:
+                rejected += 1
+            else:
+                raise ValueError(f"completion evidence mutation escaped {n}")
+    return rejected
+
+
 def docs_checks(f, a):
     texts = {n:(ROOT/"docs"/n).read_text() for n in DOCS}
     tracker = texts["tasklist/TaskList.md"]
@@ -360,8 +391,18 @@ def docs_checks(f, a):
     require(len(ids) == len(set(ids)) == 114 and set(ids) == set(range(1,115)), "114 unique task IDs")
     unchecked = {int(n) for mark,n,_ in tasks if mark == " "}
     planned = set(range(49,53)) | set(range(76,115))
-    require(unchecked == planned-S0, "only eight S0 closed, 35 unchecked")
-    require(sum(mark == "x" for mark,_,_ in tasks) == 79, "79 checked")
+    completed = planned-unchecked
+    require(S0 <= completed and unchecked <= planned, "S0 remains closed; historical tasks remain checked")
+    # Later implementation closure needs an explicit, accepted evidence record.
+    # This validates documentation provenance, never certifies its runtime claims.
+    for mark, number, description in tasks:
+        n = int(number)
+        if mark == "x" and n in planned-S0:
+            relative = f"evidence/TSK-{n:03d}.md"
+            path = ROOT/"docs/tasklist"/relative
+            require(path.is_file(), f"completion evidence file {n}")
+            completion_evidence(n, description, path.read_text())
+    checked = 114-len(unchecked)
     rows = {}
     for n,sprint,agent,rank,raw in re.findall(r"^\| TSK-(\d{3}) \| (S\d+|POST) \| ([AB]) \| (\d+) \| ([^|]+) \|", tracker, re.M):
         n = int(n)
@@ -373,6 +414,8 @@ def docs_checks(f, a):
         require(len(deps) == len(set(deps)) and n not in deps, "unique deps")
         for d in deps:
             require(d in rows and rows[d][:2] < (s,r), "DAG topological dependency rank")
+        if n in completed:
+            require(set(deps) <= completed, "completed task dependencies accepted")
     for s in range(9):
         ranks = sorted(r[1] for r in rows.values() if r[0] == s)
         require(ranks == list(range(1,len(ranks)+1)), "contiguous sprint ranks")
@@ -383,8 +426,11 @@ def docs_checks(f, a):
     require(unchecked-{95,96} <= ancestors(95), "final release covers all active tasks")
     remediation = [(m,d) for m,n,d in tasks if int(n)>=76]
     require(Counter(re.search(r"\bP[012]\b",d)[0] for _,d in remediation) == {"P0":22,"P1":16,"P2":1}, "priorities")
-    require(sum(m == "x" for m,_ in remediation) == 8 and len(remediation) == 39, "remediation done8/pending31")
-    for phrase in ("active done8/42", "S0 done8/8, pending0/8", "| 22 | 16 | 1 | 0 | 31 | 8 |"):
+    remediation_done = sum(m == "x" for m,_ in remediation)
+    require(remediation_done == len(completed & set(range(76,115))) and len(remediation) == 39, "remediation completion count")
+    active_done = len(completed-{96})
+    for phrase in (f"active done{active_done}/42", "S0 done8/8, pending0/8", f"| 22 | 16 | 1 | 0 | {39-remediation_done} | {remediation_done} |",
+                   f"{checked} checked", f"{len(unchecked)} unchecked"):
         require(phrase in tracker, "summary " + phrase)
     links = jsons = anchors = 0
     code_json = {}
@@ -451,7 +497,7 @@ def docs_checks(f, a):
         excerpt = next(b for b in api_json if type(b) is dict and b.get("quoteId") == ("q42" if mode == "FULL_PREPAY" else "q42-hybrid"))
         require(excerpt["policyVersion"] == "s0-policy-v1" and excerpt["fixtureVersion"] == "s0-fixtures-v1", "Markdown quote versions")
         require(all(excerpt[k] == expected[k] for k in ("totalStay","dueOnline","balanceDueHost")), "Markdown quote amount")
-    return len(tasks), links, jsons, anchors
+    return len(tasks), links, jsons, anchors, checked, len(unchecked), active_done
 
 
 def self_test(p, f):
@@ -544,11 +590,13 @@ def main():
     cases = validate_fixtures(f,p)
     errors,dtos,digest = api_checks(a,p,f)
     wire, nested = wire_self_test(a) if "--self-test" in sys.argv else (0, 0)
-    tasks,links,jsons,anchors = docs_checks(f,a)
+    completion_mutations = completion_evidence_self_test() if "--self-test" in sys.argv else 0
+    tasks,links,jsons,anchors,checked,unchecked,active_done = docs_checks(f,a)
     mutations = self_test(p,f) if "--self-test" in sys.argv else 0
     print(f"PASS FROZEN_DESIGN policyPins={pins} fixtureCases={cases} groups={len(GROUP_IDS)} DTOs={dtos} errors={errors} mutationRejections={mutations}")
     print(f"PASS wireScalarCases={wire} nestedDTOCases={nested}")
-    print(f"PASS docs={len(DOCS)} JSON/JSONC={jsons} relativeLinks={links} scopedAnchors={anchors}; IDs={tasks} checked79 unchecked35 activeDone8/42 remaining34 optional096; DAG/ranks/S0history")
+    print(f"PASS completionEvidenceMutationRejections={completion_mutations}; accepted metadata is not runtime proof")
+    print(f"PASS docs={len(DOCS)} JSON/JSONC={jsons} relativeLinks={links} scopedAnchors={anchors}; IDs={tasks} checked{checked} unchecked{unchecked} activeDone{active_done}/42 remaining{42-active_done} optional096; DAG/ranks/S0history")
     print(f"PASS immutable example quoteHash={digest}; exact O not total, funded D, source pools; NOT application/DB/concurrency/legal proof")
     print(f"Duration {time.perf_counter()-start:.3f}s")
 

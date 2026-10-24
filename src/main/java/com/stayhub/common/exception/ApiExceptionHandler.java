@@ -35,6 +35,12 @@ public class ApiExceptionHandler {
         return ApiResponse.error(exception.getErrorCode(), exception.getMessage());
     }
 
+    @ExceptionHandler(ConflictException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ApiResponse<Void> handleConflict(ConflictException exception) {
+        return ApiResponse.error(exception.getErrorCode(), exception.getMessage());
+    }
+
     @ExceptionHandler(BusinessException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiResponse<Void> handleBusinessException(BusinessException exception) {

@@ -16,5 +16,5 @@ public interface PaymentService {
 
     PaymentStatusResponse getPaymentStatus(Long guestId, Long bookingId);
 
-    PaymentStatusResponse getPaymentStatusByTxnRef(String txnRef);
+    PaymentStatusResponse getPaymentStatusByTxnRef(Long guestId, String txnRef);
 }

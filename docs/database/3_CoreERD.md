@@ -1,6 +1,59 @@
 # Core ERD
 
-## TARGET — conceptual fields, chưa có schema/migration
+## V14 actual additive subset — independently accepted TSK-099
+
+TSK-099 adds the seven inventory tables shown below, nullable legacy sale_mode,
+HCM timezone, composite FKs, deferred graph-shape checks and DB capacity triggers.
+See [exact schema/lock/test/rollback evidence](../tasklist/evidence/TSK-099.md).
+Classification maps to existing `properties.property_type` (not a new column).
+Money uses an exact NUMERIC domain with whole/range checks to reject fractions
+before SQL typmod rounding. Whole-place type identity is conservatively unique
+even after archive (same identity can reactivate). Type scope, item selection and
+nightly snapshots are immutable; snapshot DELETE-and-replace is forbidden.
+Current occupancy limits remain editable: items capture immutable max-adults /
+max-occupants rights; new admission checks current limits under type/plan SHARE
+locks, while existing holds can convert/release after archive or limit changes.
+Capacity primitives exist, but no checkout cutover/backfill is implied.
+The property-wide legacy exclusion remains. Financial/evidence records and extra
+header fields below are still TARGET, **not** implemented by V14. Independent
+review accepted the corrected foundation and rollback design on2026-10-23;
+TSK-099 is complete only for this subset. Backfill/cutover remain blocked.
+
+## V15 actual additive financial primitives — independently accepted foundation
+
+Independent re-review approved the corrected internal foundation and rollback
+design with no findings after the foreign-XID fix. This accepts only the additive
+primitives; downstream runtime workflows, cutover and real-money release remain
+pending/blocked.
+
+TSK-110 adds `booking_financial_snapshots` (one immutable optional snapshot per
+booking), `payment_settlement_locks`, scoped `payment_primitive_keys`, many
+`payment_attempts` plus append-only `payment_attempt_outcomes`, and
+`payment_collections` (unique accepted online credit; extra receipts reconcile;
+Host attestation memo-only). `ledger_journals` → `ledger_lines` has deferred DB
+balancing, immutable history, booking/currency-scoped reversal links and protected
+memo namespaces. `ledger_reservations` → `ledger_reserve_movements` records atomic
+source pools and append-only full consumption/release, not financial execution.
+No modification to V14, legacy payment uniqueness, exclusion or existing DTOs.
+[Exact schema/service/test manifest and acceptance limits](../tasklist/evidence/TSK-110.md).
+The conceptual receipt/refund/payout/check-in workflows below remain future scope.
+
+## V16 Sprint 2 inventory core — accepted scoped implementation
+
+V16 adds whole-VND `rate_plans.nightly_price` (nullable until a Host configures a
+plan), booking-level VND/payment-mode/policy/idempotency/15-minute hold metadata,
+and an internal JDBC flow that writes immutable item/allocation/night snapshots,
+then calls the V14 all-item capacity primitive in the same transaction. Host
+mutations now expose owned room-type/plan/calendar CRUD/archive APIs with optimistic
+versions; calendar reductions remain guarded by active commitments. Expiry cancels
+and releases holds atomically. [Implementation evidence](../tasklist/evidence/TSK-098-102.md).
+
+This is not the quote/consent or dual-mode settlement implementation (TSK-103),
+does not create payment attempts or confirm bookings, and is not a checkout/release
+or cutover claim. No public inventory-booking POST is enabled before the frozen
+quote/consent validator exists; legacy property exclusion remains unchanged.
+
+## TARGET — remaining conceptual fields and workflows
 
 Theo [canonical](../business/PropertyInventoryBusinessRules.md); names dưới là đề xuất DB review TSK-099, không map tự động sang entity hiện tại. `type_day_inventory` là tên thống nhất cho type/date inventory (canonical từng gọi `type_date_inventory`).
 
@@ -54,6 +107,7 @@ erDiagram
         bigint room_type_id FK
         string currency
         string policy_version
+        decimal nightly_price wholeVND
         json pricing_restrictions
         json allowed_payment_modes
         string payment_policy_version
@@ -78,6 +132,12 @@ erDiagram
         decimal discount
         decimal total
         string payment_mode
+        string inventory_currency
+        string inventory_policy_version
+        string inventory_idempotency_key
+        string inventory_request_hash
+        datetime inventory_hold_expires_at
+        bigint inventory_version
         decimal due_online
         decimal balance_due_host
         json payment_commission_funding_snapshot

@@ -2,7 +2,7 @@
 
 > **Baseline/legacy contracts và flow proposals bên dưới không phải multi-room implemented.** [Canonical TARGET](../business/PropertyInventoryBusinessRules.md), TSK-097–108 là core MVP gate. Các ví dụ boolean property availability/single price chỉ legacy; không dùng làm contract target hay bằng chứng runtime.
 
-## TARGET contract delta (chưa triển khai)
+## TARGET contract delta (frozen design; partial implementation)
 
 **S0-109-v1 / s0-api-v1 FROZEN_DESIGN**: [typed DTOs/enums/errors/endpoints](../business/contracts/s0-api-v1.json), [policy](../business/contracts/s0-policy-v1.json), [fixtures](../business/contracts/s0-fixtures-v1.json). Source compatibility NONE_IMPLEMENTATION_REQUIRED, no runtime activation/FinanceLegal clearance. Those field names/types supersede historical aliases in prose: quoteExpiresAt (quote only), policyVersion/fixtureVersion/quoteHash, expectedVersion; Money integer wholeVND, Instant RFC3339 offset. Consent returns acceptedPolicyVersion/acceptedFixtureVersion/acceptedQuoteHash; server binds actor+selection+amounts+expiry via SHA256 UTF8 sorted-key compact JSON/no floats, immutable snapshot. Changing any input invalidates quote/reconsent; expiry is explicit server instant, not a newly approved fixed quote TTL. Hold starts booking creation+900s, max3creations; no quoted hold before booking. Required IPN amount is exact attempt dueOnline, not T, wire vnpAmount=100×wholeVND. Currency is declared Selection input validated VND; reject fields outside each declared DTO, not all currency-bearing requests. Guest/public DTOs never expose commission/ledger/private evidence/provider raw/bank credentials. Frozen design does not mean implemented endpoint.
 
@@ -11,6 +11,22 @@
 **S0-088/109 frozen:** selfowner/onecode/nostacking/usercode1/finiteQpublishinput, previewreadonly/nocappromise, original900s atomicreserve/retryreuse/acceptedonlineconsume/finalfail-expiryrelease/no consumedrestore. WholeVNDHALF_UP/stableallocation/platformD<=Cgross/Cnet>=0/O>=Cnet/noGuestfee/nozeroT-O. Typed registry errors400/409/quotaloserconflict/rollback. Taxunsetdisabled/095blocked,089runtime pending.
 
 **Inventory boundary freeze S0-097-v1 (2026-10-23):** user/PO approved exclusive WHOLE_PLACE or ROOM_BASED (no linked sale), truly interchangeable RoomType pools with shared-plan stock, whole-place one type quantity1 (bedrooms descriptive), one property/date range/VND per booking and all-booking cancellation only. PhysicalRoom assignment is future scope. Paths/DTO details remain proposed implementation contracts; these approved domain boundaries are not proposals or runtime evidence. Provenance: [S0DecisionLog](../business/S0DecisionLog.md).
+
+**Sprint 2 implementation (controller review accepted at scoped boundary):** Host inventory
+mutations are available at `/api/v1/host/properties/{propertyId}/inventory` for
+room types, rate plans, and per-day calendar rows. Mutations require HOST/ADMIN
+session authorization, property ownership, CSRF, and expected versions; archive is
+soft and does not erase future rights. Rate-plan nightly prices are server-owned
+integer VND. Read-only `POST /api/v1/properties/{propertyId}/availability` returns
+all matching room-type/rate-plan offers and uses all-night minimum stock plus
+per-room occupancy; without dates it returns indicative prices only. The property
+detail page consumes this endpoint with per-room adults/child ages and shows
+eligible/sold-out offers. Host plan mutation serializes optional `stopSaleDates`
+under `pricing_restrictions`; this only hides that offer and never changes shared
+stock. TSK-102 has an internal transactional booking/item/hold
+core and expiry worker, but no public `POST /api/v1/bookings`: quote, explicit
+expiry, immutable consent revalidation and payment-mode amount allocation are still
+required by TSK-103/082. The existing MVC `POST /bookings` remains legacy.
 
 **v2 payment precedence:** [PaymentBusinessRules](../business/PaymentBusinessRules.md) duyệt cả FULL_PREPAY/HYBRID_DEPOSIT core MVP, instant sau required online amount; không Host approval. Tất cả amount verification dưới đây theo **dueOnline của attempt**, không booking total. Legacy mục1–8 chỉ archive, không override v2.
 

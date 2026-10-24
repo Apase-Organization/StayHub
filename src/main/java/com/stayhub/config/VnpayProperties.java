@@ -13,4 +13,5 @@ public class VnpayProperties {
     private String payUrl;
     private String returnUrl;
     private String ipnUrl;
+    private String configVersion;
 }

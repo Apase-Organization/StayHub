@@ -25,6 +25,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 @AutoConfigureMockMvc
 class PropertyWebIntegrationTest extends PostgreSqlIntegrationTest {
@@ -41,11 +42,15 @@ class PropertyWebIntegrationTest extends PostgreSqlIntegrationTest {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private JdbcTemplate jdbc;
+
     private User host;
     private Property property;
 
     @BeforeEach
     void setUp() {
+        cleanInventoryRows();
         imageRepository.deleteAll();
         propertyRepository.deleteAll();
         userRepository.deleteAll();
@@ -76,9 +81,17 @@ class PropertyWebIntegrationTest extends PostgreSqlIntegrationTest {
 
     @AfterEach
     void cleanUp() {
+        cleanInventoryRows();
         imageRepository.deleteAll();
         propertyRepository.deleteAll();
         userRepository.deleteAll();
+    }
+
+    private void cleanInventoryRows() {
+        jdbc.update("DELETE FROM type_day_inventory WHERE room_type_id IN (SELECT id FROM room_types WHERE property_id IN (SELECT id FROM properties))");
+        jdbc.update("DELETE FROM rate_plans WHERE property_id IN (SELECT id FROM properties)");
+        jdbc.update("DELETE FROM room_types WHERE property_id IN (SELECT id FROM properties)");
+        jdbc.update("UPDATE properties SET sale_mode=NULL WHERE sale_mode IS NOT NULL");
     }
 
     @Test
@@ -87,7 +100,37 @@ class PropertyWebIntegrationTest extends PostgreSqlIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(view().name("property/property-detail"))
                 .andExpect(model().attributeExists("property"))
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("Riverside Retreat")));
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Riverside Retreat")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("room-occupancies")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Find eligible offers")));
+    }
+
+    @Test
+    void publicOfferAvailabilityReturnsOnePropertyWithEligibleServerPrice() throws Exception {
+        jdbc.update("UPDATE properties SET sale_mode='ROOM_BASED' WHERE id=?", property.getId());
+        long typeId = jdbc.queryForObject("""
+                INSERT INTO room_types(property_id,sale_mode,name,base_quantity,max_adults,max_occupants)
+                VALUES (?,'ROOM_BASED','Deluxe',2,2,3) RETURNING id
+                """, Long.class, property.getId());
+        long planId = jdbc.queryForObject("""
+                INSERT INTO rate_plans(property_id,room_type_id,name,policy_version,nightly_price)
+                VALUES (?,?, 'Standard','s0-policy-v1',1500000) RETURNING id
+                """, Long.class, property.getId(), typeId);
+        jdbc.update("INSERT INTO type_day_inventory(room_type_id,stay_date,total) VALUES (?, '2030-12-10',2)", typeId);
+
+        mockMvc.perform(post("/api/v1/properties/{id}/availability", property.getId())
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"checkIn":"2030-12-10","checkOut":"2030-12-11","currency":"VND",
+                                 "paymentMode":"FULL_PREPAY","roomOccupancies":[{"adults":2,"childrenAges":[]}]}
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.propertyId").value(property.getId()))
+                .andExpect(jsonPath("$.data.liveAvailabilityChecked").value(true))
+                .andExpect(jsonPath("$.data.offers[0].ratePlanId").value(planId))
+                .andExpect(jsonPath("$.data.offers[0].availableQuantity").value(2))
+                .andExpect(jsonPath("$.data.offers[0].totalStay").value(1600000));
     }
 
     @Test

@@ -6,10 +6,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 
 import com.stayhub.booking.Booking;
 import com.stayhub.booking.BookingRepository;
 import com.stayhub.booking.BookingStatus;
+import com.stayhub.auth.UserPrincipal;
 import com.stayhub.property.Property;
 import com.stayhub.property.PropertyRepository;
 import com.stayhub.property.PropertyStatus;
@@ -47,6 +49,7 @@ class PaymentReturnWebTest extends PostgreSqlIntegrationTest {
     private UserRepository userRepository;
 
     private Payment payment;
+    private User guest;
 
     @BeforeEach
     void setUp() {
@@ -63,7 +66,7 @@ class PaymentReturnWebTest extends PostgreSqlIntegrationTest {
                 .status(UserStatus.ACTIVE)
                 .build());
 
-        User guest = userRepository.save(User.builder()
+        guest = userRepository.save(User.builder()
                 .fullName("Test Guest")
                 .email("guest.return@example.com")
                 .passwordHash("secret")
@@ -133,7 +136,8 @@ class PaymentReturnWebTest extends PostgreSqlIntegrationTest {
     @Test
     void paymentStatusPollingEndpointReturnsPendingStatus() throws Exception {
         mockMvc.perform(get("/api/v1/payments/vnpay/status")
-                        .param("txnRef", payment.getProviderTxnRef()))
+                        .param("txnRef", payment.getProviderTxnRef())
+                        .with(user(UserPrincipal.create(guest))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.paymentStatus").value("PENDING"))
