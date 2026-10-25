@@ -1,0 +1,478 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
+    <title>Cổng Quyết toán Tài chính S0-109 - StayHub Admin</title>
+    <link th:href="@{/css/tailwind.css}" rel="stylesheet">
+</head>
+<body class="min-h-screen bg-bg-light text-text-900 font-sans">
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+<main class="mx-auto max-w-7xl space-y-8 px-5 py-8 lg:px-10">
+    <header>
+        <p class="text-sm font-bold uppercase tracking-[.16em] text-primary-500">Phân hệ Quản trị · S0-109 v1</p>
+        <h1 class="mt-2 text-3xl font-black">Cổng Quyết toán & Kiểm toán Dòng tiền</h1>
+        <p class="mt-2 max-w-3xl text-sm text-text-gray leading-relaxed">
+            Trang này ghi nhận và xử lý các quy trình quyết toán (Payout), hoàn tiền (Refund) và đối soát tài chính thủ công theo cơ chế phân quyền kép (Maker-Checker). Hệ thống không tự động kích hoạt lệnh chuyển khoản ngân hàng; mọi giao dịch thực tế đều yêu cầu mã tham chiếu ủy nhiệm chi và mã băm SHA-256 chứng từ đã được bộ phận Tài chính/Vận hành phê duyệt.
+        </p>
+    </header>
+
+    <!-- Bảng Chỉ số Đối soát Dòng tiền Phân định Nguồn -->
+    <section aria-labelledby="metrics-title" class="rounded-3xl border border-border bg-white p-6 shadow-sm">
+        <h2 id="metrics-title" class="text-xl font-black">Chỉ số Đối soát Dòng tiền Phân định Nguồn (Reconciled Metrics)</h2>
+        <dl class="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <div class="rounded-xl bg-bg-light p-4">
+                <dt class="text-xs text-text-gray font-semibold">Tổng đơn đặt phòng</dt>
+                <dd class="mt-1 text-xl font-black text-text-900" th:text="${metrics.bookingCount}">0</dd>
+            </div>
+            <div class="rounded-xl bg-bg-light p-4">
+                <dt class="text-xs text-text-gray font-semibold">Số phòng đã được đặt</dt>
+                <dd class="mt-1 text-xl font-black text-text-900" th:text="${metrics.roomsBooked}">0</dd>
+            </div>
+            <div class="rounded-xl bg-bg-light p-4">
+                <dt class="text-xs text-text-gray font-semibold">Số đêm phòng đã bán</dt>
+                <dd class="mt-1 text-xl font-black text-text-900" th:text="${metrics.roomNights}">0</dd>
+            </div>
+            <div class="rounded-xl bg-bg-light p-4">
+                <dt class="text-xs text-text-gray font-semibold">Tổng đêm phòng mở bán</dt>
+                <dd class="mt-1 text-xl font-black text-text-900" th:text="${metrics.configuredSellableRoomNights}">0</dd>
+            </div>
+            <div class="rounded-xl bg-bg-light p-4">
+                <dt class="text-xs text-text-gray font-semibold">Tiền xác thực Online (VNPay/Thẻ)</dt>
+                <dd class="mt-1 text-xl font-black text-emerald-600" th:text="|${metrics.onlineVerified} VND|">0 VND</dd>
+            </div>
+            <div class="rounded-xl bg-bg-light p-4">
+                <dt class="text-xs text-text-gray font-semibold">Tiền khách trả trực tiếp cho Host</dt>
+                <dd class="mt-1 text-xl font-black text-text-900" th:text="|${metrics.hostDirectAttested} VND|">0 VND</dd>
+            </div>
+            <div class="rounded-xl bg-bg-light p-4">
+                <dt class="text-xs text-text-gray font-semibold">Hoa hồng sàn: Dự giữ / Đã ghi nhận</dt>
+                <dd class="mt-1 text-lg font-black text-primary-600" th:text="|${metrics.commissionReserved} / ${metrics.commissionEarned} VND|">0 / 0</dd>
+            </div>
+            <div class="rounded-xl bg-bg-light p-4">
+                <dt class="text-xs text-text-gray font-semibold">Tiền Host đang giữ (Cần cấn trừ)</dt>
+                <dd class="mt-1 text-xl font-black text-text-900" th:text="|${metrics.hostHeldPayable} VND|">0 VND</dd>
+            </div>
+            <div class="rounded-xl bg-bg-light p-4">
+                <dt class="text-xs text-text-gray font-semibold">Dư nợ trực tiếp chưa thanh toán</dt>
+                <dd class="mt-1 text-xl font-black text-rose-600" th:text="|${metrics.hostDirectOutstanding} VND|">0 VND</dd>
+            </div>
+            <div class="rounded-xl bg-bg-light p-4">
+                <dt class="text-xs text-text-gray font-semibold">Tiền quyết toán chờ chi (Payout)</dt>
+                <dd class="mt-1 text-xl font-black text-text-900" th:text="|${metrics.payoutReserved} VND|">0 VND</dd>
+            </div>
+            <div class="rounded-xl bg-bg-light p-4">
+                <dt class="text-xs text-text-gray font-semibold">Tiền đã hoàn (Online / Trực tiếp)</dt>
+                <dd class="mt-1 text-lg font-black text-text-900" th:text="|${metrics.onlineRefundPaid} / ${metrics.directRefundPaid} VND|">0 / 0</dd>
+            </div>
+            <div class="rounded-xl bg-bg-light p-4">
+                <dt class="text-xs text-text-gray font-semibold">Tiền hoàn dự giữ (Online / Trực tiếp)</dt>
+                <dd class="mt-1 text-lg font-black text-text-900" th:text="|${metrics.onlineRefundReserved} / ${metrics.directRefundReserved} VND|">0 / 0</dd>
+            </div>
+        </dl>
+        <p class="mt-4 text-xs text-text-gray">
+            Mỗi chỉ số được tổng hợp độc lập theo nguồn tiền và sổ cái ledger trước khi hiển thị; các khoản khách thanh toán trực tiếp cho Host tại quầy không tính vào tiền mặt lưu ký của sàn StayHub.
+        </p>
+    </section>
+
+    <!-- Hai Cột: Quyết toán Thủ công & Hoàn tiền -->
+    <div class="grid gap-6 lg:grid-cols-2">
+        <!-- Quyết toán Thủ công -->
+        <section class="rounded-3xl border border-border bg-white p-6 shadow-sm" aria-labelledby="payout-title">
+            <h2 id="payout-title" class="text-xl font-black">Quy trình Quyết toán Thủ công cho Host (Payout)</h2>
+            <p class="mt-2 text-sm text-text-gray leading-relaxed">
+                Chỉ áp dụng cho các khoản tiền khách đã thanh toán Online qua sàn đủ điều kiện giải ngân. Loại trừ các khoản khách trả trực tiếp cho Host. Yêu cầu một Admin khác phê duyệt (Cơ chế Maker-Checker); bắt buộc cung cấp mã tham chiếu ủy nhiệm chi và mã SHA-256 chứng từ để xác nhận ĐÃ THANH TOÁN (PAID).
+            </p>
+            <form id="payout-request" class="mt-5 space-y-3">
+                <label class="block text-sm font-bold">
+                    Mã đơn đặt phòng (Booking ID)
+                    <input id="payout-booking" type="number" min="1" required placeholder="Nhập ID booking..." class="mt-1 w-full rounded-xl border border-border px-3 py-2 text-sm outline-none focus:border-primary-500">
+                </label>
+                <button class="rounded-xl bg-text-900 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-black cursor-pointer">
+                    Tạo yêu cầu quyết toán
+                </button>
+            </form>
+            <form id="payout-action" class="mt-5 space-y-3 border-t border-border pt-5">
+                <label class="block text-sm font-bold">
+                    Mã hồ sơ quyết toán (Payout Case ID)
+                    <input id="payout-id" type="number" min="1" required placeholder="Nhập ID hồ sơ quyết toán..." class="mt-1 w-full rounded-xl border border-border px-3 py-2 text-sm outline-none focus:border-primary-500">
+                </label>
+                <label class="block text-sm font-bold">
+                    Phiên bản kỳ vọng (Expected Case Version)
+                    <input id="payout-version" type="number" min="0" value="0" required class="mt-1 w-full rounded-xl border border-border px-3 py-2 text-sm outline-none focus:border-primary-500">
+                </label>
+                <label class="block text-sm font-bold">
+                    Mã băm SHA-256 chứng từ chuyển khoản (Evidence Digest)
+                    <input id="payout-evidence" pattern="[a-fA-F0-9]{64}" maxlength="64" required placeholder="Chuỗi hash 64 ký tự hex..." class="mt-1 w-full rounded-xl border border-border px-3 py-2 text-sm outline-none focus:border-primary-500">
+                </label>
+                <label class="block text-sm font-bold">
+                    Mã tham chiếu ủy nhiệm chi ngân hàng (Transfer Reference)
+                    <input id="payout-reference" maxlength="200" placeholder="Số FT/Ủy nhiệm chi ngân hàng..." class="mt-1 w-full rounded-xl border border-border px-3 py-2 text-sm outline-none focus:border-primary-500">
+                </label>
+                <div class="flex flex-wrap gap-2 pt-2">
+                    <button data-payout-action="approve" class="rounded-xl border border-border px-3 py-2 text-xs font-bold hover:bg-bg-light cursor-pointer">Phê duyệt (Approve)</button>
+                    <button data-payout-action="processing" class="rounded-xl border border-border px-3 py-2 text-xs font-bold hover:bg-bg-light cursor-pointer">Đang xử lý (Processing)</button>
+                    <button data-payout-action="paid" class="rounded-xl bg-primary-500 px-3 py-2 text-xs font-bold text-white hover:bg-primary-600 cursor-pointer">Ghi nhận ĐÃ CHI TIỀN (PAID)</button>
+                    <button data-payout-action="failed" class="rounded-xl border border-red-300 px-3 py-2 text-xs font-bold text-red-700 hover:bg-red-50 cursor-pointer">Ghi nhận THẤT BẠI</button>
+                </div>
+            </form>
+        </section>
+
+        <!-- Hoàn tiền Khung Miễn phí Hủy -->
+        <section class="rounded-3xl border border-border bg-white p-6 shadow-sm" aria-labelledby="refund-title">
+            <h2 id="refund-title" class="text-xl font-black">Quy trình Hoàn tiền Toàn phần (Khung Miễn phí Hủy &ge;48h)</h2>
+            <p class="mt-2 text-sm text-text-gray leading-relaxed">
+                Quy trình này chỉ chấp nhận các đơn hủy hợp lệ trước 48 giờ đã được máy chủ đối soát. Các chính sách hoàn tiền có điều kiện khác được khóa chặt để bảo toàn dòng tiền cho tới khi có đủ bằng chứng nguồn thu. Tiền hoàn từ nguồn trực tiếp của Host do Host tự chi trả, không trừ từ quỹ StayHub.
+            </p>
+            <form id="refund-request" class="mt-5 space-y-3">
+                <label class="block text-sm font-bold">
+                    Mã đơn đặt phòng (Booking ID)
+                    <input id="refund-booking" type="number" min="1" required placeholder="Nhập ID booking cần hoàn tiền..." class="mt-1 w-full rounded-xl border border-border px-3 py-2 text-sm outline-none focus:border-primary-500">
+                </label>
+                <label class="block text-sm font-bold">
+                    Nguồn tiền hoàn (Refund Source)
+                    <select id="refund-source" class="mt-1 w-full rounded-xl border border-border px-3 py-2 text-sm outline-none focus:border-primary-500">
+                        <option value="ONLINE_VERIFIED">Tiền xác thực Online (StayHub hoàn tiền cho khách)</option>
+                        <option value="HOST_ATTESTED">Tiền khách trả trực tiếp cho Host (Host tự hoàn)</option>
+                    </select>
+                </label>
+                <button class="rounded-xl bg-text-900 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-black cursor-pointer">
+                    Tạo yêu cầu hoàn tiền
+                </button>
+            </form>
+            <form id="refund-action" class="mt-5 space-y-3 border-t border-border pt-5">
+                <label class="block text-sm font-bold">
+                    Mã hồ sơ hoàn tiền (Refund Case ID)
+                    <input id="refund-id" type="number" min="1" required placeholder="Nhập ID hồ sơ hoàn tiền..." class="mt-1 w-full rounded-xl border border-border px-3 py-2 text-sm outline-none focus:border-primary-500">
+                </label>
+                <label class="block text-sm font-bold">
+                    Phiên bản kỳ vọng (Expected Case Version)
+                    <input id="refund-version" type="number" min="0" value="0" required class="mt-1 w-full rounded-xl border border-border px-3 py-2 text-sm outline-none focus:border-primary-500">
+                </label>
+                <label class="block text-sm font-bold">
+                    Mã băm SHA-256 chứng từ hoàn tiền (Evidence Digest)
+                    <input id="refund-evidence" pattern="[a-fA-F0-9]{64}" maxlength="64" required placeholder="Chuỗi hash 64 ký tự hex..." class="mt-1 w-full rounded-xl border border-border px-3 py-2 text-sm outline-none focus:border-primary-500">
+                </label>
+                <label class="block text-sm font-bold">
+                    Mã tham chiếu giao dịch hoàn tiền (Transfer Reference)
+                    <input id="refund-reference" maxlength="200" placeholder="Số giao dịch hoàn tiền cổng thanh toán..." class="mt-1 w-full rounded-xl border border-border px-3 py-2 text-sm outline-none focus:border-primary-500">
+                </label>
+                <div class="flex flex-wrap gap-2 pt-2">
+                    <button data-refund-action="approve" class="rounded-xl border border-border px-3 py-2 text-xs font-bold hover:bg-bg-light cursor-pointer">Phê duyệt (Approve)</button>
+                    <button data-refund-action="processing" class="rounded-xl border border-border px-3 py-2 text-xs font-bold hover:bg-bg-light cursor-pointer">Đang xử lý (Processing)</button>
+                    <button data-refund-action="paid" class="rounded-xl bg-primary-500 px-3 py-2 text-xs font-bold text-white hover:bg-primary-600 cursor-pointer">Ghi nhận ĐÃ HOÀN TIỀN (PAID)</button>
+                    <button data-refund-action="failed" class="rounded-xl border border-red-300 px-3 py-2 text-xs font-bold text-red-700 hover:bg-red-50 cursor-pointer">Ghi nhận THẤT BẠI</button>
+                </div>
+            </form>
+        </section>
+    </div>
+
+    <!-- Kiểm toán Xác thực Nhận phòng Thực tế -->
+    <section class="rounded-3xl border border-border bg-white p-6 shadow-sm" aria-labelledby="arrival-review-title">
+        <h2 id="arrival-review-title" class="text-xl font-black">Kiểm toán Xác thực Khách Nhận phòng Thực tế (Actual Arrival Audit)</h2>
+        <p class="mt-2 text-sm text-text-gray">
+            Chỉ thực hiện sau khi đã kiểm tra bằng chứng vật lý ngoại tuyến (ảnh chụp check-in, cccd lưu trú, biên nhận). Thao tác nhấn nút xác nhận một phía từ Host không đủ để xác thực khách đã tới nhận phòng.
+        </p>
+        <form id="arrival-review" class="mt-4 grid gap-3 sm:grid-cols-2">
+            <label class="text-sm font-bold">
+                Mã đơn đặt phòng (Booking ID)
+                <input id="arrival-booking" type="number" min="1" required class="mt-1 w-full rounded-xl border border-border px-3 py-2 text-sm outline-none focus:border-primary-500">
+            </label>
+            <label class="text-sm font-bold">
+                Mã mục đặt phòng (Booking Item ID)
+                <input id="arrival-item" type="number" min="1" required class="mt-1 w-full rounded-xl border border-border px-3 py-2 text-sm outline-none focus:border-primary-500">
+            </label>
+            <label class="text-sm font-bold">
+                Thứ tự phòng (Room Ordinal)
+                <input id="arrival-room" type="number" min="1" required class="mt-1 w-full rounded-xl border border-border px-3 py-2 text-sm outline-none focus:border-primary-500">
+            </label>
+            <label class="text-sm font-bold">
+                Phiên bản đơn kỳ vọng (Expected Booking Version)
+                <input id="arrival-version" type="number" min="0" required class="mt-1 w-full rounded-xl border border-border px-3 py-2 text-sm outline-none focus:border-primary-500">
+            </label>
+            <label class="text-sm font-bold sm:col-span-2">
+                Mã băm SHA-256 chứng từ nhận phòng (Evidence SHA-256 Digest)
+                <input id="arrival-digest" pattern="[a-fA-F0-9]{64}" maxlength="64" required placeholder="Chuỗi SHA-256 của ảnh/hồ sơ lưu trú..." class="mt-1 w-full rounded-xl border border-border px-3 py-2 text-sm outline-none focus:border-primary-500">
+            </label>
+            <button class="rounded-xl bg-text-900 px-4 py-3 text-sm font-bold text-white transition hover:bg-black sm:col-span-2 cursor-pointer">
+                Ghi nhận Xác thực Kiểm toán của Admin
+            </button>
+        </form>
+    </section>
+
+    <!-- Hồ sơ Biên lai Thu trực tiếp của Host -->
+    <section class="rounded-3xl border border-border bg-white p-6 shadow-sm" aria-labelledby="direct-title">
+        <h2 id="direct-title" class="text-xl font-black">Hồ sơ Biên lai Khách Thanh toán Trực tiếp cho Host</h2>
+        <p class="mt-2 text-sm text-text-gray">
+            Xem xét mã tham chiếu biên lai và mã băm bằng chứng thu tiền tại chỗ. Xác nhận từ Host luôn độc lập và tách biệt với các khoản thanh toán qua cổng trực tuyến của sàn.
+        </p>
+        <form id="direct-search" class="mt-4 flex flex-wrap gap-3">
+            <label class="min-w-56 flex-1 text-sm font-bold">
+                Mã đơn đặt phòng (Booking ID)
+                <input id="direct-booking" type="number" min="1" required placeholder="Nhập ID booking..." class="mt-1 w-full rounded-xl border border-border px-3 py-2 text-sm outline-none focus:border-primary-500">
+            </label>
+            <button class="self-end rounded-xl bg-text-900 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-black cursor-pointer">
+                Tải hồ sơ biên lai
+            </button>
+        </form>
+        <div id="direct-results" class="mt-4 space-y-3"></div>
+    </section>
+
+    <!-- Hồ sơ Thu hồi Sau Quyết toán -->
+    <section class="rounded-3xl border border-border bg-white p-6 shadow-sm" aria-labelledby="recovery-title">
+        <h2 id="recovery-title" class="text-xl font-black">Hồ sơ Thu hồi Sau Quyết toán (Post-Payout Recovery)</h2>
+        <p class="mt-2 text-sm text-text-gray">
+            Hồ sơ rủi ro không đồng nghĩa với việc Host có nợ xấu. Bộ phận Vận hành - Tài chính chịu trách nhiệm xem xét; ghi nhận kết luận và mã chứng từ chứng minh, tuyệt đối không tự động khấu trừ nợ tài khoản.
+        </p>
+        <form id="recovery-search" class="mt-4 flex flex-wrap gap-3">
+            <label class="min-w-56 flex-1 text-sm font-bold">
+                Mã đơn đặt phòng (Booking ID)
+                <input id="recovery-booking" type="number" min="1" required placeholder="Nhập ID booking..." class="mt-1 w-full rounded-xl border border-border px-3 py-2 text-sm outline-none focus:border-primary-500">
+            </label>
+            <button class="self-end rounded-xl bg-text-900 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-black cursor-pointer">
+                Tải hồ sơ thu hồi
+            </button>
+        </form>
+        <div id="recovery-results" class="mt-4 space-y-3"></div>
+    </section>
+
+    <!-- Thanh Thông báo Trạng thái Thao tác -->
+    <p id="operation-status" role="status" aria-live="polite" class="rounded-xl bg-white p-4 text-sm font-semibold shadow-sm border border-border empty:hidden"></p>
+</main>
+
+<script>
+    const csrf = document.querySelector('meta[name="_csrf"]').content;
+    const csrfHeader = document.querySelector('meta[name="_csrf_header"]').content;
+    const status = document.getElementById('operation-status');
+
+    async function post(url, body) {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json', [csrfHeader]: csrf},
+            body: JSON.stringify(body)
+        });
+        const payload = await response.json();
+        if (!response.ok || !payload.success) {
+            throw new Error(payload.message || 'Thao tác không thành công.');
+        }
+        return payload.data;
+    }
+
+    document.getElementById('payout-request').addEventListener('submit', async e => {
+        e.preventDefault();
+        try {
+            const v = await post(`/api/v1/admin/payouts/bookings/${document.getElementById('payout-booking').value}`, {
+                idempotencyKey: crypto.randomUUID()
+            });
+            document.getElementById('payout-id').value = v.id;
+            document.getElementById('payout-version').value = v.version;
+            status.textContent = `Đã tạo hồ sơ quyết toán #${v.id}: Trạng thái ${v.state}, số tiền ${v.amount} ${v.currency}.`;
+        } catch (error) {
+            status.textContent = error.message;
+        }
+    });
+
+    document.getElementById('payout-action').addEventListener('click', async e => {
+        const action = e.target.dataset.payoutAction;
+        if (!action) return;
+        e.preventDefault();
+        const id = document.getElementById('payout-id').value;
+        const version = Number(document.getElementById('payout-version').value);
+        const evidenceDigest = document.getElementById('payout-evidence').value;
+        const common = {idempotencyKey: crypto.randomUUID(), evidenceDigest, expectedVersion: version};
+        try {
+            let body = common;
+            if (action === 'paid') {
+                body = {
+                    idempotencyKey: common.idempotencyKey,
+                    transferRef: document.getElementById('payout-reference').value,
+                    proofDigest: evidenceDigest,
+                    expectedVersion: version
+                };
+            }
+            const v = await post(`/api/v1/admin/payouts/${id}/${action}`, body);
+            document.getElementById('payout-version').value = v.version;
+            status.textContent = `Hồ sơ quyết toán #${v.id}: Đã cập nhật trạng thái ${v.state}.`;
+        } catch (error) {
+            status.textContent = error.message;
+        }
+    });
+
+    document.getElementById('refund-request').addEventListener('submit', async e => {
+        e.preventDefault();
+        try {
+            const v = await post(`/api/v1/admin/refunds/bookings/${document.getElementById('refund-booking').value}`, {
+                source: document.getElementById('refund-source').value,
+                idempotencyKey: crypto.randomUUID()
+            });
+            document.getElementById('refund-id').value = v.id;
+            document.getElementById('refund-version').value = v.version;
+            status.textContent = `Đã tạo hồ sơ hoàn tiền #${v.id}: Trạng thái ${v.state}, số tiền ${v.amount} ${v.currency}.`;
+        } catch (error) {
+            status.textContent = error.message;
+        }
+    });
+
+    document.getElementById('refund-action').addEventListener('click', async e => {
+        const action = e.target.dataset.refundAction;
+        if (!action) return;
+        e.preventDefault();
+        const id = document.getElementById('refund-id').value;
+        const version = Number(document.getElementById('refund-version').value);
+        const evidenceDigest = document.getElementById('refund-evidence').value;
+        let body = {idempotencyKey: crypto.randomUUID(), evidenceDigest, expectedVersion: version};
+        if (action === 'paid') {
+            body = {
+                idempotencyKey: body.idempotencyKey,
+                transferRef: document.getElementById('refund-reference').value,
+                proofDigest: evidenceDigest,
+                expectedVersion: version
+            };
+        }
+        try {
+            const v = await post(`/api/v1/admin/refunds/${id}/${action}`, body);
+            document.getElementById('refund-version').value = v.version;
+            status.textContent = `Hồ sơ hoàn tiền #${v.id}: Đã cập nhật trạng thái ${v.state}.`;
+        } catch (error) {
+            status.textContent = error.message;
+        }
+    });
+
+    document.getElementById('recovery-search').addEventListener('submit', async e => {
+        e.preventDefault();
+        const booking = document.getElementById('recovery-booking').value;
+        const root = document.getElementById('recovery-results');
+        root.replaceChildren();
+        try {
+            const response = await fetch(`/api/v1/bookings/${booking}/arrivals/recovery-cases`);
+            const payload = await response.json();
+            if (!response.ok || !payload.success) {
+                throw new Error(payload.message || 'Không thể tải hồ sơ thu hồi.');
+            }
+            for (const item of payload.data) {
+                const card = document.createElement('article');
+                card.className = 'rounded-2xl border border-border p-4 bg-bg-light/40';
+                const title = document.createElement('p');
+                title.className = 'font-bold text-text-900';
+                title.textContent = `Hồ sơ #${item.id} · Trạng thái: ${item.state} · Số tiền rủi ro: ${item.exposureAmount} VND · Vai trò: ${item.ownerRole}`;
+                const form = document.createElement('form');
+                form.className = 'mt-3 grid gap-3 sm:grid-cols-3';
+                form.innerHTML = `<select data-outcome class="rounded-xl border border-border bg-white px-3 py-2 text-xs font-semibold"><option value="RECONCILED_NO_LOSS">Đã đối soát: Không thất thoát</option><option value="MANUAL_RECOVERY_DOCUMENTED">Đã lưu hồ sơ thu hồi thủ công</option></select><input data-evidence aria-label="Mã SHA-256 chứng từ xử lý" pattern="[a-fA-F0-9]{64}" maxlength="64" required placeholder="Mã SHA-256 chứng từ..." class="rounded-xl border border-border bg-white px-3 py-2 text-xs"><button class="rounded-xl bg-primary-500 px-3 py-2 text-xs font-bold text-white hover:bg-primary-600 cursor-pointer">Lưu phương án</button>`;
+                form.addEventListener('submit', async action => {
+                    action.preventDefault();
+                    try {
+                        await post(`/api/v1/bookings/${booking}/arrivals/recovery-cases/${item.id}/resolve`, {
+                            outcome: form.querySelector('[data-outcome]').value,
+                            evidenceDigest: form.querySelector('[data-evidence]').value,
+                            idempotencyKey: crypto.randomUUID(),
+                            expectedVersion: item.version
+                        });
+                        status.textContent = `Phương án xử lý cho hồ sơ #${item.id} đã được lưu thành công.`;
+                    } catch (error) {
+                        status.textContent = error.message;
+                    }
+                });
+                card.append(title, form);
+                root.append(card);
+            }
+            if (!payload.data.length) {
+                root.textContent = 'Không ghi nhận hồ sơ thu hồi nào cho đơn đặt phòng này.';
+            }
+        } catch (error) {
+            status.textContent = error.message;
+        }
+    });
+
+    document.getElementById('direct-search').addEventListener('submit', async e => {
+        e.preventDefault();
+        const booking = document.getElementById('direct-booking').value;
+        const root = document.getElementById('direct-results');
+        root.replaceChildren();
+        try {
+            const response = await fetch(`/api/v1/admin/bookings/${booking}/direct-receipts`);
+            const payload = await response.json();
+            if (!response.ok || !payload.success) {
+                throw new Error(payload.message || 'Không thể tải hồ sơ biên lai.');
+            }
+            for (const receipt of payload.data) {
+                const card = document.createElement('article');
+                card.className = 'rounded-2xl border border-border p-4 bg-bg-light/40';
+                const summary = document.createElement('p');
+                summary.className = 'font-bold text-text-900';
+                summary.textContent = `Phương thức: ${receipt.method} · Số tiền: ${receipt.amount} ${receipt.currency} · Trạng thái: ${receipt.state} · Mã tham chiếu: ${receipt.receiptRef}`;
+                const evidence = document.createElement('p');
+                evidence.className = 'mt-1 break-all text-xs text-text-gray';
+                evidence.textContent = `Mã băm chứng từ (Digest): ${receipt.evidenceDigest}`;
+                card.append(summary, evidence);
+                if (['CONTESTED', 'REFUSED'].includes(receipt.state)) {
+                    const form = document.createElement('form');
+                    form.className = 'mt-3 grid gap-2 sm:grid-cols-3';
+                    form.innerHTML = `<select data-decision class="rounded-xl border border-border bg-white px-3 py-2 text-xs font-semibold"><option value="ACCEPT_RECEIPT">Chấp nhận biên lai</option><option value="REJECT_RECEIPT">Từ chối biên lai</option></select><input data-resolution required pattern="[a-fA-F0-9]{64}" maxlength="64" placeholder="Mã SHA-256 chứng từ xử lý..." aria-label="Mã SHA-256 chứng từ xử lý" class="rounded-xl border border-border bg-white px-3 py-2 text-xs"><button class="rounded-xl bg-primary-500 px-3 py-2 text-xs font-bold text-white hover:bg-primary-600 cursor-pointer">Xử lý biên lai</button>`;
+                    form.addEventListener('submit', async event => {
+                        event.preventDefault();
+                        try {
+                            await post(`/api/v1/admin/bookings/${booking}/direct-receipts/${receipt.id}/resolve`, {
+                                decision: form.querySelector('[data-decision]').value,
+                                resolutionDigest: form.querySelector('[data-resolution]').value,
+                                idempotencyKey: crypto.randomUUID(),
+                                expectedVersion: receipt.version
+                            });
+                            status.textContent = `Biên lai #${receipt.id} đã được xử lý; vui lòng làm mới trang trước khi thao tác tiếp.`;
+                        } catch (error) {
+                            status.textContent = error.message;
+                        }
+                    });
+                    card.append(form);
+                } else if (receipt.state === 'ACKNOWLEDGED') {
+                    const button = document.createElement('button');
+                    button.type = 'button';
+                    button.className = 'mt-3 rounded-xl border border-red-300 px-3 py-2 text-xs font-bold text-red-700 hover:bg-red-50 cursor-pointer';
+                    button.textContent = 'Ghi nhận điều chỉnh/hủy biên lai';
+                    button.addEventListener('click', async () => {
+                        const digest = window.prompt('Nhập mã SHA-256 chứng từ điều chỉnh:');
+                        if (!digest) return;
+                        try {
+                            await post(`/api/v1/admin/bookings/${booking}/direct-receipts/${receipt.id}/reverse`, {
+                                decision: 'REJECT_RECEIPT',
+                                resolutionDigest: digest,
+                                idempotencyKey: crypto.randomUUID(),
+                                expectedVersion: receipt.version
+                            });
+                            status.textContent = `Đã hủy biên lai #${receipt.id}; vui lòng làm mới trang.`;
+                        } catch (error) {
+                            status.textContent = error.message;
+                        }
+                    });
+                    card.append(button);
+                }
+                root.append(card);
+            }
+            if (!payload.data.length) {
+                root.textContent = 'Không có hồ sơ biên lai nào cho đơn đặt phòng này.';
+            }
+        } catch (error) {
+            status.textContent = error.message;
+        }
+    });
+
+    document.getElementById('arrival-review').addEventListener('submit', async e => {
+        e.preventDefault();
+        const booking = document.getElementById('arrival-booking').value;
+        try {
+            await post(`/api/v1/bookings/${booking}/arrivals/admin-verify`, {
+                itemId: Number(document.getElementById('arrival-item').value),
+                roomOrdinal: Number(document.getElementById('arrival-room').value),
+                evidenceDigest: document.getElementById('arrival-digest').value,
+                idempotencyKey: crypto.randomUUID(),
+                expectedVersion: Number(document.getElementById('arrival-version').value)
+            });
+            status.textContent = 'Đã ghi nhận xác thực kiểm toán khách nhận phòng thực tế.';
+        } catch (error) {
+            status.textContent = error.message;
+        }
+    });
+</script>
+</body>
+</html>

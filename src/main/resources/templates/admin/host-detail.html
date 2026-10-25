@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
+    <title th:text="|Hồ sơ Host: ${hostDetail.hostProfile.fullName} - StayHub Admin|">Chi tiết Host - StayHub Admin</title>
+    <link th:href="@{/css/tailwind.css}" rel="stylesheet">
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <style>
+        [x-cloak] { display: none !important; }
+    </style>
+</head>
+<body class="min-h-screen bg-bg-light text-text-900 font-sans"
+      th:data-initial-subtab="${subtab}"
+      th:data-host-id="${hostDetail.hostProfile.hostId}"
+      x-data="hostDetailApp()">
+
+    <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-6">
+
+        <!-- Breadcrumb & Back Navigation -->
+        <nav class="flex items-center justify-between">
+            <div class="flex items-center gap-2 text-sm text-text-gray">
+                <a th:href="@{/admin/dashboard}" class="hover:text-primary-500 hover:underline">Admin</a>
+                <span>&rsaquo;</span>
+                <a th:href="@{/admin/dashboard(tab='overview')}" class="hover:text-primary-500 hover:underline">Quản lý Host</a>
+                <span>&rsaquo;</span>
+                <span class="font-bold text-text-900" th:text="${hostDetail.hostProfile.fullName}">Tên Host</span>
+            </div>
+            <a th:href="@{/admin/dashboard(tab='overview')}"
+               class="inline-flex items-center gap-2 rounded-xl border border-border bg-bg-white px-4 py-2 text-xs font-bold text-text-900 transition hover:bg-bg-light">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+                <span>Về Bảng Điều Hành</span>
+            </a>
+        </nav>
+
+        <!-- Host Profile Header Card -->
+        <header class="overflow-hidden rounded-2xl border border-border bg-bg-white p-6 shadow-sm md:p-8">
+            <div class="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+                <div class="flex items-center gap-4">
+                    <!-- Avatar Circle Initials -->
+                    <div class="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-primary-500 text-2xl font-black text-white">
+                        <span th:text="${#strings.substring(hostDetail.hostProfile.fullName, 0, 1)}">H</span>
+                    </div>
+                    <div>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <h1 class="text-2xl font-black text-text-900" th:text="${hostDetail.hostProfile.fullName}">Nguyen Van Host</h1>
+                            <span class="rounded-full bg-primary-500/10 px-2.5 py-0.5 text-xs font-bold text-primary-600">HOST</span>
+                            <span th:if="${hostDetail.hostProfile.status != null and hostDetail.hostProfile.status.name() == 'ACTIVE'}"
+                                  class="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-bold text-emerald-700">Đang hoạt động</span>
+                            <span th:if="${hostDetail.hostProfile.status != null and hostDetail.hostProfile.status.name() == 'LOCKED'}"
+                                  class="rounded-full bg-rose-100 px-2.5 py-0.5 text-xs font-bold text-rose-700">Tài khoản bị khóa</span>
+                        </div>
+                        <div class="mt-2 flex flex-wrap items-center gap-4 text-xs text-text-gray">
+                            <span th:text="|ID: #${hostDetail.hostProfile.hostId}|">ID: #1</span>
+                            <span>·</span>
+                            <span th:text="${hostDetail.hostProfile.email}">host@email.com</span>
+                            <span th:if="${hostDetail.hostProfile.phone != null}">·</span>
+                            <span th:if="${hostDetail.hostProfile.phone != null}" th:text="${hostDetail.hostProfile.phone}">0901234567</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Host Quick Actions -->
+                <div class="flex flex-wrap items-center gap-3">
+                    <button th:if="${hostDetail.hostProfile.status != null and hostDetail.hostProfile.status.name() == 'ACTIVE'}"
+                            @click="toggleHostStatus('lock')"
+                            class="rounded-xl bg-rose-600 px-4 py-2.5 text-xs font-bold text-white transition hover:bg-rose-700 cursor-pointer">
+                        Khóa tài khoản Host
+                    </button>
+                    <button th:if="${hostDetail.hostProfile.status != null and hostDetail.hostProfile.status.name() == 'LOCKED'}"
+                            @click="toggleHostStatus('unlock')"
+                            class="rounded-xl bg-emerald-600 px-4 py-2.5 text-xs font-bold text-white transition hover:bg-emerald-700 cursor-pointer">
+                        Mở khóa tài khoản
+                    </button>
+                </div>
+            </div>
+
+            <!-- Host Key Performance Numbers -->
+            <div class="mt-6 grid grid-cols-2 gap-4 border-t border-border pt-6 sm:grid-cols-4">
+                <div>
+                    <p class="text-xs font-semibold text-text-gray uppercase tracking-wider">Doanh thu Host</p>
+                    <p class="mt-1 text-lg font-black text-text-900"
+                       th:text="|${hostDetail.hostProfile.grossHostRevenue != null ? #numbers.formatDecimal(hostDetail.hostProfile.grossHostRevenue, 0, 'COMMA', 0, 'POINT') : '0'} VND|">0 VND</p>
+                    <p class="text-xs text-text-gray">Tổng doanh thu gộp</p>
+                </div>
+                <div>
+                    <p class="text-xs font-semibold text-text-gray uppercase tracking-wider">Hoa hồng đóng góp</p>
+                    <p class="mt-1 text-lg font-black text-emerald-600"
+                       th:text="|${hostDetail.hostProfile.commissionEarned != null ? #numbers.formatDecimal(hostDetail.hostProfile.commissionEarned, 0, 'COMMA', 0, 'POINT') : '0'} VND|">0 VND</p>
+                    <p class="text-xs text-text-gray">10% phí dịch vụ StayHub</p>
+                </div>
+                <div>
+                    <p class="text-xs font-semibold text-text-gray uppercase tracking-wider">Quy mô Cho thuê</p>
+                    <p class="mt-1 text-lg font-black text-text-900"
+                       th:text="|${hostDetail.hostProfile.propertiesCount} căn · ${hostDetail.hostProfile.bookingsCount} đơn|">0 căn · 0 đơn</p>
+                    <p class="text-xs text-text-gray"
+                       th:text="|Hoàn thành: ${hostDetail.hostProfile.completionRate}%|">Hoàn thành: 0%</p>
+                </div>
+                <div>
+                    <p class="text-xs font-semibold text-text-gray uppercase tracking-wider">Đánh giá & Uy tín</p>
+                    <p class="mt-1 text-lg font-black text-amber-500"
+                       th:text="${hostDetail.hostProfile.averageRating != null && hostDetail.hostProfile.averageRating > 0 ? #numbers.formatDecimal(hostDetail.hostProfile.averageRating, 1, 1) + ' ★' : 'Chưa có'}">0 ★</p>
+                    <p class="text-xs text-text-gray"
+                       th:text="|Tỷ lệ hủy: ${hostDetail.hostProfile.cancellationRate}%|">Tỷ lệ hủy: 0%</p>
+                </div>
+            </div>
+        </header>
+
+        <!-- Sub-Tabs Navigation Bar -->
+        <div class="flex flex-wrap gap-2 border-b border-border pb-1 text-sm font-bold">
+            <button type="button"
+                    @click="setSubtab('financial')"
+                    :class="activeSubtab === 'financial' ? 'border-b-2 border-primary-500 text-primary-600' : 'text-text-gray hover:text-text-900 border-b-2 border-transparent'"
+                    class="px-4 py-2.5 transition cursor-pointer">
+                Tài chính & Doanh số
+            </button>
+            <button type="button"
+                    @click="setSubtab('properties')"
+                    :class="activeSubtab === 'properties' ? 'border-b-2 border-primary-500 text-primary-600' : 'text-text-gray hover:text-text-900 border-b-2 border-transparent'"
+                    class="px-4 py-2.5 transition cursor-pointer">
+                <span th:text="|Chỗ nghỉ (${hostDetail.properties.size()})|">Chỗ nghỉ (0)</span>
+            </button>
+            <button type="button"
+                    @click="setSubtab('bookings')"
+                    :class="activeSubtab === 'bookings' ? 'border-b-2 border-primary-500 text-primary-600' : 'text-text-gray hover:text-text-900 border-b-2 border-transparent'"
+                    class="px-4 py-2.5 transition cursor-pointer">
+                <span th:text="|Lịch sử Đơn phòng (${hostDetail.recentBookings.size()})|">Đơn phòng (0)</span>
+            </button>
+            <button type="button"
+                    @click="setSubtab('reviews')"
+                    :class="activeSubtab === 'reviews' ? 'border-b-2 border-primary-500 text-primary-600' : 'text-text-gray hover:text-text-900 border-b-2 border-transparent'"
+                    class="px-4 py-2.5 transition cursor-pointer">
+                <span th:text="|Đánh giá (${hostDetail.reviews.size()})|">Đánh giá (0)</span>
+            </button>
+            <button type="button"
+                    @click="setSubtab('anomalies')"
+                    :class="activeSubtab === 'anomalies' ? 'border-b-2 border-primary-500 text-primary-600' : 'text-text-gray hover:text-text-900 border-b-2 border-transparent'"
+                    class="px-4 py-2.5 transition cursor-pointer flex items-center gap-1.5">
+                <span>Cảnh báo</span>
+                <span th:if="${!hostDetail.anomalies.empty}"
+                      class="rounded-full bg-rose-500 px-1.5 py-0.2 text-[10px] text-white"
+                      th:text="${hostDetail.anomalies.size()}">0</span>
+            </button>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- SUBTAB 1: TÀI CHÍNH & DOANH SỐ             -->
+        <!-- ========================================== -->
+        <div x-show="activeSubtab === 'financial'" x-cloak class="space-y-6">
+            <div class="grid grid-cols-1 gap-6 md:grid-cols-3">
+                <div class="rounded-2xl border border-border bg-bg-white p-6 shadow-sm">
+                    <p class="text-xs font-semibold uppercase tracking-wider text-text-gray">Doanh thu Gộp (Gross)</p>
+                    <h3 class="mt-2 text-2xl font-black text-text-900"
+                        th:text="|${hostDetail.hostProfile.grossHostRevenue != null ? #numbers.formatDecimal(hostDetail.hostProfile.grossHostRevenue, 0, 'COMMA', 0, 'POINT') : '0'} VND|">0 VND</h3>
+                    <p class="mt-2 text-xs text-text-gray">Tổng số tiền khách thanh toán qua các phòng của Host</p>
+                </div>
+                <div class="rounded-2xl border border-border bg-bg-white p-6 shadow-sm">
+                    <p class="text-xs font-semibold uppercase tracking-wider text-text-gray">Phí Hoa hồng Sàn (10%)</p>
+                    <h3 class="mt-2 text-2xl font-black text-primary-600"
+                        th:text="|${hostDetail.hostProfile.commissionEarned != null ? #numbers.formatDecimal(hostDetail.hostProfile.commissionEarned, 0, 'COMMA', 0, 'POINT') : '0'} VND|">0 VND</h3>
+                    <p class="mt-2 text-xs text-text-gray">Phí dịch vụ công nghệ StayHub đã khấu trừ</p>
+                </div>
+                <div class="rounded-2xl border border-border bg-bg-white p-6 shadow-sm">
+                    <p class="text-xs font-semibold uppercase tracking-wider text-text-gray">Thực nhận Dự kiến của Host</p>
+                    <h3 class="mt-2 text-2xl font-black text-emerald-600"
+                        th:text="|${hostDetail.hostProfile.grossHostRevenue != null && hostDetail.hostProfile.commissionEarned != null ? #numbers.formatDecimal(hostDetail.hostProfile.grossHostRevenue.subtract(hostDetail.hostProfile.commissionEarned), 0, 'COMMA', 0, 'POINT') : '0'} VND|">0 VND</h3>
+                    <p class="mt-2 text-xs text-text-gray">Khoản tiền chuyển khoản về tài khoản Host sau đối soát</p>
+                </div>
+            </div>
+
+            <!-- Phân tích tỷ lệ hủy phòng -->
+            <div class="rounded-2xl border border-border bg-bg-white p-6 shadow-sm">
+                <h3 class="text-base font-bold text-text-900">Chỉ số Hoàn thành & Hủy đơn của Host</h3>
+                <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
+                    <div class="rounded-xl bg-bg-light p-4">
+                        <p class="text-xs text-text-gray">Tổng đơn đặt</p>
+                        <p class="mt-1 text-xl font-black text-text-900" th:text="${hostDetail.hostProfile.bookingsCount}">0</p>
+                    </div>
+                    <div class="rounded-xl bg-bg-light p-4">
+                        <p class="text-xs text-text-gray">Đơn hoàn tất thành công</p>
+                        <p class="mt-1 text-xl font-black text-emerald-600"
+                           th:text="|${hostDetail.hostProfile.completedBookingsCount} (${hostDetail.hostProfile.completionRate}%)|">0</p>
+                    </div>
+                    <div class="rounded-xl bg-bg-light p-4">
+                        <p class="text-xs text-text-gray">Đơn bị hủy</p>
+                        <p class="mt-1 text-xl font-black"
+                           th:classappend="${hostDetail.hostProfile.cancellationRate >= 20.0 ? 'text-rose-600' : 'text-text-900'}"
+                           th:text="|${hostDetail.hostProfile.cancelledBookingsCount} (${hostDetail.hostProfile.cancellationRate}%)|">0</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- SUBTAB 2: CHỖ NGHỈ CỦA HOST                -->
+        <!-- ========================================== -->
+        <div x-show="activeSubtab === 'properties'" x-cloak class="space-y-6">
+            <div class="overflow-hidden rounded-2xl border border-border bg-bg-white shadow-sm">
+                <div class="overflow-x-auto">
+                    <table class="w-full min-w-[800px] text-left text-sm">
+                        <thead class="border-b border-border bg-bg-light text-xs font-bold uppercase text-text-gray">
+                            <tr>
+                                <th class="px-6 py-4">Mã</th>
+                                <th class="px-6 py-4">Tên Chỗ nghỉ</th>
+                                <th class="px-6 py-4">Địa chỉ & Thành phố</th>
+                                <th class="px-6 py-4">Loại hình</th>
+                                <th class="px-6 py-4">Giá / Đêm</th>
+                                <th class="px-6 py-4">Đánh giá</th>
+                                <th class="px-6 py-4">Trạng thái</th>
+                                <th class="px-6 py-4 text-right">Listing</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-border">
+                            <tr th:if="${hostDetail.properties.empty}">
+                                <td colspan="8" class="px-6 py-10 text-center text-text-gray">Host chưa đăng chỗ nghỉ nào trên hệ thống.</td>
+                            </tr>
+                            <tr th:unless="${hostDetail.properties.empty}" th:each="prop : ${hostDetail.properties}" class="hover:bg-bg-light/60 transition">
+                                <td class="px-6 py-4 font-bold text-text-gray" th:text="|#${prop.id}|">#1</td>
+                                <td class="px-6 py-4 font-bold text-text-900" th:text="${prop.title}">Tên chỗ nghỉ</td>
+                                <td class="px-6 py-4 text-xs text-text-gray">
+                                    <p class="font-medium text-text-900" th:text="${prop.address}">Địa chỉ</p>
+                                    <p th:text="${prop.city}">Đà Nẵng</p>
+                                </td>
+                                <td class="px-6 py-4 text-xs font-semibold text-text-gray" th:text="${prop.propertyType}">APARTMENT</td>
+                                <td class="px-6 py-4 font-bold text-text-900"
+                                    th:text="|${prop.pricePerNight != null ? #numbers.formatDecimal(prop.pricePerNight, 0, 'COMMA', 0, 'POINT') : '0'} VND|">0 VND</td>
+                                <td class="px-6 py-4">
+                                    <span class="font-bold text-amber-500"
+                                          th:text="${prop.ratingAvg != null ? #numbers.formatDecimal(prop.ratingAvg, 1, 1) + ' ★' : 'Chưa có'}">5.0 ★</span>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <span class="rounded-full px-2.5 py-0.5 text-xs font-bold"
+                                          th:classappend="${prop.status.name() == 'ACTIVE'} ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-700'"
+                                          th:text="${prop.status}">ACTIVE</span>
+                                </td>
+                                <td class="px-6 py-4 text-right">
+                                    <a th:href="@{/properties/{id}(id=${prop.id})}" target="_blank"
+                                       class="text-xs font-bold text-primary-500 hover:underline">
+                                        Xem listing &rarr;
+                                    </a>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- SUBTAB 3: LỊCH SỬ ĐƠN ĐẶT PHÒNG            -->
+        <!-- ========================================== -->
+        <div x-show="activeSubtab === 'bookings'" x-cloak class="space-y-6">
+            <div class="overflow-hidden rounded-2xl border border-border bg-bg-white shadow-sm">
+                <div class="overflow-x-auto">
+                    <table class="w-full min-w-[800px] text-left text-sm">
+                        <thead class="border-b border-border bg-bg-light text-xs font-bold uppercase text-text-gray">
+                            <tr>
+                                <th class="px-6 py-4">Mã đơn</th>
+                                <th class="px-6 py-4">Khách hàng</th>
+                                <th class="px-6 py-4">Chỗ nghỉ</th>
+                                <th class="px-6 py-4">Ngày lưu trú</th>
+                                <th class="px-6 py-4">Trạng thái</th>
+                                <th class="px-6 py-4">Thanh toán</th>
+                                <th class="px-6 py-4 text-right">Tổng tiền</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-border">
+                            <tr th:if="${hostDetail.recentBookings.empty}">
+                                <td colspan="7" class="px-6 py-10 text-center text-text-gray">Chưa có đơn đặt phòng nào trên các chỗ nghỉ của Host.</td>
+                            </tr>
+                            <tr th:unless="${hostDetail.recentBookings.empty}" th:each="b : ${hostDetail.recentBookings}" class="hover:bg-bg-light/60 transition">
+                                <td class="px-6 py-4 font-bold text-primary-500" th:text="|#${b.id}|">#1</td>
+                                <td class="px-6 py-4">
+                                    <p class="font-bold text-text-900" th:text="${b.guestName}">Tên khách</p>
+                                    <p class="text-xs text-text-gray" th:text="${b.guestEmail}">email</p>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <p class="font-bold text-text-900" th:text="${b.propertyTitle}">Tên chỗ nghỉ</p>
+                                    <p class="text-xs text-text-gray" th:text="${b.propertyCity}">Thành phố</p>
+                                </td>
+                                <td class="px-6 py-4 text-xs">
+                                    <p class="font-semibold" th:text="|${b.checkInDate} ~ ${b.checkOutDate}|"></p>
+                                    <p class="text-text-gray" th:text="|${b.nights} đêm|"></p>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <span class="rounded-full px-2.5 py-0.5 text-xs font-bold"
+                                          th:classappend="${b.status.name() == 'CONFIRMED' || b.status.name() == 'COMPLETED'} ? 'bg-emerald-100 text-emerald-700' : (${b.status.name() == 'PENDING' || b.status.name() == 'PENDING_PAYMENT'} ? 'bg-amber-100 text-amber-800' : 'bg-rose-100 text-rose-700')"
+                                          th:text="${b.status}">CONFIRMED</span>
+                                </td>
+                                <td class="px-6 py-4 text-xs font-semibold" th:text="${b.paymentStatus}">PAID</td>
+                                <td class="px-6 py-4 text-right font-bold text-text-900"
+                                    th:text="|${b.totalPrice != null ? #numbers.formatDecimal(b.totalPrice, 0, 'COMMA', 0, 'POINT') : '0'} VND|">0 VND</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- SUBTAB 4: ĐÁNH GIÁ & UY TÍN                -->
+        <!-- ========================================== -->
+        <div x-show="activeSubtab === 'reviews'" x-cloak class="space-y-4">
+            <div th:if="${hostDetail.reviews.empty}" class="rounded-2xl border border-border bg-bg-white p-12 text-center text-text-gray">
+                Chưa có đánh giá nào từ khách hàng cho các chỗ nghỉ của Host này.
+            </div>
+            <div th:unless="${hostDetail.reviews.empty}" class="grid gap-4">
+                <div th:each="rev : ${hostDetail.reviews}" class="rounded-2xl border border-border bg-bg-white p-6 shadow-sm">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <span class="font-bold text-text-900" th:text="${rev.guestName}">Khách hàng</span>
+                            <span class="text-xs text-text-gray">· Đơn hàng #<span th:text="${rev.bookingId}"></span></span>
+                        </div>
+                        <div class="flex items-center text-amber-500 font-bold">
+                            <span th:text="|${rev.rating} ★|">5 ★</span>
+                        </div>
+                    </div>
+                    <p class="mt-3 text-sm text-text-900 leading-relaxed" th:text="${rev.comment}">Nội dung đánh giá của khách hàng.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- SUBTAB 5: CẢNH BÁO BẤT THƯỜNG CỦA HOST    -->
+        <!-- ========================================== -->
+        <div x-show="activeSubtab === 'anomalies'" x-cloak class="space-y-4">
+            <div th:if="${hostDetail.anomalies.empty}" class="flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-6 text-emerald-800">
+                <svg class="w-6 h-6 shrink-0 text-emerald-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                <div>
+                    <h4 class="font-bold">Không có bất thường nào được ghi nhận</h4>
+                    <p class="text-xs mt-0.5">Tỷ lệ hủy phòng, điểm đánh giá và chu kỳ xử lý đơn của Host này hoàn toàn bình thường.</p>
+                </div>
+            </div>
+            <div th:unless="${hostDetail.anomalies.empty}" class="grid gap-3">
+                <div th:each="al : ${hostDetail.anomalies}" class="rounded-2xl border border-border bg-bg-white p-6 shadow-sm">
+                    <div class="flex items-start gap-3">
+                        <span th:if="${al.severity == 'HIGH'}" class="rounded-md bg-rose-100 px-2.5 py-1 text-xs font-extrabold text-rose-700">NGHIÊM TRỌNG</span>
+                        <span th:if="${al.severity == 'MEDIUM'}" class="rounded-md bg-amber-100 px-2.5 py-1 text-xs font-extrabold text-amber-800">CẦN CHÚ Ý</span>
+                        <span th:if="${al.severity == 'LOW'}" class="rounded-md bg-blue-100 px-2.5 py-1 text-xs font-extrabold text-blue-700">THÔNG TIN</span>
+                        <div>
+                            <h4 class="font-bold text-text-900" th:text="${al.title}">Tiêu đề cảnh báo</h4>
+                            <p class="mt-1 text-xs text-text-gray" th:text="${al.description}">Chi tiết cảnh báo</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Alpine.js logic cho Host Detail -->
+    <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('hostDetailApp', () => ({
+                activeSubtab: 'financial',
+                hostId: null,
+                init() {
+                    this.hostId = this.$el.dataset.hostId;
+                    const urlParams = new URLSearchParams(window.location.search);
+                    this.activeSubtab = urlParams.get('subtab') || this.$el.dataset.initialSubtab || 'financial';
+                },
+                setSubtab(tab) {
+                    this.activeSubtab = tab;
+                    const url = new URL(window.location);
+                    url.searchParams.set('subtab', tab);
+                    window.history.replaceState({}, '', url);
+                },
+                csrf() {
+                    return {
+                        token: document.querySelector('meta[name="_csrf"]')?.content || '',
+                        header: document.querySelector('meta[name="_csrf_header"]')?.content || 'X-CSRF-TOKEN'
+                    };
+                },
+                async toggleHostStatus(action) {
+                    if (!this.hostId) return;
+                    if (!confirm(`Bạn có chắc muốn ${action === 'lock' ? 'KHÓA' : 'MỞ KHÓA'} tài khoản Host này?`)) return;
+                    const csrf = this.csrf();
+                    try {
+                        const response = await fetch(`/api/v1/admin/users/${this.hostId}/${action}`, {
+                            method: 'POST',
+                            credentials: 'same-origin',
+                            headers: {
+                                [csrf.header]: csrf.token,
+                                'Accept': 'application/json'
+                            }
+                        });
+                        const data = await response.json();
+                        if (response.ok && data.success) {
+                            window.location.reload();
+                            return;
+                        }
+                        alert(data.message || 'Thao tác không thành công.');
+                    } catch (error) {
+                        alert(error.message || 'Lỗi kết nối máy chủ.');
+                    }
+                }
+            }));
+        });
+    </script>
+</body>
+</html>
