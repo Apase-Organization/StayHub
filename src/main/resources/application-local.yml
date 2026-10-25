@@ -13,3 +13,22 @@ spring:
 
   thymeleaf:
     cache: false
+
+server:
+  servlet:
+    session:
+      timeout: ${SESSION_TIMEOUT:8h}
+      cookie:
+        http-only: true
+        same-site: lax
+        secure: false
+
+# Local manual-test quote window. Production defaults remain fail-closed unless configured.
+app:
+  payment:
+    quote-validity-seconds: ${QUOTE_VALIDITY_SECONDS:300}
+    vnpay:
+      config-version: ${VNPAY_CONFIG_VERSION:sandbox-local-v1}
+      # The browser returns to this same local app (and keeps its session cookie).
+      # Server-to-server IPN still needs a public VNPAY_IPN_URL tunnel.
+      return-url: http://localhost:${SERVER_PORT:8080}/payments/vnpay/return

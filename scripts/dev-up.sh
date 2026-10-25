@@ -45,8 +45,13 @@ import sys
 url = sys.argv[1].rstrip('/')
 path = Path('.env')
 lines = path.read_text(encoding='utf-8').splitlines()
+app_port = '8080'
+for line in lines:
+    if line.startswith('APP_PORT='):
+        app_port = line.split('=', 1)[1].strip().strip('"\'') or app_port
+        break
 values = {
-    'VNPAY_RETURN_URL': f'{url}/payments/vnpay/return',
+    'VNPAY_RETURN_URL': f'http://localhost:{app_port}/payments/vnpay/return',
     'VNPAY_IPN_URL': f'{url}/api/v1/payments/vnpay/ipn',
 }
 
@@ -72,8 +77,9 @@ docker compose up -d --force-recreate app
 echo
 echo "StayHub is running: http://localhost:${APP_PORT:-8080}"
 echo "Cloudflare public URL: $CLOUDFLARE_URL"
-echo "VNPay return URL: $CLOUDFLARE_URL/payments/vnpay/return"
+echo "VNPay browser return URL: http://localhost:${APP_PORT:-8080}/payments/vnpay/return"
 echo "VNPay IPN URL: $CLOUDFLARE_URL/api/v1/payments/vnpay/ipn"
+echo "Configure this IPN URL in the VNPay sandbox merchant settings and keep cloudflared running while testing."
 echo
 echo "Logs: docker compose logs -f app cloudflared"
 echo "Stop: ./scripts/dev-stop.sh"

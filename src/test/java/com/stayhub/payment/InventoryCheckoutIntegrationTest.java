@@ -171,6 +171,34 @@ class InventoryCheckoutIntegrationTest {
         assertThat(jdbc.queryForObject("SELECT count(*) FROM inventory_payment_outbox WHERE booking_id=? AND event_type='PAYMENT_CONFIRMED'",Integer.class,bookingId)).isEqualTo(1);
     }
 
+    @Test void hostCanBookAnotherHostsPropertyButSelfBookingIsRejectedClearly() throws Exception {
+        String body="""
+                {"propertyId":%d,"checkIn":"2030-12-10","checkOut":"2030-12-11","currency":"VND",
+                 "paymentMode":"FULL_PREPAY","rooms":1,"adults":2,"childrenAges":[],
+                 "items":[{"roomTypeId":%d,"ratePlanId":%d,"quantity":1,
+                    "roomAllocations":[{"adults":2,"childrenAges":[]}]}]}
+                """.formatted(property,type,plan);
+        UserPrincipal hostPrincipal=UserPrincipal.create(users.findById(host).orElseThrow());
+        mvc.perform(post("/api/v1/booking-quotes").with(user(hostPrincipal)).with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isBadRequest()).andExpect(jsonPath("$.errorCode").value("ERR_SELF_BOOKING"));
+
+        long otherHost=users.save(User.builder().email("other-host-"+java.util.UUID.randomUUID()+"@test.local")
+                .passwordHash("hash").fullName("Other Host").role(UserRole.HOST).status(UserStatus.ACTIVE).build()).getId();
+        jdbc.update("UPDATE properties SET host_id=? WHERE id=?",otherHost,property);
+        JsonNode quote=mapper.readTree(mvc.perform(post("/api/v1/booking-quotes").with(user(hostPrincipal)).with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString()).path("data");
+        String consent="""
+                {"quoteId":"%s","acceptedPolicyVersion":"%s","acceptedFixtureVersion":"%s","acceptedQuoteHash":"%s"}
+                """.formatted(quote.path("quoteId").asText(),quote.path("policyVersion").asText(),
+                quote.path("fixtureVersion").asText(),quote.path("quoteHash").asText());
+        mvc.perform(post("/api/v1/bookings").with(user(hostPrincipal)).with(csrf())
+                        .header("Idempotency-Key","host-books-other-property").contentType(MediaType.APPLICATION_JSON).content(consent))
+                .andExpect(status().isCreated()).andExpect(jsonPath("$.data.checkoutUrl")
+                        .value(org.hamcrest.Matchers.startsWith("https://sandbox.example/checkout?")));
+    }
+
     @Test void twoRoomQuoteReconcilesFullAndHybridFundingSnapshots() throws Exception {
         String body="""
                 {"propertyId":%d,"checkIn":"2030-12-10","checkOut":"2030-12-11","currency":"VND",

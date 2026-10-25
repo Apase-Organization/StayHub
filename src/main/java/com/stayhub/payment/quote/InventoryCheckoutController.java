@@ -28,8 +28,9 @@ public class InventoryCheckoutController {
                                                        @RequestHeader("Idempotency-Key") String key,
                                                        @Valid @RequestBody BookingConsentRequest consent,
                                                        HttpServletRequest request) {
-        if(!guest.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_GUEST")))
-            throw new ConflictException("ERR_FORBIDDEN","Guest role is required to create a booking.");
+        if(guest==null||(!guest.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_GUEST"))
+                &&!guest.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_HOST"))))
+            throw new ConflictException("ERR_FORBIDDEN","Sign in with a Guest or Host account to create a booking.");
         return ApiResponse.success(service.create(guest.getId(),consent,key,request.getRemoteAddr()),"Booking created.");
     }
 }
