@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
+    <title>Bảng Điều Hành Admin - StayHub</title>
+    <link th:href="@{/css/tailwind.css}" rel="stylesheet">
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <style>
+        [x-cloak] { display: none !important; }
+    </style>
+</head>
+<body class="flex min-h-screen bg-bg-light text-text-900 font-sans"
+      th:data-initial-tab="${tab}"
+      x-data="adminDashboard()">
+
+    <!-- Sidebar Trái -->
+    <aside class="hidden w-64 flex-col border-r border-border bg-bg-white md:flex">
+        <div class="flex h-16 items-center border-b border-border px-6">
+            <a th:href="@{/admin/dashboard}" class="flex items-center gap-2 text-primary-500 font-black text-xl">
+                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L2 12h3v8h6v-6h2v6h6v-8h3L12 2z"/></svg>
+                <span>StayHub Admin</span>
+            </a>
+        </div>
+        <nav class="flex-1 space-y-1.5 p-4 text-sm font-semibold">
+            <button type="button"
+                    @click="setTab('overview')"
+                    :class="activeTab === 'overview' ? 'bg-primary-500 bg-opacity-10 text-primary-600 font-bold' : 'text-text-gray hover:bg-bg-light hover:text-text-900'"
+                    class="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                <span>Tổng quan & Host</span>
+            </button>
+            <button type="button"
+                    @click="setTab('bookings')"
+                    :class="activeTab === 'bookings' ? 'bg-primary-500 bg-opacity-10 text-primary-600 font-bold' : 'text-text-gray hover:bg-bg-light hover:text-text-900'"
+                    class="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                <span>Đơn đặt phòng</span>
+            </button>
+            <button type="button"
+                    @click="setTab('properties')"
+                    :class="activeTab === 'properties' ? 'bg-primary-500 bg-opacity-10 text-primary-600 font-bold' : 'text-text-gray hover:bg-bg-light hover:text-text-900'"
+                    class="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                <span>Chỗ nghỉ</span>
+            </button>
+            <button type="button"
+                    @click="setTab('financials')"
+                    :class="activeTab === 'financials' ? 'bg-primary-500 bg-opacity-10 text-primary-600 font-bold' : 'text-text-gray hover:bg-bg-light hover:text-text-900'"
+                    class="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <span>Tài chính & Ký quỹ</span>
+            </button>
+            <button type="button"
+                    @click="setTab('users')"
+                    :class="activeTab === 'users' ? 'bg-primary-500 bg-opacity-10 text-primary-600 font-bold' : 'text-text-gray hover:bg-bg-light hover:text-text-900'"
+                    class="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                <span>Quản lý Người dùng</span>
+            </button>
+
+            <hr class="my-4 border-border">
+
+            <a th:href="@{/admin/financial-operations}" class="flex items-center gap-3 rounded-xl px-4 py-3 text-text-gray transition hover:bg-bg-light hover:text-text-900">
+                <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                <span>Cổng Quyết toán S0-109</span>
+            </a>
+            <a th:href="@{/}" class="flex items-center gap-3 rounded-xl px-4 py-3 text-text-gray transition hover:bg-bg-light hover:text-text-900">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+                <span>Về Trang chủ</span>
+            </a>
+        </nav>
+    </aside>
+
+    <!-- Khu vực Nội dung Chính -->
+    <main class="flex-1 overflow-y-auto p-5 md:p-8">
+
+        <!-- Top Header & Mobile Tab Bar -->
+        <div class="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div>
+                <p class="text-xs font-bold uppercase tracking-[0.2em] text-primary-500">Trung tâm Điều hành Nền tảng</p>
+                <h1 class="mt-1 text-2xl font-black md:text-3xl">StayHub Admin Operations</h1>
+            </div>
+            
+            <!-- Quick Tab Bar for Tablet/Mobile -->
+            <div class="flex flex-wrap gap-2 md:hidden">
+                <button type="button" @click="setTab('overview')" :class="activeTab === 'overview' ? 'bg-primary-500 text-white font-bold' : 'bg-bg-white text-text-gray border border-border'" class="rounded-lg px-3 py-1.5 text-xs">Tổng quan & Host</button>
+                <button type="button" @click="setTab('bookings')" :class="activeTab === 'bookings' ? 'bg-primary-500 text-white font-bold' : 'bg-bg-white text-text-gray border border-border'" class="rounded-lg px-3 py-1.5 text-xs">Đơn phòng</button>
+                <button type="button" @click="setTab('properties')" :class="activeTab === 'properties' ? 'bg-primary-500 text-white font-bold' : 'bg-bg-white text-text-gray border border-border'" class="rounded-lg px-3 py-1.5 text-xs">Chỗ nghỉ</button>
+                <button type="button" @click="setTab('financials')" :class="activeTab === 'financials' ? 'bg-primary-500 text-white font-bold' : 'bg-bg-white text-text-gray border border-border'" class="rounded-lg px-3 py-1.5 text-xs">Tài chính</button>
+                <button type="button" @click="setTab('users')" :class="activeTab === 'users' ? 'bg-primary-500 text-white font-bold' : 'bg-bg-white text-text-gray border border-border'" class="rounded-lg px-3 py-1.5 text-xs">Người dùng</button>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- TAB 1: TỔNG QUAN & HIỆU SUẤT TỪNG HOST      -->
+        <!-- ========================================== -->
+        <div x-show="activeTab === 'overview'" x-cloak class="space-y-8">
+            
+            <!-- 4 Top Executive KPI Cards -->
+            <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
+                <div class="rounded-2xl border border-border bg-bg-white p-6 shadow-sm">
+                    <p class="text-xs font-semibold text-text-gray uppercase tracking-wider">Tổng GMV Đặt phòng</p>
+                    <h3 class="mt-2 text-2xl font-black text-text-900"
+                        th:text="|${overview.totalGmv != null ? #numbers.formatDecimal(overview.totalGmv, 0, 'COMMA', 0, 'POINT') : '0'} VND|">0 VND</h3>
+                    <p class="mt-2 text-xs text-text-gray">Tổng giá trị đơn xác nhận & hoàn tất</p>
+                </div>
+                <div class="rounded-2xl border border-border bg-bg-white p-6 shadow-sm">
+                    <p class="text-xs font-semibold text-text-gray uppercase tracking-wider">Hoa hồng Sàn Thu</p>
+                    <h3 class="mt-2 text-2xl font-black text-emerald-600"
+                        th:text="|${overview.platformCommission != null ? #numbers.formatDecimal(overview.platformCommission, 0, 'COMMA', 0, 'POINT') : '0'} VND|">0 VND</h3>
+                    <p class="mt-2 text-xs text-text-gray">Doanh thu phí dịch vụ nền tảng</p>
+                </div>
+                <div class="rounded-2xl border border-border bg-bg-white p-6 shadow-sm">
+                    <p class="text-xs font-semibold text-text-gray uppercase tracking-wider">Host Đang Hoạt động</p>
+                    <h3 class="mt-2 text-2xl font-black text-text-900">
+                        <span th:text="${overview.activeHosts}">0</span>
+                        <span class="text-sm font-normal text-text-gray" th:text="|/ ${overview.totalUsers} người dùng|">/ 0 users</span>
+                    </h3>
+                    <p class="mt-2 text-xs text-text-gray" th:text="|${overview.activeProperties} chỗ nghỉ đang mở bán|">0 chỗ nghỉ</p>
+                </div>
+                <div class="rounded-2xl border border-border bg-bg-white p-6 shadow-sm">
+                    <p class="text-xs font-semibold text-text-gray uppercase tracking-wider">Cảnh báo Bất thường</p>
+                    <h3 class="mt-2 text-2xl font-black"
+                        th:classappend="${overview.alertsCount > 0 ? 'text-rose-600' : 'text-emerald-600'}"
+                        th:text="${overview.alertsCount}">0</h3>
+                    <p class="mt-2 text-xs text-text-gray" th:if="${overview.alertsCount > 0}">Vấn đề vận hành cần kiểm tra ngay</p>
+                    <p class="mt-2 text-xs text-emerald-600" th:if="${overview.alertsCount == 0}">Hệ thống vận hành an toàn</p>
+                </div>
+            </div>
+
+            <!-- Anomaly Alert Center Banner -->
+            <section class="overflow-hidden rounded-2xl border border-border bg-bg-white shadow-sm">
+                <div class="border-b border-border bg-gradient-to-r from-bg-white to-amber-50/40 px-6 py-4 flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="rounded-lg bg-amber-500/10 p-2 text-amber-600">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                        </div>
+                        <div>
+                            <h2 class="text-lg font-black text-text-900">Trung tâm Cảnh báo Vận hành & Dấu hiệu Bất thường</h2>
+                            <p class="text-xs text-text-gray">Tự động phát hiện các đơn hàng hủy bất thường, đơn treo quá hạn và chỗ nghỉ đánh giá thấp</p>
+                        </div>
+                    </div>
+                    <span class="rounded-full px-3 py-1 text-xs font-bold"
+                          th:classappend="${overview.alertsCount > 0 ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700'}"
+                          th:text="|${overview.alertsCount} cảnh báo|">0 cảnh báo</span>
+                </div>
+
+                <div class="p-6">
+                    <!-- Trường hợp KHÔNG có cảnh báo -->
+                    <div th:if="${overview.urgentAlerts.empty}" class="flex items-center gap-3 rounded-xl bg-emerald-50 p-4 text-emerald-800">
+                        <svg class="w-5 h-5 text-emerald-600 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                        <p class="text-sm font-semibold">Tất cả các chỉ số vận hành đang trong ngưỡng ổn định. Không ghi nhận đơn hàng hay tài khoản có dấu hiệu gian lận/hủy đơn bất thường.</p>
+                    </div>
+
+                    <!-- Danh sách Cảnh báo -->
+                    <div th:unless="${overview.urgentAlerts.empty}" class="grid gap-3">
+                        <div th:each="alert : ${overview.urgentAlerts}"
+                             class="flex flex-col gap-3 rounded-xl border border-border p-4 transition hover:bg-bg-light/60 md:flex-row md:items-center md:justify-between">
+                            <div class="flex items-start gap-3">
+                                <span th:if="${alert.severity == 'HIGH'}" class="inline-flex shrink-0 rounded-md bg-rose-100 px-2.5 py-1 text-xs font-extrabold text-rose-700">NGHIÊM TRỌNG</span>
+                                <span th:if="${alert.severity == 'MEDIUM'}" class="inline-flex shrink-0 rounded-md bg-amber-100 px-2.5 py-1 text-xs font-extrabold text-amber-800">CẦN CHÚ Ý</span>
+                                <span th:if="${alert.severity == 'LOW'}" class="inline-flex shrink-0 rounded-md bg-blue-100 px-2.5 py-1 text-xs font-extrabold text-blue-700">THÔNG TIN</span>
+                                <div>
+                                    <h4 class="font-bold text-text-900" th:text="${alert.title}">Tiêu đề cảnh báo</h4>
+                                    <p class="mt-0.5 text-xs text-text-gray" th:text="${alert.description}">Mô tả chi tiết</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-3 text-xs">
+                                <span class="rounded-lg bg-bg-light px-2.5 py-1 font-semibold text-text-gray" th:text="|${alert.entityType} #${alert.entityId}|">ID</span>
+                                <a th:if="${alert.entityType == 'HOST'}" th:href="@{/admin/hosts/{id}(id=${alert.entityId})}"
+                                   class="font-bold text-primary-500 hover:underline">Chi tiết Host &rarr;</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Host Performance Matrix Section -->
+            <section class="overflow-hidden rounded-2xl border border-border bg-bg-white shadow-sm">
+                <div class="border-b border-border p-6">
+                    <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+                        <div>
+                            <h2 class="text-xl font-black">Ma trận Hiệu suất & Doanh thu từng Host</h2>
+                            <p class="mt-1 text-sm text-text-gray">Theo dõi trực tiếp doanh thu gộp, tỷ lệ hủy phòng, hoa hồng nền tảng và bấm vào từng host để xem chi tiết</p>
+                        </div>
+                        <form th:action="@{/admin/dashboard}" method="get" class="grid gap-3 sm:grid-cols-[1fr_160px_auto]">
+                            <input type="hidden" name="tab" value="overview">
+                            <input name="keyword" th:value="${keyword}" placeholder="Tìm theo tên host, email..." class="rounded-xl border border-border px-4 py-2.5 text-sm outline-none focus:border-primary-500">
+                            <select name="status" class="rounded-xl border border-border px-3 py-2.5 text-sm outline-none focus:border-primary-500">
+                                <option value="">Tất cả trạng thái</option>
+                                <option value="ACTIVE" th:selected="${status == 'ACTIVE'}">Hoạt động</option>
+                                <option value="LOCKED" th:selected="${status == 'LOCKED'}">Đã khóa</option>
+                            </select>
+                            <button type="submit" class="rounded-xl bg-primary-500 px-5 py-2.5 text-sm font-bold text-white hover:bg-primary-600">Lọc dữ liệu</button>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full min-w-[960px] text-left text-sm">
+                        <thead class="border-b border-border bg-bg-light text-xs font-bold uppercase text-text-gray">
+                            <tr>
+                                <th class="px-6 py-4">Host / Đại diện</th>
+                                <th class="px-6 py-4">Trạng thái</th>
+                                <th class="px-6 py-4">Số chỗ nghỉ</th>
+                                <th class="px-6 py-4">Đơn phòng (Hoàn tất / Hủy)</th>
+                                <th class="px-6 py-4">Tỷ lệ Hoàn tất</th>
+                                <th class="px-6 py-4">Doanh thu Host</th>
+                                <th class="px-6 py-4">Hoa hồng Sàn</th>
+                                <th class="px-6 py-4">Đánh giá TB</th>
+                                <th class="px-6 py-4 text-right">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-border">
+                            <tr th:if="${hostPage.empty}">
+                                <td colspan="9" class="px-6 py-12 text-center">
+                                    <h3 class="text-base font-bold text-text-900">Không tìm thấy Host nào</h3>
+                                    <p class="mt-1 text-xs text-text-gray">Không có đối tác cho thuê nào phù hợp với điều kiện tìm kiếm.</p>
+                                </td>
+                            </tr>
+                            <tr th:unless="${hostPage.empty}" th:each="h : ${hostPage.content}" class="hover:bg-bg-light/60 transition">
+                                <td class="px-6 py-4">
+                                    <a th:href="@{/admin/hosts/{id}(id=${h.hostId})}" class="font-bold text-text-900 hover:text-primary-500 hover:underline" th:text="${h.fullName}">Tên Host</a>
+                                    <p class="text-xs text-text-gray" th:text="${h.email}">host@email.com</p>
+                                    <p class="text-xs text-text-gray" th:if="${h.phone != null}" th:text="${h.phone}">0901234567</p>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <span th:if="${h.status != null and h.status.name() == 'ACTIVE'}" class="inline-flex rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-bold text-emerald-700">Hoạt động</span>
+                                    <span th:if="${h.status != null and h.status.name() == 'LOCKED'}" class="inline-flex rounded-full bg-rose-100 px-2.5 py-0.5 text-xs font-bold text-rose-700">Đã khóa</span>
+                                </td>
+                                <td class="px-6 py-4 font-bold" th:text="|${h.propertiesCount} căn|">0 căn</td>
+                                <td class="px-6 py-4">
+                                    <span class="font-black" th:text="${h.bookingsCount}">0</span>
+                                    <span class="text-xs text-text-gray" th:text="|(${h.completedBookingsCount} xong / ${h.cancelledBookingsCount} hủy)|">(0/0)</span>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <div class="flex items-center gap-2">
+                                        <span class="font-bold text-text-900" th:text="|${h.completionRate}%|">0%</span>
+                                        <span class="text-xs text-rose-600" th:if="${h.cancellationRate >= 20.0}" th:text="|(${h.cancellationRate}% hủy)|"></span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 font-bold text-text-900"
+                                    th:text="|${h.grossHostRevenue != null ? #numbers.formatDecimal(h.grossHostRevenue, 0, 'COMMA', 0, 'POINT') : '0'} VND|">0 VND</td>
+                                <td class="px-6 py-4 font-bold text-emerald-600"
+                                    th:text="|${h.commissionEarned != null ? #numbers.formatDecimal(h.commissionEarned, 0, 'COMMA', 0, 'POINT') : '0'} VND|">0 VND</td>
+                                <td class="px-6 py-4">
+                                    <span th:if="${h.averageRating != null and h.averageRating > 0}" class="font-bold text-amber-500" th:text="|${#numbers.formatDecimal(h.averageRating, 1, 1)} ★|">4.8 ★</span>
+                                    <span th:unless="${h.averageRating != null and h.averageRating > 0}" class="text-xs text-text-gray">Chưa có</span>
+                                </td>
+                                <td class="px-6 py-4 text-right">
+                                    <a th:href="@{/admin/hosts/{id}(id=${h.hostId})}"
+                                       class="inline-flex items-center gap-1 rounded-xl bg-text-900 px-3.5 py-2 text-xs font-bold text-white transition hover:bg-black">
+                                        Chi tiết &rarr;
+                                    </a>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Phân trang Host -->
+                <nav class="flex items-center justify-between border-t border-border px-6 py-4 text-xs">
+                    <span class="text-text-gray" th:text="|Tổng số: ${hostPage.totalElements} Host|">0 Host</span>
+                    <div class="flex items-center gap-2">
+                        <a th:href="@{/admin/dashboard(tab='overview',page=${hostPage.number - 1},size=${hostPage.size},keyword=${keyword},status=${status})}"
+                           th:classappend="${hostPage.first} ? 'pointer-events-none opacity-50' : ''"
+                           class="rounded-lg border border-border px-3 py-1.5 font-bold hover:bg-bg-light">Trước</a>
+                        <span class="rounded-lg bg-bg-light px-3 py-1.5 font-bold" th:text="|Trang ${hostPage.number + 1} / ${hostPage.totalPages > 0 ? hostPage.totalPages : 1}|">Trang 1</span>
+                        <a th:href="@{/admin/dashboard(tab='overview',page=${hostPage.number + 1},size=${hostPage.size},keyword=${keyword},status=${status})}"
+                           th:classappend="${hostPage.last} ? 'pointer-events-none opacity-50' : ''"
+                           class="rounded-lg border border-border px-3 py-1.5 font-bold hover:bg-bg-light">Sau</a>
+                    </div>
+                </nav>
+            </section>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- TAB 2: ĐƠN ĐẶT PHÒNG TOÀN HỆ THỐNG         -->
+        <!-- ========================================== -->
+        <div x-show="activeTab === 'bookings'" x-cloak class="space-y-6">
+            <section class="overflow-hidden rounded-2xl border border-border bg-bg-white shadow-sm">
+                <div class="border-b border-border p-6">
+                    <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+                        <div>
+                            <h2 class="text-xl font-black">Danh sách Đơn đặt phòng Toàn hệ thống</h2>
+                            <p class="mt-1 text-sm text-text-gray">Quản lý và tra cứu trạng thái đơn, khách hàng, chỗ nghỉ và tiến trình thanh toán</p>
+                        </div>
+                        <form th:action="@{/admin/dashboard}" method="get" class="grid gap-3 sm:grid-cols-[1fr_180px_auto]">
+                            <input type="hidden" name="tab" value="bookings">
+                            <input name="keyword" th:value="${keyword}" placeholder="Khách hàng, host, chỗ nghỉ..." class="rounded-xl border border-border px-4 py-2.5 text-sm outline-none focus:border-primary-500">
+                            <select name="status" class="rounded-xl border border-border px-3 py-2.5 text-sm outline-none focus:border-primary-500">
+                                <option value="">Tất cả trạng thái</option>
+                                <option th:each="st : ${bookingStatuses}" th:value="${st}" th:selected="${st == status}" th:text="${st}">PENDING</option>
+                            </select>
+                            <button type="submit" class="rounded-xl bg-primary-500 px-5 py-2.5 text-sm font-bold text-white hover:bg-primary-600">Lọc đơn</button>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full min-w-[960px] text-left text-sm">
+                        <thead class="border-b border-border bg-bg-light text-xs font-bold uppercase text-text-gray">
+                            <tr>
+                                <th class="px-6 py-4">Mã đơn</th>
+                                <th class="px-6 py-4">Khách hàng</th>
+                                <th class="px-6 py-4">Chỗ nghỉ & Host</th>
+                                <th class="px-6 py-4">Ngày lưu trú</th>
+                                <th class="px-6 py-4">Trạng thái đơn</th>
+                                <th class="px-6 py-4">Thanh toán</th>
+                                <th class="px-6 py-4">Tổng tiền</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-border">
+                            <tr th:if="${bookingPage.empty}">
+                                <td colspan="7" class="px-6 py-12 text-center text-text-gray">Không tìm thấy đơn đặt phòng nào phù hợp.</td>
+                            </tr>
+                            <tr th:unless="${bookingPage.empty}" th:each="b : ${bookingPage.content}" class="hover:bg-bg-light/60 transition">
+                                <td class="px-6 py-4 font-bold text-primary-500" th:text="|#${b.id}|">#1</td>
+                                <td class="px-6 py-4">
+                                    <p class="font-bold text-text-900" th:text="${b.guestName}">Tên khách</p>
+                                    <p class="text-xs text-text-gray" th:text="${b.guestEmail}">email</p>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <p class="font-bold text-text-900" th:text="${b.propertyTitle}">Tên chỗ nghỉ</p>
+                                    <p class="text-xs text-text-gray">
+                                        <span th:text="${b.propertyCity}">Thành phố</span> · Host: <span th:text="${b.hostName}">Tên Host</span>
+                                    </p>
+                                </td>
+                                <td class="px-6 py-4 text-xs">
+                                    <p class="font-semibold text-text-900" th:text="|${b.checkInDate} ~ ${b.checkOutDate}|">Dates</p>
+                                    <p class="text-text-gray" th:text="|${b.nights} đêm · ${b.guests} khách|">1 đêm</p>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <span class="inline-flex rounded-full px-2.5 py-0.5 text-xs font-bold"
+                                          th:classappend="${b.status.name() == 'CONFIRMED' || b.status.name() == 'COMPLETED'} ? 'bg-emerald-100 text-emerald-700' : (${b.status.name() == 'PENDING' || b.status.name() == 'PENDING_PAYMENT'} ? 'bg-amber-100 text-amber-800' : 'bg-rose-100 text-rose-700')"
+                                          th:text="${b.status}">CONFIRMED</span>
+                                </td>
+                                <td class="px-6 py-4 text-xs">
+                                    <p class="font-semibold" th:text="${b.paymentStatus}">PAID</p>
+                                    <p class="text-text-gray" th:text="${b.paymentMethod}">VNPAY</p>
+                                </td>
+                                <td class="px-6 py-4 font-bold text-text-900"
+                                    th:text="|${b.totalPrice != null ? #numbers.formatDecimal(b.totalPrice, 0, 'COMMA', 0, 'POINT') : '0'} VND|">0 VND</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Phân trang Booking -->
+                <nav class="flex items-center justify-between border-t border-border px-6 py-4 text-xs">
+                    <span class="text-text-gray" th:text="|Tổng số: ${bookingPage.totalElements} đơn đặt phòng|">0 đơn</span>
+                    <div class="flex items-center gap-2">
+                        <a th:href="@{/admin/dashboard(tab='bookings',page=${bookingPage.number - 1},size=${bookingPage.size},keyword=${keyword},status=${status})}"
+                           th:classappend="${bookingPage.first} ? 'pointer-events-none opacity-50' : ''"
+                           class="rounded-lg border border-border px-3 py-1.5 font-bold hover:bg-bg-light">Trước</a>
+                        <span class="rounded-lg bg-bg-light px-3 py-1.5 font-bold" th:text="|Trang ${bookingPage.number + 1} / ${bookingPage.totalPages > 0 ? bookingPage.totalPages : 1}|">Trang 1</span>
+                        <a th:href="@{/admin/dashboard(tab='bookings',page=${bookingPage.number + 1},size=${bookingPage.size},keyword=${keyword},status=${status})}"
+                           th:classappend="${bookingPage.last} ? 'pointer-events-none opacity-50' : ''"
+                           class="rounded-lg border border-border px-3 py-1.5 font-bold hover:bg-bg-light">Sau</a>
+                    </div>
+                </nav>
+            </section>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- TAB 3: CHỖ NGHỈ TOÀN HỆ THỐNG              -->
+        <!-- ========================================== -->
+        <div x-show="activeTab === 'properties'" x-cloak class="space-y-6">
+            <section class="overflow-hidden rounded-2xl border border-border bg-bg-white shadow-sm">
+                <div class="border-b border-border p-6">
+                    <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+                        <div>
+                            <h2 class="text-xl font-black">Danh mục Chỗ nghỉ Toàn sàn</h2>
+                            <p class="mt-1 text-sm text-text-gray">Theo dõi niêm yết, tình trạng kiểm duyệt, giá cả và đánh giá từng căn hộ/phòng</p>
+                        </div>
+                        <form th:action="@{/admin/dashboard}" method="get" class="grid gap-3 sm:grid-cols-[1fr_160px_160px_auto]">
+                            <input type="hidden" name="tab" value="properties">
+                            <input name="keyword" th:value="${keyword}" placeholder="Tên chỗ nghỉ, địa chỉ..." class="rounded-xl border border-border px-4 py-2.5 text-sm outline-none focus:border-primary-500">
+                            <input name="city" th:value="${city}" placeholder="Thành phố..." class="rounded-xl border border-border px-3 py-2.5 text-sm outline-none focus:border-primary-500">
+                            <select name="status" class="rounded-xl border border-border px-3 py-2.5 text-sm outline-none focus:border-primary-500">
+                                <option value="">Tất cả trạng thái</option>
+                                <option th:each="st : ${propertyStatuses}" th:value="${st}" th:selected="${st == status}" th:text="${st}">ACTIVE</option>
+                            </select>
+                            <button type="submit" class="rounded-xl bg-primary-500 px-5 py-2.5 text-sm font-bold text-white hover:bg-primary-600">Lọc chỗ nghỉ</button>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full min-w-[960px] text-left text-sm">
+                        <thead class="border-b border-border bg-bg-light text-xs font-bold uppercase text-text-gray">
+                            <tr>
+                                <th class="px-6 py-4">Chỗ nghỉ</th>
+                                <th class="px-6 py-4">Host Phụ trách</th>
+                                <th class="px-6 py-4">Thành phố & Loại hình</th>
+                                <th class="px-6 py-4">Giá / Đêm</th>
+                                <th class="px-6 py-4">Đánh giá & Đơn đặt</th>
+                                <th class="px-6 py-4">Trạng thái</th>
+                                <th class="px-6 py-4 text-right">Xem Listing</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-border">
+                            <tr th:if="${propertyPage.empty}">
+                                <td colspan="7" class="px-6 py-12 text-center text-text-gray">Không tìm thấy chỗ nghỉ nào.</td>
+                            </tr>
+                            <tr th:unless="${propertyPage.empty}" th:each="p : ${propertyPage.content}" class="hover:bg-bg-light/60 transition">
+                                <td class="px-6 py-4">
+                                    <p class="font-bold text-text-900" th:text="${p.title}">Luxury Studio</p>
+                                    <p class="text-xs text-text-gray" th:text="${p.address}">123 Đường ABC</p>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <a th:href="@{/admin/hosts/{id}(id=${p.hostId})}" class="font-semibold text-text-900 hover:text-primary-500 hover:underline" th:text="${p.hostName}">Tên Host</a>
+                                    <p class="text-xs text-text-gray" th:text="${p.hostEmail}">email</p>
+                                </td>
+                                <td class="px-6 py-4 text-xs">
+                                    <p class="font-bold text-text-900" th:text="${p.city}">Đà Nẵng</p>
+                                    <p class="text-text-gray" th:text="${p.propertyType}">APARTMENT</p>
+                                </td>
+                                <td class="px-6 py-4 font-bold text-text-900"
+                                    th:text="|${p.pricePerNight != null ? #numbers.formatDecimal(p.pricePerNight, 0, 'COMMA', 0, 'POINT') : '0'} VND|">0 VND</td>
+                                <td class="px-6 py-4 text-xs">
+                                    <p class="font-bold text-amber-500" th:text="|${p.ratingAvg != null ? #numbers.formatDecimal(p.ratingAvg, 1, 1) + ' ★' : 'Chưa có'}|">5.0 ★</p>
+                                    <p class="text-text-gray" th:text="|${p.totalBookings} đơn đã đặt|">0 đơn</p>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <span class="inline-flex rounded-full px-2.5 py-0.5 text-xs font-bold"
+                                          th:classappend="${p.status.name() == 'ACTIVE'} ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-700'"
+                                          th:text="${p.status}">ACTIVE</span>
+                                </td>
+                                <td class="px-6 py-4 text-right">
+                                    <a th:href="@{/properties/{id}(id=${p.id})}" target="_blank"
+                                       class="text-xs font-bold text-primary-500 hover:underline">
+                                        Xem &rarr;
+                                    </a>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Phân trang Property -->
+                <nav class="flex items-center justify-between border-t border-border px-6 py-4 text-xs">
+                    <span class="text-text-gray" th:text="|Tổng số: ${propertyPage.totalElements} chỗ nghỉ|">0 chỗ nghỉ</span>
+                    <div class="flex items-center gap-2">
+                        <a th:href="@{/admin/dashboard(tab='properties',page=${propertyPage.number - 1},size=${propertyPage.size},keyword=${keyword},status=${status},city=${city})}"
+                           th:classappend="${propertyPage.first} ? 'pointer-events-none opacity-50' : ''"
+                           class="rounded-lg border border-border px-3 py-1.5 font-bold hover:bg-bg-light">Trước</a>
+                        <span class="rounded-lg bg-bg-light px-3 py-1.5 font-bold" th:text="|Trang ${propertyPage.number + 1} / ${propertyPage.totalPages > 0 ? propertyPage.totalPages : 1}|">Trang 1</span>
+                        <a th:href="@{/admin/dashboard(tab='properties',page=${propertyPage.number + 1},size=${propertyPage.size},keyword=${keyword},status=${status},city=${city})}"
+                           th:classappend="${propertyPage.last} ? 'pointer-events-none opacity-50' : ''"
+                           class="rounded-lg border border-border px-3 py-1.5 font-bold hover:bg-bg-light">Sau</a>
+                    </div>
+                </nav>
+            </section>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- TAB 4: TÀI CHÍNH & KÝ QUỸ                  -->
+        <!-- ========================================== -->
+        <div x-show="activeTab === 'financials'" x-cloak class="space-y-6">
+            <div class="grid grid-cols-1 gap-6 md:grid-cols-3">
+                <div class="rounded-2xl border border-border bg-bg-white p-6 shadow-sm">
+                    <p class="text-xs font-semibold uppercase tracking-wider text-text-gray">Tổng GMV Toàn sàn</p>
+                    <h3 class="mt-2 text-3xl font-black text-text-900"
+                        th:text="|${overview.totalGmv != null ? #numbers.formatDecimal(overview.totalGmv, 0, 'COMMA', 0, 'POINT') : '0'} VND|">0 VND</h3>
+                    <p class="mt-2 text-xs text-text-gray">Dòng tiền giao dịch đã qua xử lý cổng VNPay & Thẻ</p>
+                </div>
+                <div class="rounded-2xl border border-border bg-bg-white p-6 shadow-sm">
+                    <p class="text-xs font-semibold uppercase tracking-wider text-text-gray">Doanh thu Hoa hồng (Take Rate)</p>
+                    <h3 class="mt-2 text-3xl font-black text-emerald-600"
+                        th:text="|${overview.platformCommission != null ? #numbers.formatDecimal(overview.platformCommission, 0, 'COMMA', 0, 'POINT') : '0'} VND|">0 VND</h3>
+                    <p class="mt-2 text-xs text-text-gray">Tỷ lệ phí sàn đóng góp trực tiếp vào lợi nhuận vận hành</p>
+                </div>
+                <div class="rounded-2xl border border-border bg-bg-white p-6 shadow-sm">
+                    <p class="text-xs font-semibold uppercase tracking-wider text-text-gray">Quyết toán Tiền về Host</p>
+                    <h3 class="mt-2 text-3xl font-black text-text-900"
+                        th:text="|${overview.totalGmv != null && overview.platformCommission != null ? #numbers.formatDecimal(overview.totalGmv.subtract(overview.platformCommission), 0, 'COMMA', 0, 'POINT') : '0'} VND|">0 VND</h3>
+                    <p class="mt-2 text-xs text-text-gray">Khoản phải trả các đối tác cho thuê sau hoàn tất lưu trú</p>
+                </div>
+            </div>
+
+            <!-- Deep Operations Banner -->
+            <div class="rounded-2xl border border-border bg-bg-white p-8 shadow-sm">
+                <div class="max-w-2xl">
+                    <h3 class="text-xl font-black text-text-900">Cổng Kiểm toán & Quyết toán Tài chính Chuyên sâu</h3>
+                    <p class="mt-2 text-sm text-text-gray leading-relaxed">
+                        Theo thiết kế đối soát tài chính S0-109 của StayHub, các giao dịch quyết toán thủ công (Manual Payout), hoàn tiền bảo vệ khách (Refund Workflow), và giải tỏa ký quỹ (Escrow Release) được quản lý tập trung và bảo vệ bằng chữ ký số phân quyền kép (Maker-Checker).
+                    </p>
+                    <div class="mt-6">
+                        <a th:href="@{/admin/financial-operations}"
+                           class="inline-flex items-center gap-2 rounded-xl bg-text-900 px-6 py-3.5 text-sm font-bold text-white transition hover:bg-black">
+                            <span>Mở Cổng Vận hành Tài chính S0-109</span>
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- TAB 5: QUẢN LÝ NGƯỜI DÙNG                  -->
+        <!-- ========================================== -->
+        <div x-show="activeTab === 'users'" x-cloak class="space-y-6">
+            <section class="overflow-hidden rounded-2xl border border-border bg-bg-white shadow-sm">
+                <div class="border-b border-border p-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                        <h2 class="text-xl font-black">Danh sách Tài khoản Người dùng</h2>
+                        <p class="mt-1 text-sm text-text-gray">Quản lý phân quyền (GUEST / HOST / ADMIN) và khóa/mở khóa tài khoản ngay lập tức</p>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full min-w-[800px] text-left text-sm">
+                        <thead class="border-b border-border bg-bg-light text-xs font-bold uppercase text-text-gray">
+                            <tr>
+                                <th class="px-6 py-4">ID</th>
+                                <th class="px-6 py-4">Họ và tên</th>
+                                <th class="px-6 py-4">Email</th>
+                                <th class="px-6 py-4">Vai trò</th>
+                                <th class="px-6 py-4">Trạng thái</th>
+                                <th class="px-6 py-4 text-right">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-border">
+                            <tr th:if="${userPage.empty}">
+                                <td colspan="6" class="px-6 py-12 text-center text-text-gray">Không có người dùng nào.</td>
+                            </tr>
+                            <tr th:unless="${userPage.empty}" th:each="user : ${userPage.content}" class="hover:bg-bg-light/60 transition">
+                                <td class="px-6 py-4 text-text-gray" th:text="${user.id}">1</td>
+                                <td class="px-6 py-4 font-bold text-text-900" th:text="${user.fullName}">Nguyen Van A</td>
+                                <td class="px-6 py-4 text-text-gray" th:text="${user.email}">user@email.com</td>
+                                <td class="px-6 py-4">
+                                    <select th:disabled="${user.role.name() == 'ADMIN'}"
+                                            th:data-user-id="${user.id}"
+                                            @change="changeRole($el.dataset.userId, $event.target.value)"
+                                            class="rounded-lg border border-border bg-white px-2.5 py-1 text-xs font-bold text-primary-600 disabled:cursor-not-allowed disabled:bg-bg-light cursor-pointer">
+                                        <option value="GUEST" th:selected="${user.role.name() == 'GUEST'}">GUEST</option>
+                                        <option value="HOST" th:selected="${user.role.name() == 'HOST'}">HOST</option>
+                                        <option value="ADMIN" th:selected="${user.role.name() == 'ADMIN'}">ADMIN</option>
+                                    </select>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <span th:text="${user.status}"
+                                          th:classappend="${user.status.name() == 'ACTIVE' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}"
+                                          class="rounded-full px-2.5 py-0.5 text-xs font-bold">
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 text-right">
+                                    <button th:if="${user.status.name() == 'ACTIVE' and user.role.name() != 'ADMIN'}"
+                                            th:data-user-id="${user.id}"
+                                            @click="toggleUserStatus($el.dataset.userId, 'lock')"
+                                            class="rounded-lg bg-rose-50 px-3 py-1.5 text-xs font-bold text-rose-600 hover:bg-rose-100 cursor-pointer">
+                                        Khóa
+                                    </button>
+                                    <button th:if="${user.status.name() == 'LOCKED'}"
+                                            th:data-user-id="${user.id}"
+                                            @click="toggleUserStatus($el.dataset.userId, 'unlock')"
+                                            class="rounded-lg bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-600 hover:bg-emerald-100 cursor-pointer">
+                                        Mở khóa
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Phân trang Users -->
+                <nav class="flex items-center justify-between border-t border-border px-6 py-4 text-xs">
+                    <span class="text-text-gray" th:text="|Tổng số: ${userPage.totalElements} tài khoản|">0 tài khoản</span>
+                    <div class="flex items-center gap-2">
+                        <a th:href="@{/admin/dashboard(tab='users',page=${userPage.number - 1},size=${userPage.size})}"
+                           th:classappend="${userPage.first} ? 'pointer-events-none opacity-50' : ''"
+                           class="rounded-lg border border-border px-3 py-1.5 font-bold hover:bg-bg-light">Trước</a>
+                        <span class="rounded-lg bg-bg-light px-3 py-1.5 font-bold" th:text="|Trang ${userPage.number + 1} / ${userPage.totalPages > 0 ? userPage.totalPages : 1}|">Trang 1</span>
+                        <a th:href="@{/admin/dashboard(tab='users',page=${userPage.number + 1},size=${userPage.size})}"
+                           th:classappend="${userPage.last} ? 'pointer-events-none opacity-50' : ''"
+                           class="rounded-lg border border-border px-3 py-1.5 font-bold hover:bg-bg-light">Sau</a>
+                    </div>
+                </nav>
+            </section>
+        </div>
+
+    </main>
+
+    <!-- Alpine.js logic cho Admin Dashboard -->
+    <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('adminDashboard', () => ({
+                activeTab: 'overview',
+                init() {
+                    const urlParams = new URLSearchParams(window.location.search);
+                    this.activeTab = urlParams.get('tab') || this.$el.dataset.initialTab || 'overview';
+                },
+                setTab(tab) {
+                    this.activeTab = tab;
+                    const url = new URL(window.location);
+                    url.searchParams.set('tab', tab);
+                    window.history.replaceState({}, '', url);
+                },
+                csrf() {
+                    return {
+                        token: document.querySelector('meta[name="_csrf"]')?.content || '',
+                        header: document.querySelector('meta[name="_csrf_header"]')?.content || 'X-CSRF-TOKEN'
+                    };
+                },
+                async toggleUserStatus(userId, action) {
+                    if (!confirm(`Bạn có chắc chắn muốn ${action === 'lock' ? 'KHÓA' : 'MỞ KHÓA'} tài khoản này?`)) return;
+                    const csrf = this.csrf();
+                    try {
+                        const response = await fetch(`/api/v1/admin/users/${userId}/${action}`, {
+                            method: 'POST',
+                            credentials: 'same-origin',
+                            headers: {
+                                [csrf.header]: csrf.token,
+                                'Accept': 'application/json'
+                            }
+                        });
+                        const data = await response.json();
+                        if (response.ok && data.success) {
+                            window.location.reload();
+                            return;
+                        }
+                        alert(data.message || 'Thao tác không thành công.');
+                    } catch (error) {
+                        alert(error.message || 'Lỗi kết nối máy chủ.');
+                    }
+                },
+                async changeRole(userId, role) {
+                    if (!confirm(`Bạn có chắc muốn đổi vai trò tài khoản thành ${role}?`)) {
+                        window.location.reload();
+                        return;
+                    }
+                    const csrf = this.csrf();
+                    try {
+                        const response = await fetch(`/api/v1/admin/users/${userId}/role?role=${encodeURIComponent(role)}`, {
+                            method: 'POST',
+                            credentials: 'same-origin',
+                            headers: {
+                                [csrf.header]: csrf.token,
+                                'Accept': 'application/json'
+                            }
+                        });
+                        const data = await response.json();
+                        if (response.ok && data.success) {
+                            window.location.reload();
+                            return;
+                        }
+                        alert(data.message || 'Không thể đổi vai trò.');
+                    } catch (error) {
+                        alert(error.message || 'Lỗi kết nối máy chủ.');
+                    }
+                }
+            }));
+        });
+    </script>
+</body>
+</html>

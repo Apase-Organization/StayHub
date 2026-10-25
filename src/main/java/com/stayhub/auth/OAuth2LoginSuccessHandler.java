@@ -37,7 +37,8 @@ public class OAuth2LoginSuccessHandler extends SavedRequestAwareAuthenticationSu
         }
 
         setDefaultTargetUrl("/");
-        setAlwaysUseDefaultTargetUrl(true);
+        // Honor the saved request so OAuth login from a protected deep link continues there.
+        setAlwaysUseDefaultTargetUrl(false);
         super.onAuthenticationSuccess(request, response, SecurityContextHolder.getContext().getAuthentication());
     }
 }

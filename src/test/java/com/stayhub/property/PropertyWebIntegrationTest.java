@@ -106,6 +106,25 @@ class PropertyWebIntegrationTest extends PostgreSqlIntegrationTest {
     }
 
     @Test
+    void ownListingShowsWhySelfBookingIsBlockedButGuestCanRequestAQuote() throws Exception {
+        UserPrincipal hostPrincipal=UserPrincipal.create(host);
+        var hostAuth=new UsernamePasswordAuthenticationToken(hostPrincipal,hostPrincipal.getPassword(),hostPrincipal.getAuthorities());
+        mockMvc.perform(get("/properties/{id}",property.getId()).with(authentication(hostAuth)))
+                .andExpect(status().isOk())
+                .andExpect(model().attribute("selfBookingBlocked",true))
+                .andExpect(model().attribute("canBookProperty",false))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("does not allow booking your own property")));
+
+        User guest=userRepository.save(User.builder().email("detail-guest@example.com").passwordHash("hash")
+                .fullName("Detail Guest").role(UserRole.GUEST).status(UserStatus.ACTIVE).build());
+        UserPrincipal guestPrincipal=UserPrincipal.create(guest);
+        var guestAuth=new UsernamePasswordAuthenticationToken(guestPrincipal,guestPrincipal.getPassword(),guestPrincipal.getAuthorities());
+        mockMvc.perform(get("/properties/{id}",property.getId()).with(authentication(guestAuth)))
+                .andExpect(status().isOk()).andExpect(model().attribute("selfBookingBlocked",false))
+                .andExpect(model().attribute("canBookProperty",true));
+    }
+
+    @Test
     void publicOfferAvailabilityReturnsOnePropertyWithEligibleServerPrice() throws Exception {
         jdbc.update("UPDATE properties SET sale_mode='ROOM_BASED' WHERE id=?", property.getId());
         long typeId = jdbc.queryForObject("""
@@ -144,7 +163,13 @@ class PropertyWebIntegrationTest extends PostgreSqlIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(view().name("host/property-form"))
                 .andExpect(model().attributeExists("property", "propertyRequest", "amenities"))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("href=\"/host/dashboard\"")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("Riverside Retreat")));
+
+        mockMvc.perform(get("/host/properties").with(authentication(token)))
+                .andExpect(status().isOk()).andExpect(view().name("host/dashboard"));
+        mockMvc.perform(get("/host/dashboard").with(authentication(token)))
+                .andExpect(status().isOk()).andExpect(view().name("host/dashboard"));
     }
 
     @Test

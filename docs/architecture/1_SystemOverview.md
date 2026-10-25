@@ -135,10 +135,10 @@ flowchart TB
 
 - **Auth**: Xác thực, phân quyền, đăng ký bằng OTP email, đăng nhập Google OAuth2.
 - **User**: Quản lý thông tin người dùng.
-- **Property**: CRUD cho chỗ ở, ảnh, tiện nghi.
-- **Search**: Tìm kiếm, lọc, sắp xếp, phân trang.
-- **Booking**: Quản lý đặt phòng, trạng thái, kiểm tra trùng lịch.
-- **Payment**: Xử lý thanh toán Mock/VNPay, verify IPN, polling trạng thái sau redirect.
+- **Property**: Quản lý cơ sở lưu trú, hạng phòng (`room_types`), gói giá (`rate_plans`), ảnh, tiện nghi và tồn kho mở bán theo ngày (`type_day_inventory`).
+- **Search**: Tìm kiếm theo ngày, số phòng, số khách; kiểm tra availability trên từng hạng phòng, lọc, sắp xếp, phân trang.
+- **Booking**: Quản lý đặt phòng đa phòng (`booking_items`), phân bổ khách (`room_allocations`), snapshot giá từng đêm (`nightly_snapshots`), Dual-mode payment (Full/Hybrid), kiểm tra trùng lịch và giữ chỗ 15 phút.
+- **Payment**: Xử lý thanh toán VNPay theo mode, verify IPN, polling trạng thái sau redirect, sổ cái tài chính (`ledger_journals`), biên lai thu tiền mặt trực tiếp (`direct_receipts`).
 - **Discount**: Validate promo code, tính discount snapshot, chỉ tăng usage sau payment success.
 - **Review**: Đánh giá của Guest.
 - **Host**: Dashboard cho Host.

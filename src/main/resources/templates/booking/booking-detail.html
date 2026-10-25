@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
     <title>Booking detail - StayHub</title>
     <link th:href="@{/css/tailwind.css}" rel="stylesheet">
 </head>
@@ -54,6 +56,59 @@
                             <p class="text-sm font-bold text-text-gray">Email</p>
                             <p class="mt-1 font-semibold" th:text="${booking.guestEmail}">guest@example.com</p>
                         </div>
+                    </div>
+                </section>
+
+                <section th:if="${directBalance != null}" class="mt-8 rounded-3xl border border-border p-5">
+                    <h2 class="text-xl font-black">Host-direct balance evidence</h2>
+                    <p class="mt-2 text-sm text-text-gray">These are Host attestations, not VNPay-verified payments. They never count as StayHub cash.</p>
+                    <dl class="mt-4 grid gap-3 sm:grid-cols-3">
+                        <div class="rounded-xl bg-bg-light p-3"><dt class="text-xs text-text-gray">Host balance</dt><dd class="font-bold" th:text="|${#numbers.formatDecimal(directBalance.balanceDueHost,0,'COMMA',0,'POINT')} VND|">0</dd></div>
+                        <div class="rounded-xl bg-bg-light p-3"><dt class="text-xs text-text-gray">Acknowledged direct</dt><dd class="font-bold" th:text="|${#numbers.formatDecimal(directBalance.guestAcknowledged,0,'COMMA',0,'POINT')} VND|">0</dd></div>
+                        <div class="rounded-xl bg-bg-light p-3"><dt class="text-xs text-text-gray">Outstanding</dt><dd class="font-bold" th:text="|${#numbers.formatDecimal(directBalance.outstanding,0,'COMMA',0,'POINT')} VND|">0</dd></div>
+                    </dl>
+                    <div th:if="${!#lists.isEmpty(directReceipts)}" class="mt-4 space-y-3">
+                        <article th:each="receipt : ${directReceipts}" class="rounded-2xl border border-border p-4">
+                            <div class="flex flex-wrap justify-between gap-2"><strong th:text="|${receipt.method} · ${#numbers.formatDecimal(receipt.amount,0,'COMMA',0,'POINT')} VND|">Cash</strong><span class="text-sm font-bold" th:text="${receipt.state}">ATTESTED</span></div>
+                            <p class="mt-1 text-xs text-text-gray" th:text="|Reference ${receipt.id} · ${receipt.paidAt}|">Reference</p>
+                            <div th:if="${viewer == 'guest' and receipt.state == 'ATTESTED'}" class="mt-3 flex gap-2">
+                                <button type="button" data-direct-case="true" th:data-case-id="${receipt.id}" data-disposition="ACKNOWLEDGE" class="rounded-xl bg-success-500 px-3 py-2 text-sm font-bold text-white">Acknowledge</button>
+                                <button type="button" data-direct-case="true" th:data-case-id="${receipt.id}" data-disposition="CONTEST" class="rounded-xl border border-red-300 px-3 py-2 text-sm font-bold text-red-700">Contest</button>
+                            </div>
+                        </article>
+                    </div>
+                    <form th:if="${viewer == 'host' and directBalance.outstanding.signum() > 0 and booking.status.name() == 'CONFIRMED'}" id="direct-receipt-form" class="mt-5 grid gap-3 rounded-2xl bg-bg-light p-4 sm:grid-cols-2">
+                        <label class="text-sm font-bold">Receipt reference<input id="direct-ref" required maxlength="200" class="mt-1 w-full rounded-xl border border-border px-3 py-2"></label>
+                        <label class="text-sm font-bold">Amount (VND)<input id="direct-amount" type="number" min="1" step="1" required class="mt-1 w-full rounded-xl border border-border px-3 py-2"></label>
+                        <label class="text-sm font-bold">Method<select id="direct-method" class="mt-1 w-full rounded-xl border border-border px-3 py-2"><option value="CASH">Cash</option><option value="BANK_TRANSFER">Bank transfer</option></select></label>
+                        <label class="text-sm font-bold">Paid at<input id="direct-paid-at" type="datetime-local" required class="mt-1 w-full rounded-xl border border-border px-3 py-2"></label>
+                        <label class="text-sm font-bold sm:col-span-2">Private evidence SHA-256 digest<input id="direct-evidence" required pattern="[a-fA-F0-9]{64}" maxlength="64" class="mt-1 w-full rounded-xl border border-border px-3 py-2"></label>
+                        <button class="rounded-xl bg-text-900 px-4 py-3 font-bold text-white sm:col-span-2">Record Host attestation</button>
+                    </form>
+                </section>
+
+                <section th:if="${!#lists.isEmpty(arrivalRooms)}" class="mt-8 rounded-3xl border border-border p-5">
+                    <h2 class="text-xl font-black">Per-room arrival evidence</h2>
+                    <p class="mt-2 text-sm text-text-gray">A scheduled date or payment alone does not confirm actual stay or payout eligibility.</p>
+                    <div class="mt-4 space-y-3">
+                        <article th:each="room : ${arrivalRooms}" class="rounded-2xl border border-border p-4">
+                            <div class="flex flex-wrap justify-between gap-2"><strong th:text="|${room.roomType} · ${room.ratePlan} · Room ${room.roomOrdinal}|">Room</strong><span class="text-sm font-bold" th:text="${room.state != null ? room.state : 'NO ARRIVAL EVIDENCE'}">State</span></div>
+                            <p th:if="${room.actualAt != null}" class="mt-1 text-xs text-text-gray" th:text="|Actual arrival ${room.actualAt} · review needed: ${room.needsReview}|">Arrival time</p>
+                            <form th:if="${viewer == 'host' and room.state == null and booking.status.name() == 'CONFIRMED'}" data-arrival-form="true" th:data-item-id="${room.itemId}" th:data-room-ordinal="${room.roomOrdinal}" th:data-version="${room.bookingVersion}" class="mt-3 grid gap-3 sm:grid-cols-2">
+                                <label class="text-sm font-bold">Actual arrival time<input data-actual-at type="datetime-local" required class="mt-1 w-full rounded-xl border border-border px-3 py-2"></label>
+                                <label class="text-sm font-bold">Evidence SHA-256 digest<input data-evidence required pattern="[a-fA-F0-9]{64}" maxlength="64" class="mt-1 w-full rounded-xl border border-border px-3 py-2"></label>
+                                <button class="rounded-xl bg-text-900 px-4 py-3 font-bold text-white sm:col-span-2">Record actual arrival</button>
+                            </form>
+                            <div th:if="${viewer == 'guest' and room.state == 'REPORTED'}" class="mt-3 flex gap-2">
+                                <button type="button" data-arrival-decision="ACKNOWLEDGE" th:data-item-id="${room.itemId}" th:data-room-ordinal="${room.roomOrdinal}" th:data-version="${room.bookingVersion}" class="rounded-xl bg-success-500 px-3 py-2 text-sm font-bold text-white">Acknowledge</button>
+                                <button type="button" data-arrival-decision="CONTEST" th:data-item-id="${room.itemId}" th:data-room-ordinal="${room.roomOrdinal}" th:data-version="${room.bookingVersion}" class="rounded-xl border border-red-300 px-3 py-2 text-sm font-bold text-red-700">Contest</button>
+                            </div>
+                        </article>
+                    </div>
+                    <div th:if="${arrivalEligibility != null}" class="mt-4 rounded-2xl bg-bg-light p-4">
+                        <p class="font-bold" th:text="${arrivalEligibility.eligible ? 'Eligibility gates currently clear' : 'Payout eligibility is blocked'}">Eligibility</p>
+                        <p th:if="${arrivalEligibility.earliestAt != null}" class="mt-1 text-sm text-text-gray" th:text="|Earliest arrival-based time: ${arrivalEligibility.earliestAt}|">Earliest</p>
+                        <ul class="mt-2 list-disc pl-5 text-sm text-red-700"><li th:each="blocker : ${arrivalEligibility.blockers}" th:text="${blocker}">Blocker</li></ul>
                     </div>
                 </section>
 
@@ -142,5 +197,51 @@
 </main>
 
 <div th:replace="~{fragments/footer :: footer}"></div>
+<script th:inline="javascript">
+    const bookingId=/*[[${booking.id}]]*/0;
+    const csrfToken=document.querySelector('meta[name="_csrf"]')?.content;
+    const csrfHeader=document.querySelector('meta[name="_csrf_header"]')?.content;
+    async function sendEvidence(url,body){
+        const response=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json',[csrfHeader]:csrfToken},body:JSON.stringify(body)});
+        const payload=await response.json();if(!response.ok||!payload.success)throw new Error(payload.message||'Request failed');return payload.data;
+    }
+    document.getElementById('direct-receipt-form')?.addEventListener('submit',async event=>{
+        event.preventDefault();
+        const paidAt=new Date(document.getElementById('direct-paid-at').value).toISOString();
+        try { await sendEvidence(`/api/v1/bookings/${bookingId}/direct-receipts`,{
+            receiptRef:document.getElementById('direct-ref').value,amount:Number(document.getElementById('direct-amount').value),
+            currency:'VND',method:document.getElementById('direct-method').value,paidAt,
+            evidenceDigest:document.getElementById('direct-evidence').value,idempotencyKey:crypto.randomUUID(),
+            expectedVersion:[[${directBalance != null ? directBalance.version : 0}]]});location.reload(); }
+        catch(error){alert(error.message);}
+    });
+    document.querySelectorAll('[data-direct-case]').forEach(button=>button.addEventListener('click',async()=>{
+        const disposition=button.dataset.disposition;
+        const evidenceDigest=disposition==='CONTEST'?window.prompt('Enter the SHA-256 digest for private dispute evidence:'):null;
+        if(disposition==='CONTEST'&&!evidenceDigest)return;
+        try { await sendEvidence(`/api/v1/bookings/${bookingId}/direct-receipts/${button.dataset.caseId}/guest-disposition`,{
+            disposition,idempotencyKey:crypto.randomUUID(),evidenceDigest,
+            expectedVersion:[[${directBalance != null ? directBalance.version : 0}]]});location.reload(); }
+        catch(error){alert(error.message);}
+    }));
+    document.querySelectorAll('[data-arrival-form]').forEach(form=>form.addEventListener('submit',async event=>{
+        event.preventDefault();const itemId=Number(form.dataset.itemId),roomOrdinal=Number(form.dataset.roomOrdinal);
+        try { await sendEvidence(`/api/v1/bookings/${bookingId}/arrivals`,{itemId,roomOrdinal,
+            actualAt:new Date(form.querySelector('[data-actual-at]').value).toISOString(),
+            evidenceDigest:form.querySelector('[data-evidence]').value,idempotencyKey:crypto.randomUUID(),
+            expectedVersion:Number(form.dataset.version)});location.reload(); }
+        catch(error){alert(error.message);}
+    }));
+    document.querySelectorAll('[data-arrival-decision]').forEach(button=>button.addEventListener('click',async()=>{
+        const itemId=Number(button.dataset.itemId),roomOrdinal=Number(button.dataset.roomOrdinal);
+        const decision=button.dataset.arrivalDecision;
+        const evidenceDigest=decision==='CONTEST'?window.prompt('Enter the SHA-256 digest for private dispute evidence:'):null;
+        if(decision==='CONTEST'&&!evidenceDigest)return;
+        try { await sendEvidence(`/api/v1/bookings/${bookingId}/arrivals/${itemId}/${roomOrdinal}/guest-decision`,{
+            decision,evidenceDigest,
+            idempotencyKey:crypto.randomUUID(),expectedVersion:Number(button.dataset.version)});location.reload(); }
+        catch(error){alert(error.message);}
+    }));
+</script>
 </body>
 </html>

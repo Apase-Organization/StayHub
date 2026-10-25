@@ -1,10 +1,12 @@
 package com.stayhub.common.exception;
 
 import com.stayhub.common.response.ApiResponse;
+import com.stayhub.payment.ledger.PaymentPrimitiveException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.BindException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -45,6 +47,12 @@ public class ApiExceptionHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiResponse<Void> handleBusinessException(BusinessException exception) {
         return ApiResponse.error(exception.getErrorCode(), exception.getMessage());
+    }
+
+    @ExceptionHandler(PaymentPrimitiveException.class)
+    public ResponseEntity<ApiResponse<Void>> handlePaymentPrimitiveException(PaymentPrimitiveException exception) {
+        return ResponseEntity.status(HttpStatus.valueOf(exception.status()))
+                .body(ApiResponse.error(exception.errorCode(),exception.getMessage()));
     }
 
     @ExceptionHandler(MaxUploadSizeExceededException.class)

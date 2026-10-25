@@ -77,6 +77,12 @@ public class Booking extends BaseEntity {
     @Column(name = "cancelled_at")
     private Instant cancelledAt;
 
+    @Column(name = "completed_at")
+    private Instant completedAt;
+
+    @Column(name = "completed_by")
+    private Long completedBy;
+
     @OneToOne(mappedBy = "booking", fetch = FetchType.LAZY)
     private Payment payment;
 
