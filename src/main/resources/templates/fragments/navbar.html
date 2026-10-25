@@ -81,6 +81,8 @@
                         
                         <!-- Host Features (Visible to everyone for MVP context, or restrict to HOST role) -->
                         <a sec:authorize="hasAnyRole('HOST','ADMIN')" th:href="@{/host/dashboard}" class="block px-4 py-3 hover:bg-bg-light text-text-900">Manage listings</a>
+                        <a sec:authorize="hasRole('ADMIN')" th:href="@{/admin/dashboard}" class="block px-4 py-3 hover:bg-bg-light font-bold text-primary-500">Admin dashboard</a>
+                        <a sec:authorize="hasRole('ADMIN')" th:href="@{/admin/financial-operations}" class="block px-4 py-3 hover:bg-bg-light text-text-900">Financial operations</a>
                         <a th:href="@{/profile}" class="block px-4 py-3 hover:bg-bg-light text-text-900">Profile</a>
                         <hr class="my-1 border-border">
                         

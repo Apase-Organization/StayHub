@@ -10,11 +10,13 @@
 <div th:replace="~{fragments/navbar :: navbar}"></div>
 
 <main class="mx-auto max-w-5xl px-5 py-10 lg:px-8">
-    <a th:href="@{/host/properties}" class="text-sm font-bold text-text-gray hover:text-text-900">Back to properties</a>
+    <a th:href="@{/host/dashboard}" class="text-sm font-bold text-text-gray hover:text-text-900">Back to properties</a>
     <div class="mt-4 mb-8">
         <p class="mb-2 text-sm font-bold uppercase tracking-[0.18em] text-primary-500" th:text="${editing} ? 'Listing editor' : 'New listing'">Listing editor</p>
         <h1 class="text-3xl font-bold" th:text="${editing} ? 'Edit your property' : 'Create a property'">Edit your property</h1>
         <p class="mt-2 text-text-gray" th:unless="${editing}">New properties are saved as drafts. Add a cover image before publishing.</p>
+        <a th:if="${editing}" th:href="@{/host/properties/{id}/inventory(id=${propertyId})}"
+           class="mt-4 inline-flex rounded-xl bg-slate-900 px-4 py-3 text-sm font-bold text-white">Manage room types, rates &amp; calendar</a>
     </div>
 
     <div th:if="${message}" class="mb-6 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm font-semibold text-green-800"
@@ -98,7 +100,7 @@
         </label>
 
         <div class="mt-8 flex justify-end gap-3 border-t border-border pt-6">
-            <a th:href="@{/host/properties}" class="rounded-xl border border-border px-5 py-3 font-bold hover:bg-bg-light">Cancel</a>
+            <a th:href="@{/host/dashboard}" class="rounded-xl border border-border px-5 py-3 font-bold hover:bg-bg-light">Cancel</a>
             <button type="submit" class="rounded-xl bg-primary-500 px-6 py-3 font-bold text-white hover:bg-primary-600"
                     th:text="${editing} ? 'Save changes' : 'Create draft'">Save</button>
         </div>

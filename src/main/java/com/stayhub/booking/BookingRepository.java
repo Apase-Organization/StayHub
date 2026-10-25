@@ -86,4 +86,37 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
                                             @Param("status") BookingStatus status);
 
     long countByGuestIdAndDiscountCodeId(Long guestId, Long discountCodeId);
+
+    @Query("""
+            select b from Booking b
+            join fetch b.property p
+            join fetch p.host
+            join fetch b.guest
+            left join fetch b.payment
+            where p.host.id = :hostId
+            order by b.createdAt desc
+            """)
+    List<Booking> findByPropertyHostIdOrderByCreatedAtDesc(@Param("hostId") Long hostId);
+
+    List<Booking> findByStatusAndCreatedAtBefore(BookingStatus status, java.time.Instant threshold);
+
+    @Query("select count(b) from Booking b where b.property.host.id = :hostId and b.status = :status")
+    long countByHostIdAndStatus(@Param("hostId") Long hostId, @Param("status") BookingStatus status);
+
+    @Query("select count(b) from Booking b where b.property.host.id = :hostId")
+    long countByHostId(@Param("hostId") Long hostId);
+
+    @Query("""
+            select coalesce(sum(b.totalPrice), 0) from Booking b
+            where b.property.host.id = :hostId
+              and b.status in ('CONFIRMED', 'COMPLETED')
+            """)
+    java.math.BigDecimal sumGrossRevenueByHostId(@Param("hostId") Long hostId);
+
+    @Query("""
+            select coalesce(sum(b.serviceFee), 0) from Booking b
+            where b.property.host.id = :hostId
+              and b.status in ('CONFIRMED', 'COMPLETED')
+            """)
+    java.math.BigDecimal sumCommissionByHostId(@Param("hostId") Long hostId);
 }

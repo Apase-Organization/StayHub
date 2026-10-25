@@ -1,5 +1,6 @@
 package com.stayhub.property;
 
+import com.stayhub.auth.UserPrincipal;
 import com.stayhub.search.SearchService;
 import com.stayhub.search.dto.SearchCriteria;
 import com.stayhub.review.ReviewService;
@@ -7,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.stereotype.Controller;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -31,9 +33,15 @@ public class PropertyController {
     }
 
     @GetMapping("/properties/{id}")
-    public String showProperty(@PathVariable Long id, Model model) {
-        model.addAttribute("property", propertyService.getPublicProperty(id));
+    public String showProperty(@PathVariable Long id, @AuthenticationPrincipal UserPrincipal viewer, Model model) {
+        var property=propertyService.getPublicProperty(id);
+        model.addAttribute("property", property);
         model.addAttribute("reviews", reviewService.getPropertyReviews(id));
+        boolean self=viewer!=null&&property.getHostId()!=null&&property.getHostId().equals(viewer.getId());
+        boolean guestOrHost=viewer!=null&&(viewer.getAuthorities().stream().anyMatch(authority->
+                authority.getAuthority().equals("ROLE_GUEST")||authority.getAuthority().equals("ROLE_HOST")));
+        model.addAttribute("canBookProperty",guestOrHost&&!self);
+        model.addAttribute("selfBookingBlocked",self);
         return "property/property-detail";
     }
 }

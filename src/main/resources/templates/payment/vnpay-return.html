@@ -114,21 +114,32 @@
         bookingStatusSpan.textContent = bookingStatus || 'CONFIRMED';
     }
 
+    function renderStatusAccessRequired() {
+        iconSpinner.classList.add('hidden');
+        headline.textContent = 'Chưa thể xác minh trạng thái';
+        message.textContent = 'Phiên Guest không có trên địa chỉ trả về hoặc không sở hữu giao dịch này. Thanh toán chưa được xác nhận tại StayHub; hãy mở lại ứng dụng trên localhost và kiểm tra My Bookings. Không thanh toán lần hai cho đến khi đối soát xong.';
+        paymentStatusSpan.textContent = 'CHƯA XÁC MINH';
+        bookingStatusSpan.textContent = 'PENDING / CHỜ ĐỐI SOÁT';
+    }
+
     async function pollStatus() {
         if (!txnRef) {
             renderFailed('Không tìm thấy thông tin mã giao dịch.');
             return;
         }
 
-        // Nếu mã trả về của VNPay không phải 00 ngay từ gateway
+        // Browser return parameters are untrusted and never determine booking/payment state.
         if (responseCode && responseCode !== '00') {
-            renderFailed('Cổng VNPay thông báo giao dịch bị từ chối hoặc bị huỷ (Mã: ' + responseCode + ').');
-            return;
+            message.textContent = 'VNPay trả về mã ' + responseCode + '. StayHub vẫn đang kiểm tra trạng thái đã xác minh từ server.';
         }
 
         pollAttempts++;
         try {
             const response = await fetch(`/api/v1/payments/vnpay/status?txnRef=${encodeURIComponent(txnRef)}`);
+            if (response.status === 401 || response.status === 403 || response.status === 404) {
+                renderStatusAccessRequired();
+                return;
+            }
             if (!response.ok) {
                 throw new Error('HTTP ' + response.status);
             }

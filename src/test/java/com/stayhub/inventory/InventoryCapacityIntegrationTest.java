@@ -6,6 +6,7 @@ import com.stayhub.payment.quote.BookingQuoteRequest;
 import com.stayhub.payment.quote.BookingQuoteService;
 import java.time.LocalDate;
 import java.time.Instant;
+import java.util.List;
 import java.util.concurrent.*;
 import java.util.Set;
 import org.flywaydb.core.Flyway;
@@ -139,6 +140,42 @@ class InventoryCapacityIntegrationTest {
         capacity.confirmAll(booking);
         capacity.releaseAll(booking);
         assertThat(management.listPlans(host, property, type).getLast().status()).isEqualTo("ARCHIVED");
+    }
+    @Test void wholePlaceRoomTypeMustAlwaysHaveExactlyOneSaleUnit() {
+        long wholeProperty=db.queryForObject("""
+                INSERT INTO properties(host_id,title,description,address,city,price_per_night,max_guests,bedrooms,beds,bathrooms,
+                    property_type,sale_mode) VALUES (?,'Whole','Whole','Whole','Whole',1000000,4,2,2,1,'HOUSE','WHOLE_PLACE') RETURNING id
+                """,Long.class,host);
+        assertThatThrownBy(()->management.createType(host,wholeProperty,
+                new RoomTypeRequest("Whole home",RoomTypeRequest.InventorySaleMode.WHOLE_PLACE,2,4,4)))
+                .isInstanceOf(com.stayhub.common.exception.BusinessException.class)
+                .extracting("errorCode").isEqualTo("ERR_INVALID_ROOM_TYPE");
+        long wholeType=management.createType(host,wholeProperty,
+                new RoomTypeRequest("Whole home",RoomTypeRequest.InventorySaleMode.WHOLE_PLACE,1,4,4));
+        assertThat(management.listTypes(host,wholeProperty)).filteredOn(t->t.id()==wholeType).singleElement()
+                .extracting(InventoryManagementService.RoomTypeView::quantity).isEqualTo(1);
+        assertThatThrownBy(()->management.updateType(host,wholeProperty,wholeType,
+                new RoomTypeUpdateRequest("Whole home",2,4,4,0L)))
+                .isInstanceOf(com.stayhub.common.exception.BusinessException.class)
+                .extracting("errorCode").isEqualTo("ERR_INVALID_ROOM_TYPE");
+    }
+    @Test void calendarBulkSaveIsAtomicAndDateOrdered() {
+        var initial=java.util.List.of(new InventoryDayRequest(DAY,2,0,false,0L),
+                new InventoryDayRequest(DAY.plusDays(1),2,3,false,0L));
+        assertThatThrownBy(()->management.updateCalendarBatch(host,property,type,initial))
+                .isInstanceOf(com.stayhub.common.exception.BusinessException.class)
+                .extracting("errorCode").isEqualTo("ERR_INVALID_CAPACITY");
+        assertThat(db.queryForObject("SELECT total FROM type_day_inventory WHERE room_type_id=? AND stay_date=?",
+                Integer.class,type,DAY)).isEqualTo(1);
+        assertThat(db.queryForObject("SELECT count(*) FROM type_day_inventory WHERE room_type_id=? AND stay_date=?",
+                Integer.class,type,DAY.plusDays(1))).isZero();
+
+        management.updateCalendarBatch(host,property,type,java.util.List.of(new InventoryDayRequest(DAY.plusDays(1),2,0,false,0L),
+                new InventoryDayRequest(DAY,2,0,false,0L)));
+        assertThat(db.queryForObject("SELECT total FROM type_day_inventory WHERE room_type_id=? AND stay_date=?",
+                Integer.class,type,DAY)).isEqualTo(2);
+        assertThat(db.queryForObject("SELECT total FROM type_day_inventory WHERE room_type_id=? AND stay_date=?",
+                Integer.class,type,DAY.plusDays(1))).isEqualTo(2);
     }
     @Test void bookingHoldUsesServerPlanPriceIsIdempotentAndReleasesOnExpiry() {
         db.update("UPDATE properties SET status='ACTIVE' WHERE id=?", property);

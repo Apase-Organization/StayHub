@@ -3,11 +3,15 @@ package com.stayhub.admin;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
 
+import com.stayhub.admin.dto.AdminOverviewDto;
 import com.stayhub.admin.dto.DashboardStatsResponse;
+import com.stayhub.admin.dto.HostDetailDto;
 import com.stayhub.auth.UserPrincipal;
 import com.stayhub.booking.Booking;
 import com.stayhub.booking.BookingRepository;
@@ -209,5 +213,75 @@ class AdminWebIntegrationTest extends PostgreSqlIntegrationTest {
         @SuppressWarnings("unchecked")
         Page<BookingResponse> keywordPage = (Page<BookingResponse>) keywordResult.getModelAndView().getModel().get("bookingPage");
         assertThat(keywordPage.getTotalElements()).isEqualTo(2);
+    }
+
+    @Test
+    void adminRootRedirectsToDashboard() throws Exception {
+        mockMvc.perform(get("/admin")
+                        .with(authentication(adminAuth)))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/admin/dashboard"));
+    }
+
+    @Test
+    void adminCanViewNewDashboardWithTabsAndOverview() throws Exception {
+        var result = mockMvc.perform(get("/admin/dashboard")
+                        .with(authentication(adminAuth)))
+                .andExpect(status().isOk())
+                .andExpect(view().name("admin/dashboard"))
+                .andExpect(model().attributeExists("tab", "overview", "hostPage", "bookingPage", "propertyPage", "userPage"))
+                .andReturn();
+
+        AdminOverviewDto overview = (AdminOverviewDto) result.getModelAndView().getModel().get("overview");
+        assertThat(overview.getTotalUsers()).isEqualTo(3);
+        assertThat(overview.getActiveHosts()).isEqualTo(1);
+        assertThat(overview.getActiveProperties()).isEqualTo(1);
+    }
+
+    @Test
+    void guestCannotAccessAdminDashboard() throws Exception {
+        UserPrincipal guestPrincipal = UserPrincipal.create(guest);
+        UsernamePasswordAuthenticationToken guestAuth = new UsernamePasswordAuthenticationToken(
+                guestPrincipal, guestPrincipal.getPassword(), guestPrincipal.getAuthorities());
+
+        mockMvc.perform(get("/admin/dashboard")
+                        .with(authentication(guestAuth)))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void adminCanViewHostDetailDrillDown() throws Exception {
+        var result = mockMvc.perform(get("/admin/hosts/" + host.getId())
+                        .with(authentication(adminAuth)))
+                .andExpect(status().isOk())
+                .andExpect(view().name("admin/host-detail"))
+                .andExpect(model().attributeExists("hostDetail", "subtab"))
+                .andReturn();
+
+        HostDetailDto detail = (HostDetailDto) result.getModelAndView().getModel().get("hostDetail");
+        assertThat(detail.getHostProfile().getHostId()).isEqualTo(host.getId());
+        assertThat(detail.getHostProfile().getFullName()).isEqualTo("Host User");
+        assertThat(detail.getProperties()).hasSize(1);
+    }
+
+    @Test
+    void adminCanAccessAdminRestApis() throws Exception {
+        mockMvc.perform(get("/api/v1/admin/dashboard/overview")
+                        .with(authentication(adminAuth)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.activeHosts").value(1));
+
+        mockMvc.perform(get("/api/v1/admin/hosts")
+                        .with(authentication(adminAuth)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.content[0].email").value("host.test@stayhub.local"));
+
+        mockMvc.perform(get("/api/v1/admin/hosts/" + host.getId())
+                        .with(authentication(adminAuth)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.hostProfile.fullName").value("Host User"));
     }
 }

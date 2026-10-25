@@ -12,6 +12,8 @@ spring:
     cache: false
 
 app:
+  seed-data:
+    enabled: false
   mail:
     enabled: false
   bootstrap:

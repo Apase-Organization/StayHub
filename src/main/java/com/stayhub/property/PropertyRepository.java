@@ -26,4 +26,12 @@ public interface PropertyRepository extends JpaRepository<Property, Long>, JpaSp
                                                   @Param("status") PropertyStatus status);
 
     List<Property> findAllByHostIdOrderByUpdatedAtDesc(Long hostId);
+
+    long countByHostId(Long hostId);
+
+    long countByStatus(PropertyStatus status);
+
+    List<Property> findByHostId(Long hostId);
+
+    List<Property> findByRatingAvgLessThanAndStatus(java.math.BigDecimal ratingThreshold, PropertyStatus status);
 }

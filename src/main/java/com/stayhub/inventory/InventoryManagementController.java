@@ -81,4 +81,10 @@ public class InventoryManagementController {
         service.updateCalendar(user.getId(), propertyId, typeId, request);
         return ApiResponse.success(null, "Inventory day saved");
     }
+    @PutMapping("/room-types/{typeId}/calendar/batch")
+    public ApiResponse<?> updateDays(@AuthenticationPrincipal UserPrincipal user,@PathVariable long propertyId,
+                                     @PathVariable long typeId,@Valid @RequestBody InventoryDaysRequest request) {
+        service.updateCalendarBatch(user.getId(),propertyId,typeId,request.days());
+        return ApiResponse.success(null,"Inventory dates saved atomically");
+    }
 }

@@ -1,5 +1,6 @@
 package com.stayhub.notification;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -10,87 +11,50 @@ import com.stayhub.property.Property;
 import com.stayhub.user.User;
 import jakarta.mail.Session;
 import jakarta.mail.internet.MimeMessage;
-import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.util.Properties;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.mail.MailSendException;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.test.util.ReflectionTestUtils;
 
 class EmailNotificationServiceTest {
-
     private JavaMailSender mailSender;
-    private EmailNotificationService notificationService;
+    private EmailNotificationService notifications;
 
-    @BeforeEach
-    void setUp() {
-        mailSender = org.mockito.Mockito.mock(JavaMailSender.class);
+    @BeforeEach void setUp() {
+        mailSender=org.mockito.Mockito.mock(JavaMailSender.class);
         when(mailSender.createMimeMessage()).thenReturn(new MimeMessage(Session.getInstance(new Properties())));
-        notificationService = new EmailNotificationService(mailSender);
-        ReflectionTestUtils.setField(notificationService, "mailEnabled", true);
-        ReflectionTestUtils.setField(notificationService, "fromAddress", "no-reply@stayhub.test");
-        ReflectionTestUtils.setField(notificationService, "systemName", "StayHub System");
+        notifications=new EmailNotificationService(mailSender);
+        ReflectionTestUtils.setField(notifications,"mailEnabled",true);
+        ReflectionTestUtils.setField(notifications,"fromAddress","no-reply@stayhub.test");
+        ReflectionTestUtils.setField(notifications,"systemName","StayHub System");
     }
 
-    @Test
-    void sendsEmailForConfirmedRejectedCancelledAndCompletedBookings() {
-        Booking booking = booking(BookingStatus.CONFIRMED);
-        notificationService.bookingStatusChanged(booking);
+    @Test void statusCallbackDoesNotSendInsideBookingTransaction() {
+        notifications.bookingStatusChanged(booking());
+        verify(mailSender,never()).send(org.mockito.ArgumentMatchers.any(MimeMessage.class));
+    }
+
+    @Test void durableOutboxSenderSendsProvidedPayloadAndPropagatesSmtpFailureToDispatcher() throws Exception {
+        notifications.sendOutboxEmail("guest@example.test","Booking confirmed","plain","<p>saved items</p>");
         verify(mailSender).send(org.mockito.ArgumentMatchers.any(MimeMessage.class));
-
-        // COMPLETED booking also receives email inviting guest to review
-        Booking completed = booking(BookingStatus.COMPLETED);
-        completed.setId(2L);
-        notificationService.bookingStatusChanged(completed);
-        verify(mailSender, org.mockito.Mockito.times(2)).send(org.mockito.ArgumentMatchers.any(MimeMessage.class));
-    }
-
-    @Test
-    void deduplicatesDuplicateNotificationEventsForSameBookingAndStatus() {
-        Booking booking = booking(BookingStatus.CONFIRMED);
-        notificationService.bookingStatusChanged(booking);
-        notificationService.bookingStatusChanged(booking); // duplicate invocation
-
-        verify(mailSender, org.mockito.Mockito.times(1)).send(org.mockito.ArgumentMatchers.any(MimeMessage.class));
-    }
-
-    @Test
-    void retriesUpToMaxAttemptsOnFailureWithoutThrowing() {
-        org.mockito.Mockito.doThrow(new org.springframework.mail.MailSendException("SMTP timeout"))
+        org.mockito.Mockito.doThrow(new MailSendException("timeout"))
                 .when(mailSender).send(org.mockito.ArgumentMatchers.any(MimeMessage.class));
-
-        Booking booking = booking(BookingStatus.CONFIRMED);
-        org.junit.jupiter.api.Assertions.assertDoesNotThrow(() -> notificationService.bookingStatusChanged(booking));
-
-        // Verify it retried 3 times
-        verify(mailSender, org.mockito.Mockito.times(3)).send(org.mockito.ArgumentMatchers.any(MimeMessage.class));
+        assertThatThrownBy(()->notifications.sendOutboxEmail("guest@example.test","Booking confirmed","plain","html"))
+                .isInstanceOf(MailSendException.class);
     }
 
-    @Test
-    void doesNotSendWhenDisabled() {
-        ReflectionTestUtils.setField(notificationService, "mailEnabled", false);
-        notificationService.bookingStatusChanged(booking(BookingStatus.CANCELLED));
-        verify(mailSender, never()).send(org.mockito.ArgumentMatchers.any(MimeMessage.class));
+    @Test void disabledTransportIsNotInvoked() {
+        ReflectionTestUtils.setField(notifications,"mailEnabled",false);
+        assertThatThrownBy(()->notifications.sendOutboxEmail("guest@example.test","subject","plain","html"))
+                .isInstanceOf(IllegalStateException.class);
+        verify(mailSender,never()).send(org.mockito.ArgumentMatchers.any(MimeMessage.class));
     }
 
-    private Booking booking(BookingStatus status) {
-        User guest = User.builder()
-                .email("guest@example.com")
-                .fullName("Guest User")
-                .build();
-        Property property = Property.builder()
-                .title("Notification House")
-                .build();
-        Booking booking = Booking.builder()
-                .guest(guest)
-                .property(property)
-                .checkInDate(LocalDate.now().plusDays(1))
-                .checkOutDate(LocalDate.now().plusDays(3))
-                .guests(2)
-                .totalPrice(new BigDecimal("2300000.00"))
-                .status(status)
-                .build();
+    private Booking booking() {
+        Booking booking=Booking.builder().guest(User.builder().email("guest@example.com").fullName("Guest").build())
+                .property(Property.builder().title("Notice house").build()).status(BookingStatus.CONFIRMED).build();
         booking.setId(1L);
         return booking;
     }

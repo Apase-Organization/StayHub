@@ -13,6 +13,7 @@ import com.stayhub.discount.AppliedDiscount;
 import com.stayhub.discount.DiscountService;
 import com.stayhub.notification.NotificationService;
 import com.stayhub.payment.PaymentService;
+import com.stayhub.payment.ledger.ArrivalEligibilityService;
 import com.stayhub.property.Property;
 import com.stayhub.property.PropertyRepository;
 import com.stayhub.property.PropertyStatus;
@@ -48,6 +49,7 @@ public class BookingServiceImpl implements BookingService {
     private final PaymentService paymentService;
     private final NotificationService notificationService;
     private final DiscountService discountService;
+    private final ArrivalEligibilityService arrivalEligibility;
 
     @Override
     @Transactional
@@ -172,7 +174,12 @@ public class BookingServiceImpl implements BookingService {
     public BookingResponse completeBooking(Long hostId, Long bookingId) {
         Booking booking = findHostBookingForUpdate(hostId, bookingId);
         requireStatus(booking, BookingStatus.CONFIRMED, "Only confirmed bookings can be completed.");
+        Instant completedAt=arrivalEligibility.authorizeCompletion(bookingId,hostId);
         booking.setStatus(BookingStatus.COMPLETED);
+        if(completedAt!=null) {
+            booking.setCompletedAt(completedAt);
+            booking.setCompletedBy(hostId);
+        }
         return bookingMapper.toResponse(bookingRepository.save(booking));
     }
 

@@ -3,12 +3,14 @@ package com.stayhub.payment.ledger;
 import static com.stayhub.payment.ledger.LedgerService.*;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.math.RoundingMode;
 import java.sql.Timestamp;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -172,6 +174,7 @@ public class PaymentPrimitivesService {
             if(s.grossCommission().signum()>0) lines.add(Line.credit(Account.COMMISSION_RESERVED,s.grossCommission()));
             if(s.heldHostPayable().signum()>0) lines.add(Line.credit(Account.HOST_HELD_PAYABLE,s.heldHostPayable()));
             ledger.post(input.bookingId(),input.actorId(),"collection:"+id,"collection:"+id,Source.ONLINE_VERIFIED,id,null,input.evidenceDigest(),lines);
+            allocateCollectionToCharges(input.bookingId(),id,"ONLINE_VERIFIED",amount);
         }
         ledger.remember(input.actorId(),"COLLECTION",input.bookingId(),key,hash,id);
         return collection(id);
@@ -191,6 +194,7 @@ public class PaymentPrimitivesService {
         long id=insertCollection(booking,host,null,"HOST_ATTESTED",method.name(),"MEMO",reference,hash,amount,occurred,evidenceDigest);
         ledger.post(booking,host,"collection:"+id,"collection:"+id,Source.HOST_ATTESTED,id,null,evidenceDigest,
                 List.of(Line.debit(Account.MEMO_HOST_DIRECT,amount),Line.credit(Account.MEMO_GUEST_DIRECT,amount)));
+        allocateCollectionToCharges(booking,id,"HOST_ATTESTED",amount);
         ledger.remember(host,"DIRECT_MEMO",booking,key,hash,id);
         return collection(id);
     }
@@ -208,6 +212,106 @@ public class PaymentPrimitivesService {
     private CollectionResult collection(long id) {
         return jdbc.queryForObject("SELECT id,disposition FROM payment_collections WHERE id=?",(r,n)->new CollectionResult(r.getLong(1),r.getString(2)),id);
     }
+
+    private void allocateCollectionToCharges(long booking,long collection,String source,BigDecimal amount) {
+        if(jdbc.queryForObject("SELECT count(*) FROM payment_collection_allocations WHERE collection_id=?",Integer.class,collection)>0)
+            return;
+        require(jdbc.queryForObject("SELECT count(*) FROM payment_collection_allocations WHERE booking_id=? AND gross_amount IS NULL",
+                Integer.class,booking)==0,"ERR_PAYMENT_ALLOCATION_MISSING");
+        List<ChargeLine> lines=inventoryChargeLines(booking);
+        if(lines.isEmpty()) lines=legacyChargeLines(booking);
+        BigDecimal paid=amount;
+        for(ChargeLine line:lines) {
+            if(paid.signum()==0) break;
+            var prior=jdbc.queryForMap("""
+                    SELECT coalesce(sum(net_amount),0) AS net,coalesce(sum(gross_amount),0) AS gross,
+                        coalesce(sum(discount_amount),0) AS discount FROM payment_collection_allocations
+                    WHERE booking_id=? AND line_key=?
+                    """,booking,line.key());
+            BigDecimal previousNet=(BigDecimal)prior.get("net");
+            BigDecimal remaining=line.net().subtract(previousNet);
+            require(remaining.signum()>=0,"ERR_PAYMENT_ALLOCATION_CONFLICT");
+            BigDecimal allocated=paid.min(remaining);
+            if(allocated.signum()>0) {
+                BigDecimal remainingGross=line.gross().subtract((BigDecimal)prior.get("gross"));
+                BigDecimal remainingDiscount=line.discount().subtract((BigDecimal)prior.get("discount"));
+                BigDecimal grossPart=allocated.compareTo(remaining)==0?remainingGross:
+                        remainingGross.multiply(allocated).divide(remaining,0,RoundingMode.HALF_UP);
+                BigDecimal discountPart=grossPart.subtract(allocated);
+                require(discountPart.signum()>=0&&discountPart.compareTo(remainingDiscount)<=0,
+                        "ERR_PAYMENT_ALLOCATION_CONFLICT");
+                jdbc.update("""
+                        INSERT INTO payment_collection_allocations(collection_id,booking_id,source,line_key,charge_type,
+                            item_id,room_ordinal,stay_date,gross_amount,discount_amount,net_amount)
+                        VALUES (?,?,?,?,?,?,?,?,?,?,?)
+                        """,collection,booking,source,line.key(),line.type(),line.itemId(),line.roomOrdinal(),line.stayDate(),
+                        grossPart,discountPart,allocated);
+                paid=paid.subtract(allocated);
+            }
+        }
+        require(paid.signum()==0,"ERR_PAYMENT_ALLOCATION_MISSING");
+    }
+
+    private List<ChargeLine> inventoryChargeLines(long booking) {
+        var rows=jdbc.query("""
+                SELECT ns.item_id,ns.room_ordinal,ns.stay_date,ns.room_charge,ns.fees,ns.taxes,ns.discount_allocation
+                FROM booking_items bi JOIN nightly_snapshots ns ON ns.item_id=bi.id
+                WHERE bi.booking_id=? ORDER BY ns.item_id,ns.room_ordinal,ns.stay_date
+                """,(r,n)->new Object[]{r.getLong("item_id"),r.getInt("room_ordinal"),r.getDate("stay_date").toLocalDate(),
+                    r.getBigDecimal("room_charge"),r.getBigDecimal("fees"),r.getBigDecimal("taxes"),r.getBigDecimal("discount_allocation")},booking);
+        var lines=new ArrayList<ChargeLine>();
+        for(Object[] row:rows) {
+            long item=(Long)row[0];int ordinal=(Integer)row[1];var date=(java.time.LocalDate)row[2];
+            List<String> types=new ArrayList<>();List<BigDecimal> gross=new ArrayList<>();
+            if(((BigDecimal)row[3]).signum()>0){types.add("ROOM");gross.add((BigDecimal)row[3]);}
+            if(((BigDecimal)row[4]).signum()>0){types.add("CLEANING");gross.add((BigDecimal)row[4]);}
+            if(((BigDecimal)row[5]).signum()>0){types.add("TAX");gross.add((BigDecimal)row[5]);}
+            List<BigDecimal> discountParts=splitDiscount((BigDecimal)row[6],gross);
+            for(int i=0;i<types.size();i++) {
+                BigDecimal net=gross.get(i).subtract(discountParts.get(i));
+                if(net.signum()>0) lines.add(new ChargeLine(item+":"+ordinal+":"+date+":"+types.get(i),types.get(i),
+                        item,ordinal,date,gross.get(i),discountParts.get(i),net));
+            }
+        }
+        return lines;
+    }
+
+    private List<ChargeLine> legacyChargeLines(long booking) {
+        var rows=jdbc.query("SELECT room_charges,cleaning_fee,discount FROM booking_financial_snapshots WHERE booking_id=?",
+                (r,n)->List.of(r.getBigDecimal(1),r.getBigDecimal(2),r.getBigDecimal(3)),booking);
+        if(rows.isEmpty()) return List.of();
+        var row=rows.getFirst();
+        List<String> types=new ArrayList<>();List<BigDecimal> gross=new ArrayList<>();
+        if(row.get(0).signum()>0){types.add("ROOM");gross.add(row.get(0));}
+        if(row.get(1).signum()>0){types.add("CLEANING");gross.add(row.get(1));}
+        List<BigDecimal> discount=splitDiscount(row.get(2),gross);var lines=new ArrayList<ChargeLine>();
+        for(int i=0;i<types.size();i++) {
+            BigDecimal net=gross.get(i).subtract(discount.get(i));
+            if(net.signum()>0) lines.add(new ChargeLine("legacy:"+booking+":"+types.get(i),types.get(i),null,null,null,
+                    gross.get(i),discount.get(i),net));
+        }
+        return lines;
+    }
+
+    private List<BigDecimal> splitDiscount(BigDecimal rawDiscount,List<BigDecimal> bases) {
+        if(bases.isEmpty()) {require(rawDiscount.signum()==0,"ERR_PAYMENT_ALLOCATION_MISSING");return List.of();}
+        long discount=rawDiscount.longValueExact();long total=bases.stream().mapToLong(BigDecimal::longValueExact).sum();
+        require(discount>=0&&discount<=total,"ERR_PAYMENT_ALLOCATION_MISSING");
+        if(total==0) return java.util.Collections.nCopies(bases.size(),BigDecimal.ZERO);
+        var shares=new ArrayList<Long>();var remainders=new ArrayList<Map.Entry<Integer,BigInteger>>();long allocated=0;
+        BigInteger divisor=BigInteger.valueOf(total),d=BigInteger.valueOf(discount);
+        for(int i=0;i<bases.size();i++) {
+            BigInteger product=d.multiply(BigInteger.valueOf(bases.get(i).longValueExact()));
+            BigInteger[] qr=product.divideAndRemainder(divisor);long share=qr[0].longValueExact();
+            shares.add(share);allocated+=share;remainders.add(Map.entry(i,qr[1]));
+        }
+        remainders.sort(java.util.Comparator.<Map.Entry<Integer,BigInteger>,BigInteger>comparing(Map.Entry::getValue)
+                .reversed().thenComparingInt(Map.Entry::getKey));
+        for(int i=0;i<discount-allocated;i++) {int index=remainders.get(i).getKey();shares.set(index,shares.get(index)+1);}
+        return shares.stream().map(BigDecimal::valueOf).toList();
+    }
+    private record ChargeLine(String key,String type,Long itemId,Integer roomOrdinal,java.time.LocalDate stayDate,
+            BigDecimal gross,BigDecimal discount,BigDecimal net) {}
 
     @Transactional(readOnly=true)
     public long settlementVersion(long booking) {
@@ -234,9 +338,15 @@ public class PaymentPrimitivesService {
                 """,input.bookingId(),input.source().name());
         BigDecimal allocated=(BigDecimal)totals.get("allocated");
         BigDecimal collected=jdbc.queryForObject("""
-                SELECT coalesce(sum(amount),0) FROM payment_collections WHERE booking_id=? AND source=?
-                  AND disposition IN ('ACCEPTED','MEMO')
+                SELECT coalesce(sum(pc.amount),0) FROM payment_collections pc
+                WHERE pc.booking_id=? AND pc.source=? AND pc.disposition IN ('ACCEPTED','MEMO')
+                  AND NOT (pc.source='HOST_ATTESTED' AND EXISTS (SELECT 1 FROM direct_receipt_cases x
+                    WHERE x.booking_id=pc.booking_id AND x.receipt_ref=pc.receipt_ref))
                 """,BigDecimal.class,input.bookingId(),input.source().name());
+        if(input.source()==MoneySource.HOST_ATTESTED) collected=collected.add(jdbc.queryForObject("""
+                SELECT coalesce(sum(amount),0) FROM direct_receipt_cases
+                WHERE booking_id=? AND state IN ('ACKNOWLEDGED','RESOLVED') AND guest_disposition='ACKNOWLEDGE'
+                """,BigDecimal.class,input.bookingId()));
         require(amount.compareTo(collected.subtract(allocated))<=0 && amount.compareTo(policy.subtract(allocated))<=0,"ERR_REFUND_POOL_EXCEEDED");
         if(input.kind()==ReserveKind.PAYOUT) require(amount.compareTo(snapshot(input.bookingId()).heldHostPayable()
                 .subtract((BigDecimal)totals.get("payout_allocated")))<=0,"ERR_PAYOUT_NOT_ELIGIBLE");

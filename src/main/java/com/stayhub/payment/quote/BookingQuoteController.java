@@ -20,8 +20,13 @@ public class BookingQuoteController {
     @PostMapping
     public ApiResponse<BookingQuoteResponse> quote(@AuthenticationPrincipal UserPrincipal guest,
                                                    @Valid @RequestBody BookingQuoteRequest request) {
-        if(!guest.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_GUEST")))
-            throw new com.stayhub.common.exception.ConflictException("ERR_FORBIDDEN","Guest role is required to request a booking quote.");
+        if(!canBookAsGuest(guest))
+            throw new com.stayhub.common.exception.ConflictException("ERR_FORBIDDEN","Sign in with a Guest or Host account to request a booking quote.");
         return ApiResponse.success(service.quote(guest.getId(), request), "Booking quote created.");
+    }
+
+    private boolean canBookAsGuest(UserPrincipal principal) {
+        return principal!=null&&(principal.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_GUEST"))
+                ||principal.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_HOST")));
     }
 }

@@ -31,6 +31,8 @@ public class InventoryManagementService {
     @Transactional
     public long createType(long hostId, long propertyId, RoomTypeRequest request) {
         lockOwnedProperty(hostId, propertyId);
+        if(request.saleMode()==RoomTypeRequest.InventorySaleMode.WHOLE_PLACE&&request.quantity()!=1)
+            invalid("ERR_INVALID_ROOM_TYPE","A whole-place listing must have exactly one sale unit.");
         if (request.maxOccupants() < request.maxAdults()) invalid("ERR_INVALID_ROOM_TYPE", "Occupancy must cover adults.");
         String currentMode = jdbc.queryForObject("SELECT sale_mode FROM properties WHERE id=?", String.class, propertyId);
         if (currentMode == null) {
@@ -68,6 +70,9 @@ public class InventoryManagementService {
     public void updateType(long hostId, long propertyId, long typeId, RoomTypeUpdateRequest request) {
         lockOwnedProperty(hostId, propertyId);
         lockType(propertyId, typeId, "FOR UPDATE");
+        String saleMode=jdbc.queryForObject("SELECT sale_mode FROM room_types WHERE id=? AND property_id=?",String.class,typeId,propertyId);
+        if("WHOLE_PLACE".equals(saleMode)&&request.quantity()!=1)
+            invalid("ERR_INVALID_ROOM_TYPE","A whole-place listing must have exactly one sale unit.");
         if (request.maxOccupants() < request.maxAdults()) invalid("ERR_INVALID_ROOM_TYPE", "Occupancy must cover adults.");
         int changed = jdbc.update("""
                 UPDATE room_types SET name=?,base_quantity=?,max_adults=?,max_occupants=?,version=version+1
@@ -118,6 +123,20 @@ public class InventoryManagementService {
                 throw new ConflictException("ERR_VERSION_CONFLICT", "The calendar version is stale.");
             }
         }
+    }
+
+    @Transactional
+    public void updateCalendarBatch(long hostId,long propertyId,long typeId,List<InventoryDayRequest> requests) {
+        if(requests==null||requests.isEmpty()||requests.size()>31)
+            invalid("ERR_INVALID_REQUEST","Save between one and 31 calendar dates at a time.");
+        if(requests.stream().anyMatch(java.util.Objects::isNull)
+                ||requests.stream().map(InventoryDayRequest::date).distinct().count()!=requests.size())
+            invalid("ERR_INVALID_REQUEST","Calendar dates must be present and unique.");
+        lockOwnedProperty(hostId,propertyId);
+        lockType(propertyId,typeId,"FOR SHARE");
+        // Deterministic order and the enclosing transaction ensure an error on any day rolls back the entire Save action.
+        requests.stream().sorted(java.util.Comparator.comparing(InventoryDayRequest::date))
+                .forEach(day->updateCalendar(hostId,propertyId,typeId,day));
     }
 
     @Transactional
