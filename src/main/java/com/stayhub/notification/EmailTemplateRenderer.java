@@ -3,8 +3,11 @@ package com.stayhub.notification;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 
 public final class EmailTemplateRenderer {
+    public record ItemDetail(String roomType,String ratePlan,int quantity,long roomNights,BigDecimal total) {}
 
     private static final String LOGO_URL = "https://github.com/user-attachments/assets/dad8185a-1590-4f73-b1da-01d90ce87989";
     private static final String PRIMARY = "#ff5a5f";
@@ -33,8 +36,15 @@ public final class EmailTemplateRenderer {
                                             String status,
                                             LocalDate checkIn,
                                             LocalDate checkOut,
-                                            Integer guests,
-                                            BigDecimal totalPrice) {
+                                             Integer guests,
+                                             BigDecimal totalPrice) {
+        return bookingStatusEmail(fullName,propertyTitle,status,checkIn,checkOut,guests,totalPrice,
+                null,null,null,List.of());
+    }
+
+    public static String bookingStatusEmail(String fullName,String propertyTitle,String status,LocalDate checkIn,
+            LocalDate checkOut,Integer guests,BigDecimal totalPrice,String paymentMode,BigDecimal dueOnline,
+            BigDecimal balanceDueHost,List<ItemDetail> items) {
         String statusColor = switch (status) {
             case "CONFIRMED" -> "#16a34a";
             case "COMPLETED" -> "#2563eb";
@@ -60,6 +70,19 @@ public final class EmailTemplateRenderer {
             case "CONFIRMED" -> "Your booking is confirmed. Please review your check-in time and host contact details on your StayHub account.";
             default -> "You can review your trip details from your StayHub bookings page.";
         };
+        List<String> rows=new ArrayList<>(List.of(
+                detailRow("Check-in", DATE_FORMATTER.format(checkIn)),
+                detailRow("Check-out", DATE_FORMATTER.format(checkOut)),
+                detailRow("Guests", String.valueOf(guests)),
+                detailRow("Total", totalPrice.stripTrailingZeros().toPlainString() + " VND")));
+        if(paymentMode!=null) rows.add(detailRow("Payment mode",paymentMode));
+        if(dueOnline!=null) rows.add(detailRow("Paid online",dueOnline.stripTrailingZeros().toPlainString()+" VND"));
+        if(balanceDueHost!=null&&balanceDueHost.signum()>0)
+            rows.add(detailRow("Balance paid to Host",balanceDueHost.stripTrailingZeros().toPlainString()+" VND"));
+        String itemRows=(items==null?List.<ItemDetail>of():items).stream().map(item->detailRow(
+                item.quantity()+" × "+item.roomType()+" / "+item.ratePlan(),item.roomNights()+" room-nights · "+
+                        item.total().stripTrailingZeros().toPlainString()+" VND")).reduce("",String::concat);
+        String itemSection=itemRows.isEmpty()?"":"<h2 style=\"margin:24px 0 8px;font-size:18px;color:"+TEXT+";\">Rooms in this booking</h2>"+itemRows;
         return layout(title, "StayHub booking update for " + propertyTitle + ".",
                 """
                 <p style="margin:0 0 18px;color:%s;font-size:16px;line-height:1.6;">Hello %s,</p>
@@ -67,18 +90,45 @@ public final class EmailTemplateRenderer {
                 <div style="display:inline-block;margin:0 0 24px;padding:10px 16px;border-radius:999px;background:%s;color:%s;font-size:13px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;">%s</div>
                 <table role="presentation" width="100%%" cellspacing="0" cellpadding="0" style="margin:8px 0 24px;border-collapse:separate;border-spacing:0 10px;">
                     %s
-                    %s
-                    %s
-                    %s
                 </table>
+                %s
                 <div style="margin-top:22px;padding:18px;border-radius:18px;background:#f9fafb;border:1px solid #e5e7eb;color:%s;font-size:14px;line-height:1.6;">
                     %s
                 </div>
-                """.formatted(MUTED, escape(fullName), MUTED, TEXT, escape(propertyTitle), statusBackground, statusColor, escape(status),
-                        detailRow("Check-in", DATE_FORMATTER.format(checkIn)),
-                        detailRow("Check-out", DATE_FORMATTER.format(checkOut)),
-                        detailRow("Guests", String.valueOf(guests)),
-                        detailRow("Total", totalPrice.stripTrailingZeros().toPlainString() + " VND"), MUTED, escape(footerNote)));
+                """.formatted(MUTED, escape(fullName), MUTED, TEXT, escape(propertyTitle), statusBackground, statusColor,
+                        escape(status),String.join("",rows),itemSection,MUTED,escape(footerNote)));
+    }
+
+    public static String refundStatusEmail(String fullName,long bookingId,String status,String source,
+            BigDecimal amount,String currency,String sla,String transferReference) {
+        String sourceLabel="ONLINE_VERIFIED".equals(source)?"StayHub-collected online payment":"Host-direct attested payment";
+        String reference=transferReference==null||transferReference.isBlank()?"Not yet available":transferReference;
+        return layout("Refund update","Refund case update for booking "+bookingId+".","""
+                <p style="margin:0 0 18px;color:%s;font-size:16px;line-height:1.6;">Hello %s,</p>
+                <p style="margin:0 0 20px;color:%s;font-size:16px;line-height:1.6;">Refund status: <strong>%s</strong></p>
+                <table role="presentation" width="100%%" cellspacing="0" cellpadding="0" style="border-collapse:separate;border-spacing:0 10px;">
+                    %s%s%s
+                </table>
+                <p style="margin-top:18px;color:%s;font-size:14px;line-height:1.6;">%s</p>
+                """.formatted(MUTED,escape(fullName),MUTED,escape(status),
+                detailRow("Booking",Long.toString(bookingId)),detailRow("Source",sourceLabel),
+                detailRow("Amount",amount.stripTrailingZeros().toPlainString()+" "+currency),MUTED,
+                escape(sla+" Transfer reference: "+reference)));
+    }
+
+    public static String payoutStatusEmail(String fullName,long bookingId,String status,BigDecimal amount,
+            String currency,String transferReference) {
+        String reference=transferReference==null||transferReference.isBlank()?"Not yet available":transferReference;
+        return layout("Host payout update","Manual payout case update for booking "+bookingId+".","""
+                <p style="margin:0 0 18px;color:%s;font-size:16px;line-height:1.6;">Hello %s,</p>
+                <p style="margin:0 0 20px;color:%s;font-size:16px;line-height:1.6;">Payout status: <strong>%s</strong></p>
+                <table role="presentation" width="100%%" cellspacing="0" cellpadding="0" style="border-collapse:separate;border-spacing:0 10px;">
+                    %s%s%s
+                </table>
+                <p style="margin-top:18px;color:%s;font-size:14px;line-height:1.6;">Only a recorded manual proof confirms payout. This message does not promise automatic transfer.</p>
+                """.formatted(MUTED,escape(fullName),MUTED,escape(status),detailRow("Booking",Long.toString(bookingId)),
+                detailRow("Amount",amount.stripTrailingZeros().toPlainString()+" "+currency),
+                detailRow("Transfer reference",reference),MUTED));
     }
 
     private static String layout(String heading, String preheader, String body) {
