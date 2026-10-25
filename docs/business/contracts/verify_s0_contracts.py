@@ -28,6 +28,7 @@ DOCS = [
     "database/7_Booking.md", "database/8_Payment.md", "database/9_Reviews.md",
     "database/10_Discounts.md", "ui/UXUI_DesignSystem.md", "ui/ApplicationDesigned.md",
     "contributors/Rules.md", "contributors/FirstStep.md",
+    "tasklist/evidence/TSK-094.md", "tasklist/evidence/TSK-104.md",
     "tasklist/evidence/TSK-110.md",
 ]
 S0 = {79, 97, 81, 84, 86, 88, 90, 109}

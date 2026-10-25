@@ -41,13 +41,14 @@ flowchart TB
 
 - A **User** can act as `GUEST`, `HOST`, or `ADMIN`.
 - A **Host** owns multiple **Properties**.
-- A **Property** contains multiple **PropertyImages**.
-- A **Property** has many **Amenities** through `property_amenities`.
+- A **Property** contains multiple **PropertyImages** and many **Amenities** through `property_amenities`.
+- A **Property** owns one or more **RoomTypes** (hạng phòng), each providing multiple **RatePlans** (gói giá) sharing physical inventory.
 - A **Guest** can create multiple **Bookings**.
-- A **Property** can receive multiple **Bookings** over time.
+- Each **Booking** contains one or more **BookingItems** (chọn `RoomType` và `RatePlan`), phân bổ khách qua **RoomAllocations** và snapshot giá qua **NightlySnapshots**.
 - A **Booking** can optionally apply one **DiscountCode** and stores price/discount snapshots.
-- A **Booking** has one payment record in the MVP/VNPay flow.
+- A **Booking** supports Dual Payment Modes (`FULL_PREPAY` vs `HYBRID_DEPOSIT`).
 - A completed **Booking** can have at most one **Review**.
+- Sơ đồ quan hệ chi tiết và các ràng buộc toàn vẹn xem tại [3_CoreERD.md](3_CoreERD.md).
 
 ---
 
