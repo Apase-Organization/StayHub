@@ -83,7 +83,7 @@
                 <p class="text-xs font-bold uppercase tracking-[0.2em] text-primary-500">Trung tâm Điều hành Nền tảng</p>
                 <h1 class="mt-1 text-2xl font-black md:text-3xl">StayHub Admin Operations</h1>
             </div>
-
+            
             <!-- Quick Tab Bar for Tablet/Mobile -->
             <div class="flex flex-wrap gap-2 md:hidden">
                 <button type="button" @click="setTab('overview')" :class="activeTab === 'overview' ? 'bg-primary-500 text-white font-bold' : 'bg-bg-white text-text-gray border border-border'" class="rounded-lg px-3 py-1.5 text-xs">Tổng quan & Host</button>
@@ -98,7 +98,7 @@
         <!-- TAB 1: TỔNG QUAN & HIỆU SUẤT TỪNG HOST      -->
         <!-- ========================================== -->
         <div x-show="activeTab === 'overview'" x-cloak class="space-y-8">
-
+            
             <!-- 4 Top Executive KPI Cards -->
             <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
                 <div class="rounded-2xl border border-border bg-bg-white p-6 shadow-sm">

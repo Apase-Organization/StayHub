@@ -4,7 +4,7 @@
 
 **Goal:** Revamp the StayHub Admin Portal into a comprehensive, market-standard multi-tab operations dashboard featuring an executive overview with deep-dive host performance metrics, actionable anomaly alerts, and a dedicated host profile view with specialized sub-tabs and RESTful endpoints.
 
-**Architecture:**
+**Architecture:** 
 - Backend: Modular Spring Boot service layer aggregating cross-domain metrics (User, Property, Booking, Payment, Review) into specialized DTOs for platform overview, host performance, and anomaly detection.
 - API: Dedicated RESTful endpoints under `/api/v1/admin/**` providing JSON responses wrapped in `ApiResponse<T>` for asynchronous tab navigation and drill-down operations.
 - Frontend: Thymeleaf template with Tailwind CSS and Alpine.js providing a reactive multi-tab navigation layout (`dashboard.html`) and a specialized host deep-dive page (`host-detail.html`) with breadcrumb navigation.
