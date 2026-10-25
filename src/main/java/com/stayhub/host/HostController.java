@@ -139,7 +139,7 @@ public class HostController {
                                   RedirectAttributes redirectAttributes) {
         propertyService.archiveProperty(principal.getId(), id);
         redirectAttributes.addFlashAttribute("message", "Property archived successfully.");
-        return "redirect:/host/properties";
+        return "redirect:/host/dashboard";
     }
 
     @PostMapping("/properties/{id}/images")
