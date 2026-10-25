@@ -6,6 +6,8 @@ import com.stayhub.booking.dto.BookingCreateRequest;
 import com.stayhub.booking.dto.BookingResponse;
 import com.stayhub.common.exception.BusinessException;
 import com.stayhub.common.exception.ResourceNotFoundException;
+import com.stayhub.payment.ledger.ArrivalEligibilityService;
+import com.stayhub.payment.ledger.DirectReceiptService;
 import com.stayhub.property.PropertyService;
 import com.stayhub.review.ReviewService;
 import com.stayhub.review.dto.ReviewCreateRequest;
@@ -38,6 +40,8 @@ public class BookingController {
     private final PropertyService propertyService;
     private final ReviewService reviewService;
     private final CustomOAuth2UserService customOAuth2UserService;
+    private final DirectReceiptService directReceipts;
+    private final ArrivalEligibilityService arrivals;
 
     @GetMapping("/properties/{id}/book")
     public String showBookingPage(@PathVariable Long id,
@@ -113,7 +117,7 @@ public class BookingController {
                                     Model model) {
         UserPrincipal principal = currentPrincipal(authentication);
         BookingResponse booking = bookingService.getBookingForGuest(principal.getId(), id);
-        addBookingDetailModel(model, booking, "guest");
+        addBookingDetailModel(model, booking, "guest",principal.getId());
         return "booking/booking-detail";
     }
 
@@ -133,14 +137,25 @@ public class BookingController {
                                         Model model) {
         UserPrincipal principal = currentPrincipal(authentication);
         BookingResponse booking = bookingService.getBookingForHost(principal.getId(), id);
-        addBookingDetailModel(model, booking, "host");
+        addBookingDetailModel(model, booking, "host",principal.getId());
         return "booking/booking-detail";
     }
 
-    private void addBookingDetailModel(Model model, BookingResponse booking, String viewer) {
+    private void addBookingDetailModel(Model model, BookingResponse booking, String viewer,long actorId) {
         model.addAttribute("booking", booking);
         model.addAttribute("viewer", viewer);
         model.addAttribute("existingReview", reviewService.getReviewByBooking(booking.getId()).orElse(null));
+        var rooms=arrivals.roomsForActor(booking.getId(),actorId);
+        model.addAttribute("arrivalRooms",rooms);
+        if(!rooms.isEmpty()) {
+            model.addAttribute("arrivalEligibility",arrivals.eligibilityForActor(booking.getId(),actorId));
+        }
+        if(booking.getPaymentMode()!=null&&booking.getBalanceDueHost()!=null&&booking.getBalanceDueHost().signum()>0) {
+            model.addAttribute("directBalance",directReceipts.balanceForActor(booking.getId(),actorId));
+            model.addAttribute("directReceipts",viewer.equals("host")
+                    ? directReceipts.listForHost(booking.getId(),actorId)
+                    : directReceipts.listForGuest(booking.getId(),actorId));
+        }
         if (!model.containsAttribute("reviewRequest")) {
             model.addAttribute("reviewRequest", new ReviewCreateRequest());
         }

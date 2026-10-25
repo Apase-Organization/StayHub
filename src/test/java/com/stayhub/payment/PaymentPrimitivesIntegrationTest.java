@@ -63,6 +63,9 @@ class PaymentPrimitivesIntegrationTest extends PostgreSqlIntegrationTest {
     @AfterEach void cleanup() {
         // Test database owner teardown only. Production history is never deleted
         // by services. CASCADE reaches new children, not legacy parent bookings.
+        // V22 intentionally preserves booking snapshots; test teardown removes
+        // test-only snapshots explicitly before deleting its fixture bookings.
+        jdbc.execute("TRUNCATE booking_listing_snapshots");
         jdbc.execute("TRUNCATE booking_financial_snapshots CASCADE");
         for(long id:otherBookings) bookings.deleteById(id);
         properties.deleteById(property); users.deleteById(guest); users.deleteById(host);
