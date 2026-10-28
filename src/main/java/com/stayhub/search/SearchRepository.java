@@ -12,8 +12,10 @@ import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
 import jakarta.persistence.criteria.Subquery;
+import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -23,6 +25,18 @@ import org.springframework.stereotype.Repository;
 @Repository
 @RequiredArgsConstructor
 public class SearchRepository {
+
+    private static final String VIETNAMESE_LETTERS = "áàảãạăắằẳẵặâấầẩẫậéèẻẽẹêếềểễệíìỉĩịóòỏõọôốồổỗộơớờởỡợúùủũụưứừửữựýỳỷỹỵđ";
+    private static final String ASCII_LETTERS = VIETNAMESE_LETTERS.codePoints()
+            .mapToObj(codePoint -> {
+                String letter = new String(Character.toChars(codePoint));
+                if (letter.equals("đ")) {
+                    return "d";
+                }
+                return Normalizer.normalize(letter, Normalizer.Form.NFD)
+                        .replaceAll("\\p{M}+", "");
+            })
+            .reduce("", String::concat);
 
     private final PropertyRepository propertyRepository;
 
@@ -37,11 +51,11 @@ public class SearchRepository {
 
             if (criteria != null) {
                 if (hasText(criteria.getLocation())) {
-                    String keyword = "%" + criteria.getLocation().trim().toLowerCase() + "%";
+                    String keyword = "%" + normalizeLocation(criteria.getLocation()) + "%";
                     predicates.add(builder.or(
-                            builder.like(builder.lower(root.get("city")), keyword),
-                            builder.like(builder.lower(root.get("address")), keyword),
-                            builder.like(builder.lower(root.get("title")), keyword)
+                            builder.like(normalizeDatabaseText(builder, root.get("city")), keyword),
+                            builder.like(normalizeDatabaseText(builder, root.get("address")), keyword),
+                            builder.like(normalizeDatabaseText(builder, root.get("title")), keyword)
                     ));
                 }
                 if (criteria.getGuests() != null) {
@@ -102,5 +116,20 @@ public class SearchRepository {
 
     private boolean hasText(String value) {
         return value != null && !value.trim().isEmpty();
+    }
+
+    private String normalizeLocation(String value) {
+        return Normalizer.normalize(value.trim().toLowerCase(Locale.ROOT), Normalizer.Form.NFD)
+                .replaceAll("\\p{M}+", "")
+                .replace('đ', 'd');
+    }
+
+    private jakarta.persistence.criteria.Expression<String> normalizeDatabaseText(
+            jakarta.persistence.criteria.CriteriaBuilder builder,
+            jakarta.persistence.criteria.Expression<String> expression) {
+        return builder.function("translate", String.class,
+                builder.lower(expression),
+                builder.literal(VIETNAMESE_LETTERS),
+                builder.literal(ASCII_LETTERS));
     }
 }
