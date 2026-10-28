@@ -49,6 +49,16 @@ class AuthServiceImplTest {
     }
 
     @Test
+    void mvcNoticesAreVietnameseWithoutChangingServiceContracts() {
+        assertThat(com.stayhub.common.exception.MvcExceptionHandler.displayMessage(
+                "The verification code is invalid.")).isEqualTo("Mã xác minh không hợp lệ.");
+        assertThat(com.stayhub.common.exception.MvcExceptionHandler.displayMessage(
+                "An account with this email already exists.")).isEqualTo("Email này đã được đăng ký.");
+        assertThat(com.stayhub.common.exception.MvcExceptionHandler.displayMessage("Thông báo tùy chỉnh"))
+                .isEqualTo("Thông báo tùy chỉnh");
+    }
+
+    @Test
     void registrationRequiresOtpBeforeCreatingGuest() {
         RegisterRequest request = request(" User@Example.COM ");
         when(userRepository.existsByEmail("user@example.com")).thenReturn(false);
@@ -115,6 +125,45 @@ class AuthServiceImplTest {
 
         assertThatThrownBy(() -> authService.verifyRegistration("user@example.com", otp))
                 .isInstanceOf(DuplicateEmailException.class);
+    }
+
+    @Test
+    void emailChangeTakesEffectOnlyAfterVerificationOfOtpSentToNewAddress() {
+        User user = User.builder().email("old@example.com").fullName("Test User").build();
+        when(userRepository.findById(42L)).thenReturn(Optional.of(user));
+        when(userRepository.existsByEmail("new@example.com")).thenReturn(false);
+        when(userRepository.existsByEmailAndIdNot("new@example.com", 42L)).thenReturn(false);
+
+        authService.requestEmailChangeOtp(42L, " New@Example.com ");
+
+        assertThat(user.getEmail()).isEqualTo("old@example.com");
+        assertThat(authService.getPendingEmailChange(42L)).isEqualTo("new@example.com");
+        String otp = ((java.util.Map<Long, ?>) ReflectionTestUtils.getField(authService, "pendingEmailChanges"))
+                .get(42L).toString().replaceAll(".*otp=([0-9]{6}).*", "$1");
+
+        authService.verifyEmailChangeOtp(42L, otp);
+
+        assertThat(user.getEmail()).isEqualTo("new@example.com");
+        assertThat(authService.getPendingEmailChange(42L)).isNull();
+        verify(userRepository).saveAndFlush(user);
+    }
+
+    @Test
+    void invalidEmailChangeOtpLeavesCurrentEmailUnchanged() {
+        User user = User.builder().email("old@example.com").fullName("Test User").build();
+        when(userRepository.findById(42L)).thenReturn(Optional.of(user));
+        when(userRepository.existsByEmail("new@example.com")).thenReturn(false);
+
+        authService.requestEmailChangeOtp(42L, "new@example.com");
+
+        String actualOtp = ((java.util.Map<Long, ?>) ReflectionTestUtils.getField(authService, "pendingEmailChanges"))
+                .get(42L).toString().replaceAll(".*otp=([0-9]{6}).*", "$1");
+        String wrongOtp = "000000".equals(actualOtp) ? "000001" : "000000";
+        assertThatThrownBy(() -> authService.verifyEmailChangeOtp(42L, wrongOtp))
+                .isInstanceOf(BusinessException.class)
+                .extracting("errorCode").isEqualTo("ERR_OTP_INVALID");
+        assertThat(user.getEmail()).isEqualTo("old@example.com");
+        verify(userRepository, never()).saveAndFlush(any(User.class));
     }
 
     private RegisterRequest request(String email) {

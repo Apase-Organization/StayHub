@@ -42,6 +42,7 @@ public class AuthServiceImpl implements AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JavaMailSender mailSender;
     private final Map<String, PendingRegistration> pendingRegistrations = new ConcurrentHashMap<>();
+    private final Map<Long, PendingEmailChange> pendingEmailChanges = new ConcurrentHashMap<>();
 
     @Value("${app.mail.enabled:false}")
     private boolean mailEnabled;
@@ -104,6 +105,68 @@ public class AuthServiceImpl implements AuthService {
         }
     }
 
+    @Override
+    public void requestEmailChangeOtp(Long userId, String newEmail) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException("ERR_USER_NOT_FOUND", "User account was not found."));
+        String normalizedEmail = EmailNormalizer.normalize(newEmail);
+        if (normalizedEmail.equals(user.getEmail())) {
+            pendingEmailChanges.remove(userId);
+            return;
+        }
+        if (userRepository.existsByEmail(normalizedEmail)) {
+            throw new DuplicateEmailException();
+        }
+
+        String otp = String.format("%06d", SECURE_RANDOM.nextInt(1_000_000));
+        pendingEmailChanges.put(userId, new PendingEmailChange(
+                normalizedEmail, otp, Instant.now().plus(10, ChronoUnit.MINUTES)));
+        sendEmailChangeOtp(userId, normalizedEmail, user.getFullName(), otp);
+    }
+
+    @Override
+    @Transactional
+    public String verifyEmailChangeOtp(Long userId, String otp) {
+        PendingEmailChange pending = pendingEmailChanges.get(userId);
+        if (pending == null || pending.expiresAt().isBefore(Instant.now())) {
+            pendingEmailChanges.remove(userId);
+            throw new BusinessException("ERR_OTP_EXPIRED", "The verification code has expired. Please request a new code.");
+        }
+        if (otp == null || !pending.otp().equals(otp.trim())) {
+            throw new BusinessException("ERR_OTP_INVALID", "The verification code is invalid.");
+        }
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException("ERR_USER_NOT_FOUND", "User account was not found."));
+        if (userRepository.existsByEmailAndIdNot(pending.email(), userId)) {
+            throw new DuplicateEmailException();
+        }
+        user.setEmail(pending.email());
+        try {
+            userRepository.saveAndFlush(user);
+            pendingEmailChanges.remove(userId);
+            return user.getEmail();
+        } catch (DataIntegrityViolationException exception) {
+            if (isEmailConstraintViolation(exception)) {
+                throw new DuplicateEmailException();
+            }
+            throw exception;
+        }
+    }
+
+    @Override
+    public String getPendingEmailChange(Long userId) {
+        PendingEmailChange pending = pendingEmailChanges.get(userId);
+        if (pending == null) {
+            return null;
+        }
+        if (pending.expiresAt().isBefore(Instant.now())) {
+            pendingEmailChanges.remove(userId);
+            return null;
+        }
+        return pending.email();
+    }
+
     private void ensureUniqueAccount(String email, String username) {
         if (userRepository.existsByEmail(email)) {
             throw new DuplicateEmailException();
@@ -148,6 +211,31 @@ public class AuthServiceImpl implements AuthService {
         }
     }
 
+    private void sendEmailChangeOtp(Long userId, String email, String fullName, String otp) {
+        if (!mailEnabled) {
+            log.info("Mail disabled. Email change OTP for {} is {}", email, otp);
+            return;
+        }
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            helper.setFrom(fromAddress, systemName);
+            helper.setTo(email);
+            helper.setSubject("StayHub email change verification code");
+            String text = "Hello " + fullName + ",\n\n"
+                    + "Your StayHub email change verification code is: " + otp + "\n"
+                    + "This code expires in 10 minutes. Your account email will not change until this code is verified.\n\n"
+                    + "StayHub";
+            helper.setText(text, EmailTemplateRenderer.otpEmail(fullName, otp));
+            mailSender.send(message);
+            log.info("Sent email change OTP to {}", email);
+        } catch (MessagingException | UnsupportedEncodingException | RuntimeException exception) {
+            pendingEmailChanges.remove(userId);
+            log.warn("Unable to send email change OTP to {}", email, exception);
+            throw new BusinessException("ERR_MAIL_SEND", "Unable to send verification email. Please try again later.");
+        }
+    }
+
     private boolean isEmailConstraintViolation(Throwable throwable) {
         Throwable current = throwable;
         while (current != null) {
@@ -182,5 +270,8 @@ public class AuthServiceImpl implements AuthService {
 
     private record PendingRegistration(String fullName, String username, String email, String password,
                                        String otp, Instant expiresAt) {
+    }
+
+    private record PendingEmailChange(String email, String otp, Instant expiresAt) {
     }
 }

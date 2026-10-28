@@ -51,7 +51,8 @@ public class UserServiceImpl implements UserService {
     public UserResponse updateProfile(Long userId, UpdateProfileRequest request) {
         User user = findEntityById(userId);
         user.setFullName(request.getFullName().trim());
-        user.setPhone(request.getPhone());
+        String phone = request.getPhone();
+        user.setPhone(phone == null || phone.isBlank() ? null : phone.trim());
         return userMapper.toResponse(userRepository.save(user));
     }
 
