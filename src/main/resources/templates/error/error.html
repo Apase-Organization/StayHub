@@ -1,19 +1,19 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title th:text="${status + ' - ' + error + ' | StayHub'}">Error | StayHub</title>
+    <title th:text="${status + ' - Có lỗi xảy ra | StayHub'}">Có lỗi xảy ra | StayHub</title>
     <link th:href="@{/css/tailwind.css}" rel="stylesheet">
 </head>
 <body class="bg-bg-light text-text-900 font-sans min-h-screen flex items-center justify-center p-6">
     <main class="bg-bg-white border border-border rounded-xl shadow-sm max-w-lg w-full p-8 text-center">
         <p class="text-primary-500 text-5xl font-bold" th:text="${status}">500</p>
-        <h1 class="text-2xl font-bold mt-4" th:text="${error}">Unexpected error</h1>
-        <p class="text-text-gray mt-3" th:text="${message}">Please try again later.</p>
+        <h1 class="text-2xl font-bold mt-4" th:text="${status == 404 ? 'Không tìm thấy trang' : (status == 403 ? 'Bạn không có quyền truy cập' : 'Có lỗi xảy ra')}">Có lỗi xảy ra</h1>
+        <p class="text-text-gray mt-3" th:text="${message}">Vui lòng thử lại sau.</p>
         <p class="text-xs text-text-gray mt-2" th:if="${path}" th:text="${path}"></p>
         <a th:href="@{/}" class="inline-block mt-6 bg-primary-500 hover:bg-primary-600 text-bg-white font-semibold px-5 py-3 rounded-lg transition">
-            Back to home
+            Về trang chủ
         </a>
     </main>
 </body>

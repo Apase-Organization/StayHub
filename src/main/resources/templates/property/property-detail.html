@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title th:text="|${property.title} - StayHub|">Property - StayHub</title>
+    <title th:text="|${property.title} - StayHub|">Chỗ nghỉ - StayHub</title>
     <link th:href="@{/css/tailwind.css}" rel="stylesheet">
     <meta name="_csrf" th:content="${_csrf.token}">
     <meta name="_csrf_header" th:content="${_csrf.headerName}">
@@ -13,85 +13,90 @@
 
 <main class="mx-auto max-w-7xl px-5 py-8 lg:px-10">
     <header class="mb-6">
-        <a th:href="@{/properties}" class="mb-4 inline-flex text-sm font-bold text-primary-500 hover:text-primary-600">Back to stays</a>
-        <p class="mb-2 text-sm font-bold uppercase tracking-[0.16em] text-primary-500" th:text="${#strings.replace(property.propertyType.name(), '_', ' ')}">VILLA</p>
+        <a th:href="@{/properties}" class="mb-4 inline-flex text-sm font-bold text-primary-500 hover:text-primary-600">Về danh sách chỗ nghỉ</a>
+        <p class="mb-2 text-sm font-bold uppercase tracking-[0.16em] text-primary-500" th:text="${property.propertyType.name() == 'APARTMENT' ? 'Căn hộ' : (property.propertyType.name() == 'HOUSE' ? 'Nhà nguyên căn' : (property.propertyType.name() == 'VILLA' ? 'Biệt thự' : (property.propertyType.name() == 'HOTEL_ROOM' ? 'Phòng khách sạn' : (property.propertyType.name() == 'RESORT' ? 'Khu nghỉ dưỡng' : 'Homestay'))))}">Biệt thự</p>
         <h1 class="text-3xl font-black tracking-tight md:text-5xl" th:text="${property.title}">Property title</h1>
         <div class="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
             <span class="font-bold"><span class="text-rating-500">&#9733;</span> <span th:text="${property.ratingAvg}">0.0</span></span>
-            <span class="text-text-gray" th:text="|${property.city} · Hosted by ${property.hostName}|">City</span>
+            <span class="text-text-gray" th:text="|${property.city} · Chủ chỗ nghỉ: ${property.hostName}|">Thành phố</span>
         </div>
     </header>
 
     <section th:if="${#lists.isEmpty(property.images)}" class="flex aspect-[16/9] items-center justify-center rounded-[2rem] bg-bg-light text-text-gray md:aspect-[16/7]">
-        Photos are coming soon
+        Ảnh sẽ sớm được cập nhật
     </section>
     <section th:unless="${#lists.isEmpty(property.images)}" class="grid gap-2 overflow-hidden rounded-[2rem] md:max-h-[560px] md:grid-cols-2">
         <img th:src="${property.images[0].imageUrl}" th:alt="${property.title}" class="h-80 w-full object-cover md:h-full md:min-h-[480px]">
         <div class="grid grid-cols-2 gap-2">
             <img th:each="image, stat : ${property.images}" th:if="${stat.index > 0 and stat.index < 5}"
-                 th:src="${image.imageUrl}" th:alt="|${property.title} photo ${stat.count}|" class="h-40 w-full object-cover md:h-full md:min-h-0">
-            <div th:if="${property.images.size() == 1}" class="col-span-2 flex min-h-40 items-center justify-center bg-bg-light text-text-gray">More photos coming soon</div>
+                 th:src="${image.imageUrl}" th:alt="|${property.title} - ảnh ${stat.count}|" class="h-40 w-full object-cover md:h-full md:min-h-0">
+            <div th:if="${property.images.size() == 1}" class="col-span-2 flex min-h-40 items-center justify-center bg-bg-light text-text-gray">Sẽ sớm có thêm ảnh</div>
         </div>
     </section>
 
     <div class="mt-10 grid gap-10 lg:grid-cols-[minmax(0,1fr)_380px]">
         <div>
             <section class="border-b border-border pb-8">
-                <h2 class="text-2xl font-black" th:text="|${#strings.replace(property.propertyType.name(), '_', ' ')} in ${property.city}|">Stay details</h2>
-                <p class="mt-3 text-text-gray" th:text="|${property.maxGuests} guests · ${property.bedrooms} bedrooms · ${property.beds} beds · ${property.bathrooms} bathrooms|">Capacity</p>
+                <h2 class="text-2xl font-black" th:text="|Chỗ nghỉ tại ${property.city}|">Thông tin chỗ nghỉ</h2>
+                <p class="mt-3 text-text-gray" th:text="|${property.maxGuests} khách · ${property.bedrooms} phòng ngủ · ${property.beds} giường · ${property.bathrooms} phòng tắm|">Sức chứa</p>
             </section>
 
             <section class="border-b border-border py-8">
-                <h2 class="text-xl font-black">About this place</h2>
+                <h2 class="text-xl font-black">Giới thiệu chỗ nghỉ</h2>
                 <p class="mt-4 whitespace-pre-line leading-7 text-text-gray" th:text="${property.description}">Description</p>
                 <p class="mt-5 text-sm font-bold" th:text="${property.address}">Address</p>
             </section>
 
             <section class="border-b border-border py-8">
-                <h2 class="text-xl font-black">What this place offers</h2>
-                <p th:if="${#lists.isEmpty(property.amenities)}" class="mt-4 text-text-gray">No amenities listed yet.</p>
+                <h2 class="text-xl font-black">Tiện nghi tại đây</h2>
+                <p th:if="${#lists.isEmpty(property.amenities)}" class="mt-4 text-text-gray">Chưa có thông tin tiện nghi.</p>
                 <div th:unless="${#lists.isEmpty(property.amenities)}" class="mt-5 grid gap-4 sm:grid-cols-2">
-                    <div th:each="amenity : ${property.amenities}" class="flex items-center gap-3 rounded-2xl border border-border px-4 py-4">
-                        <span class="flex h-10 w-10 items-center justify-center rounded-full bg-bg-light text-lg" th:text="${amenity.icon != null ? amenity.icon : '+'}">+</span>
-                        <span class="font-bold" th:text="${amenity.name}">Amenity</span>
+                    <div th:each="amenity : ${property.amenities}" class="min-w-0 rounded-2xl border border-border px-4 py-4">
+                        <span class="block min-w-0 break-words font-bold" th:text="${amenity.name == 'Air conditioning' ? 'Điều hòa' : (amenity.name == 'Kitchen' ? 'Bếp' : (amenity.name == 'Parking' ? 'Chỗ đỗ xe' : (amenity.name == 'Pool' ? 'Hồ bơi' : (amenity.name == 'Washer' ? 'Máy giặt' : (amenity.name == 'Workspace' ? 'Không gian làm việc' : amenity.name)))))}">Tiện nghi</span>
                     </div>
                 </div>
             </section>
 
             <section id="room-offers" class="border-b border-border py-8">
-                <h2 class="text-xl font-black">Room types and rate plans</h2>
-                <p class="mt-2 text-sm text-text-gray">Select dates and occupancy for each room. Prices are per room per night; a stay total includes the property cleaning fee once. No dates means no live availability check.</p>
-                <p th:if="${selfBookingBlocked}" role="status" class="mt-4 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm font-semibold text-amber-900">This listing belongs to your Host account. StayHub does not allow booking your own property; choose another listing or sign in with the Guest demo account.</p>
-                <p th:if="${!canBookProperty and !selfBookingBlocked}" role="status" class="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700"><a th:href="@{/login}" class="font-bold text-primary-700 underline">Sign in as a Guest or Host</a> to request a quote and continue to payment.</p>
+                <h2 class="text-xl font-black">Hạng phòng và gói giá</h2>
+                <p class="mt-2 text-sm text-text-gray">Chọn ngày và số khách cho từng phòng. Giá tính theo phòng mỗi đêm; tổng tiền lưu trú chỉ tính phí vệ sinh một lần. Cần chọn ngày để kiểm tra phòng trống thực tế.</p>
+                <p th:if="${selfBookingBlocked}" role="status" class="mt-4 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm font-semibold text-amber-900">Chỗ nghỉ này thuộc tài khoản của bạn. StayHub không cho phép tự đặt chỗ nghỉ; hãy chọn chỗ nghỉ khác hoặc dùng tài khoản khách thử nghiệm.</p>
+                <p th:if="${!canBookProperty and !selfBookingBlocked and viewerRole == null}" role="status" class="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700"><a th:href="@{/login}" class="font-bold text-primary-700 underline">Đăng nhập</a> bằng tài khoản khách hoặc chủ chỗ nghỉ để nhận báo giá và thanh toán.</p>
+                <p th:if="${viewerRole == 'ADMIN'}" role="status" class="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">Tài khoản quản trị viên chỉ dùng để quản lý hệ thống, không thể đặt phòng. Hãy đăng xuất rồi đăng nhập bằng tài khoản khách hoặc chủ chỗ nghỉ.</p>
                 <form id="offer-search" class="mt-5 space-y-4 rounded-3xl bg-bg-light p-5">
                     <div class="grid gap-3 sm:grid-cols-3">
-                        <label><span class="text-sm font-bold text-text-gray">Check-in</span><input id="offer-check-in" type="date" class="mt-2 w-full rounded-2xl border border-border px-4 py-3"></label>
-                        <label><span class="text-sm font-bold text-text-gray">Check-out</span><input id="offer-check-out" type="date" class="mt-2 w-full rounded-2xl border border-border px-4 py-3"></label>
-                        <label><span class="text-sm font-bold text-text-gray">Payment mode</span><select id="offer-payment-mode" class="mt-2 w-full rounded-2xl border border-border px-4 py-3"><option value="FULL_PREPAY">Full prepay</option><option value="HYBRID_DEPOSIT">Hybrid deposit</option></select></label>
+                        <label><span class="text-sm font-bold text-text-gray">Nhận phòng</span><input id="offer-check-in" type="date" class="mt-2 w-full rounded-2xl border border-border px-4 py-3"></label>
+                        <label><span class="text-sm font-bold text-text-gray">Trả phòng</span><input id="offer-check-out" type="date" class="mt-2 w-full rounded-2xl border border-border px-4 py-3"></label>
+                        <label><span class="text-sm font-bold text-text-gray">Hình thức thanh toán</span><select id="offer-payment-mode" class="mt-2 w-full rounded-2xl border border-border px-4 py-3"><option value="FULL_PREPAY">Trả trước toàn bộ</option><option value="HYBRID_DEPOSIT">Đặt cọc, trả phần còn lại khi nhận phòng</option></select></label>
                     </div>
-                    <label class="block max-w-xs"><span class="text-sm font-bold text-text-gray">Rooms requested</span><select id="offer-room-count" class="mt-2 w-full rounded-2xl border border-border px-4 py-3"><option th:each="count : ${#numbers.sequence(1, 20)}" th:value="${count}" th:text="${count}">1</option></select></label>
+                    <label class="block max-w-xs"><span class="text-sm font-bold text-text-gray">Số phòng cần đặt</span><select id="offer-room-count" class="mt-2 w-full rounded-2xl border border-border px-4 py-3"><option th:each="count : ${#numbers.sequence(1, 20)}" th:value="${count}" th:text="${count}">1</option></select></label>
                     <div id="room-occupancies" class="grid gap-3 md:grid-cols-2"></div>
-                    <button id="search-offers-button" type="submit" class="rounded-2xl bg-text-900 px-5 py-3 font-bold text-white hover:bg-black">Find eligible offers</button>
+                    <button id="search-offers-button" type="submit" class="rounded-2xl bg-text-900 px-5 py-3 font-bold text-white hover:bg-black">Tìm phòng phù hợp</button>
                 </form>
-                <p id="offer-status" role="status" aria-live="polite" class="mt-3 text-sm text-text-gray">Choose dates and configure each room, or leave dates blank to see indicative rate plans.</p>
+                <p id="offer-status" role="status" aria-live="polite" class="mt-3 text-sm text-text-gray">Chọn ngày và số khách từng phòng, hoặc để trống ngày để xem gói giá tham khảo.</p>
                 <div id="offer-results" class="mt-4 space-y-3"></div>
                 <div id="selection-summary" class="mt-5 hidden rounded-2xl border border-primary-200 bg-primary-50 p-4">
-                    <h3 class="font-black">Selected rooms</h3><ul id="selected-offers" class="mt-2 list-disc space-y-1 pl-5 text-sm"></ul>
-                    <p class="mt-3 text-xs text-text-gray">Selection is advisory. A server quote will recheck dates, stock, mode and price before checkout.</p>
-                    <button id="request-quote" type="button" th:disabled="${!canBookProperty}" class="mt-4 rounded-xl bg-text-900 px-4 py-3 font-bold text-white disabled:cursor-not-allowed disabled:bg-slate-300">Review server quote</button>
+                    <h3 class="font-black">Phòng đã chọn</h3><ul id="selected-offers" class="mt-2 list-disc space-y-1 pl-5 text-sm"></ul>
+                    <p class="mt-3 text-xs text-text-gray">Lựa chọn chỉ mang tính tham khảo. Hệ thống sẽ kiểm tra lại ngày, phòng trống, hình thức thanh toán và giá trước khi thanh toán.</p>
+                    <button id="request-quote" type="button" th:disabled="${!canBookProperty}" class="mt-4 rounded-xl bg-text-900 px-4 py-3 font-bold text-white disabled:cursor-not-allowed disabled:bg-slate-300">Xem báo giá hệ thống</button>
+                    <p id="quote-access-note" th:unless="${canBookProperty}" class="mt-2 text-xs font-semibold text-amber-800">
+                        <span th:if="${selfBookingBlocked}">Bạn không thể đặt chỗ nghỉ do chính mình quản lý.</span>
+                        <span th:if="${viewerRole == 'ADMIN'}">Tài khoản quản trị viên không được phép đặt phòng. Hãy dùng tài khoản khách hoặc chủ chỗ nghỉ.</span>
+                        <span th:if="${viewerRole == null}">Đăng nhập bằng tài khoản khách hoặc chủ chỗ nghỉ để xem báo giá.</span>
+                    </p>
                     <div id="quote-panel" class="mt-4 hidden space-y-3 rounded-xl border border-primary-200 bg-white p-4">
                         <p id="quote-summary" class="text-sm font-semibold"></p>
-                        <label class="flex items-start gap-3 text-sm"><input id="quote-consent" type="checkbox" class="mt-1"><span>I reviewed and accept this quote and its policy version.</span></label>
-                        <button id="confirm-quote" type="button" disabled class="rounded-xl bg-primary-500 px-4 py-3 font-bold text-white disabled:cursor-not-allowed disabled:bg-slate-300">Confirm booking and pay online</button>
+                        <label class="flex items-start gap-3 text-sm"><input id="quote-consent" type="checkbox" class="mt-1"><span>Tôi đã xem và chấp nhận báo giá cùng phiên bản chính sách áp dụng.</span></label>
+                        <button id="confirm-quote" type="button" disabled class="rounded-xl bg-primary-500 px-4 py-3 font-bold text-white disabled:cursor-not-allowed disabled:bg-slate-300">Xác nhận đặt phòng và thanh toán trực tuyến</button>
                     </div>
                 </div>
             </section>
 
             <section class="py-8">
-                <h2 class="text-xl font-black">Guest reviews</h2>
+                <h2 class="text-xl font-black">Đánh giá của khách</h2>
                 <div th:if="${#lists.isEmpty(reviews)}" class="mt-5 rounded-3xl border border-dashed border-border p-6">
-                    <p class="font-bold"><span class="text-rating-500">&#9733;</span> <span th:text="${property.ratingAvg}">0.0</span> average rating</p>
-                    <p class="mt-2 text-text-gray">No guest reviews yet.</p>
+                    <p class="font-bold"><span class="text-rating-500">&#9733;</span> <span th:text="${property.ratingAvg}">0.0</span> điểm trung bình</p>
+                    <p class="mt-2 text-text-gray">Chưa có đánh giá của khách.</p>
                 </div>
                 <div th:unless="${#lists.isEmpty(reviews)}" class="mt-5 space-y-4">
                     <article th:each="review : ${reviews}" class="rounded-3xl border border-border p-5">
@@ -99,7 +104,7 @@
                             <p class="font-black" th:text="${review.guestName}">Guest name</p>
                             <p class="font-bold"><span class="text-rating-500">&#9733;</span> <span th:text="${review.rating}">5</span> / 5</p>
                         </div>
-                        <p class="mt-3 whitespace-pre-line text-text-gray" th:text="${review.comment != null ? review.comment : 'No written comment.'}">Comment</p>
+                        <p class="mt-3 whitespace-pre-line text-text-gray" th:text="${review.comment != null ? (#strings.startsWith(review.comment, '[Đánh giá demo] ') ? #strings.substring(review.comment, 16) : review.comment) : 'Không có nhận xét.'}">Nhận xét</p>
                     </article>
                 </div>
             </section>
@@ -107,10 +112,10 @@
 
         <aside class="hidden lg:block lg:sticky lg:top-28 lg:self-start">
             <div class="rounded-3xl border border-border bg-white p-6 shadow-xl shadow-slate-200/60">
-                <p class="text-lg font-black">Choose a room type and rate plan</p>
-                <p class="mt-2 text-sm leading-6 text-text-gray">The old property-wide guide price is not a room offer. Use the room selector for server-owned rates and date-specific stock.</p>
-                <a href="#room-offers" class="mt-5 block rounded-2xl bg-primary-500 px-5 py-4 text-center font-bold text-white hover:bg-primary-600">Choose room offers</a>
-                <p class="mt-3 text-center text-xs text-text-gray">Availability is advisory until a server quote is confirmed.</p>
+                <p class="text-lg font-black">Chọn hạng phòng và gói giá</p>
+                <p class="mt-2 text-sm leading-6 text-text-gray">Giá tham khảo chung của chỗ nghỉ không phải giá đặt phòng. Hãy chọn phòng để xem giá hệ thống và số phòng trống theo ngày.</p>
+                <a href="#room-offers" class="mt-5 block rounded-2xl bg-primary-500 px-5 py-4 text-center font-bold text-white hover:bg-primary-600">Chọn phòng</a>
+                <p class="mt-3 text-center text-xs text-text-gray">Tình trạng phòng chỉ mang tính tham khảo cho đến khi báo giá được xác nhận.</p>
             </div>
         </aside>
     </div>
@@ -143,13 +148,13 @@
     const formatVnd = value => Number(value).toLocaleString('en-US', {maximumFractionDigits: 0});
     function apiError(payload, fallback) {
         switch(payload?.errorCode) {
-            case 'ERR_SELF_BOOKING': return 'You cannot book a property managed by your account. Choose another listing or sign in as a Guest.';
+            case 'ERR_SELF_BOOKING': return 'Bạn không thể tự đặt chỗ nghỉ do mình quản lý. Hãy chọn chỗ nghỉ khác hoặc dùng tài khoản khách.';
             case 'ERR_PAYMENT_CONFIG':
-            case 'ERR_VNPAY_CONFIG': return 'The quote is ready, but checkout is not configured. Set the VNPay sandbox merchant code and hash secret in .env, then restart StayHub.';
+            case 'ERR_VNPAY_CONFIG': return 'Báo giá đã sẵn sàng nhưng chưa cấu hình thanh toán. Hãy cấu hình mã đơn vị và khóa bí mật VNPay thử nghiệm trong .env, rồi khởi động lại StayHub.';
             case 'ERR_QUOTE_EXPIRED':
-            case 'ERR_QUOTE_STALE': return 'This quote expired or the offer changed. Search again and review a fresh server quote.';
-            case 'ERR_ROOM_NOT_AVAILABLE': return 'The selected rooms are no longer available. Search again and choose another offer.';
-            case 'ERR_FORBIDDEN': return payload.message || 'This account cannot book this stay. Sign in with a Guest or Host account.';
+            case 'ERR_QUOTE_STALE': return 'Báo giá đã hết hạn hoặc phòng đã thay đổi. Hãy tìm lại và xem báo giá mới.';
+            case 'ERR_ROOM_NOT_AVAILABLE': return 'Phòng đã chọn không còn trống. Hãy tìm lại và chọn phòng khác.';
+            case 'ERR_FORBIDDEN': return payload.message || 'Tài khoản này không thể đặt chỗ nghỉ. Hãy dùng tài khoản khách hoặc chủ chỗ nghỉ.';
             default: return payload?.message || fallback;
         }
     }
@@ -159,7 +164,7 @@
         for (let i = 0; i < Number(roomCount.value); i++) {
             const box = document.createElement('div');
             box.className = 'grid gap-3 rounded-2xl border border-border bg-white p-4 sm:grid-cols-2';
-            box.innerHTML = `<strong class="sm:col-span-2">Room ${i + 1}</strong><label class="text-sm">Adults<input data-adults type="number" min="1" value="1" class="mt-1 w-full rounded-xl border border-border px-3 py-2"></label><label class="text-sm">Children ages (comma separated)<input data-children placeholder="e.g. 4, 7" class="mt-1 w-full rounded-xl border border-border px-3 py-2"></label>`;
+            box.innerHTML = `<strong class="sm:col-span-2">Phòng ${i + 1}</strong><label class="text-sm">Người lớn<input data-adults type="number" min="1" value="1" class="mt-1 w-full rounded-xl border border-border px-3 py-2"></label><label class="text-sm">Tuổi trẻ em<input data-children placeholder="Ví dụ: 4, 7" class="mt-1 w-full rounded-xl border border-border px-3 py-2"></label>`;
             occupancyRoot.append(box);
         }
         invalidateOffers();
@@ -174,15 +179,15 @@
         document.getElementById('quote-panel').classList.add('hidden');
         document.getElementById('quote-consent').checked = false;
         document.getElementById('confirm-quote').disabled = true;
-        offerStatus.textContent = 'Selection changed. Search again to refresh eligible offers.';
+        offerStatus.textContent = 'Lựa chọn đã thay đổi. Hãy tìm lại phòng phù hợp.';
     }
     function getOccupancies() {
         return [...occupancyRoot.children].map((box, index) => {
         const ageText = box.querySelector('[data-children]').value.trim();
         const childrenAges = ageText ? ageText.split(',').map(value => Number(value.trim())) : [];
             const adults = Number(box.querySelector('[data-adults]').value);
-            if (!Number.isInteger(adults) || adults < 1) throw new Error(`Enter at least one adult for room ${index + 1}.`);
-            if (childrenAges.some(age => !Number.isInteger(age) || age < 0 || age > 17)) throw new Error(`Enter whole child ages from 0 to 17 for room ${index + 1}.`);
+            if (!Number.isInteger(adults) || adults < 1) throw new Error(`Phòng ${index + 1} cần ít nhất một người lớn.`);
+            if (childrenAges.some(age => !Number.isInteger(age) || age < 0 || age > 17)) throw new Error(`Nhập tuổi trẻ em là số nguyên từ 0 đến 17 cho phòng ${index + 1}.`);
             return {adults, childrenAges};
         });
     }
@@ -190,7 +195,7 @@
         const alreadySelected = selectedOffers.filter(item => item.offer.roomTypeId === offer.roomTypeId)
             .reduce((sum, item) => sum + item.roomOccupancies.length, 0);
         if (alreadySelected + selections.length > offer.availableQuantity) {
-            offerStatus.textContent = 'The combined room quantity exceeds the shared stock. Search again.';
+            offerStatus.textContent = 'Tổng số phòng đã chọn vượt quá số phòng trống. Hãy tìm lại.';
             return;
         }
         const existing=selectedOffers.find(item=>item.offer.roomTypeId===offer.roomTypeId && item.offer.ratePlanId===offer.ratePlanId);
@@ -202,7 +207,7 @@
         document.getElementById('selected-offers').replaceChildren();
         selectedOffers.forEach(selection => {
             const item = document.createElement('li');
-            item.textContent = `${selection.roomOccupancies.length} × ${selection.offer.roomTypeName} · ${selection.offer.ratePlanName} · ${selection.offer.priceBasis}`;
+            item.textContent = `${selection.roomOccupancies.length} × ${selection.offer.roomTypeName} · ${selection.offer.ratePlanName} · Giá theo phòng mỗi đêm`;
             document.getElementById('selected-offers').append(item);
         });
         summary.classList.remove('hidden');
@@ -214,8 +219,8 @@
         document.getElementById('quote-consent').checked = false;
         document.getElementById('confirm-quote').disabled = true;
         offerStatus.textContent = assignedRooms.size === Number(roomCount.value)
-            ? 'All rooms are assigned. Review the selected items and request a server quote.'
-            : `Selection saved. Assign ${Number(roomCount.value)-assignedRooms.size} remaining room(s).`;
+            ? 'Đã chọn đủ phòng. Hãy kiểm tra lựa chọn và yêu cầu báo giá hệ thống.'
+            : `Đã lưu lựa chọn. Cần chọn thêm ${Number(roomCount.value)-assignedRooms.size} phòng.`;
     }
     document.getElementById('offer-search').addEventListener('submit', async event => {
         event.preventDefault();
@@ -225,31 +230,31 @@
         catch (error) { offerStatus.textContent = error.message; return; }
         const checkIn = document.getElementById('offer-check-in').value || null;
         const checkOut = document.getElementById('offer-check-out').value || null;
-        if (Boolean(checkIn) !== Boolean(checkOut)) { offerStatus.textContent = 'Enter both dates, or leave both blank for indicative prices.'; return; }
-        offerStatus.textContent = 'Checking room offers…';
+        if (Boolean(checkIn) !== Boolean(checkOut)) { offerStatus.textContent = 'Nhập cả hai ngày, hoặc để trống cả hai để xem giá tham khảo.'; return; }
+        offerStatus.textContent = 'Đang tìm phòng…';
         try {
             const response = await fetch(`/api/v1/properties/${propertyId}/availability`, {
                 method: 'POST', headers: {'Content-Type': 'application/json', [csrfHeader]: csrfToken},
                 body: JSON.stringify({checkIn, checkOut, currency: 'VND', paymentMode: document.getElementById('offer-payment-mode').value, roomOccupancies})
             });
             const payload = await response.json();
-            if (!response.ok || !payload.success) throw new Error(response.status === 409 ? `409: ${payload.message}` : (payload.message || 'Unable to load offers. Search again.'));
+            if (!response.ok || !payload.success) throw new Error(response.status === 409 ? `409: ${payload.message}` : (payload.message || 'Không thể tải danh sách phòng. Hãy tìm lại.'));
             const data = payload.data;
-            if (!data.offers.length) { offerStatus.textContent = 'No active room offers match this occupancy and payment mode.'; return; }
-            offerStatus.textContent = data.liveAvailabilityChecked ? 'Availability checked for every night. Stock is advisory and can change.' : 'Indicative rates only — select dates to check live availability.';
+            if (!data.offers.length) { offerStatus.textContent = 'Không có phòng phù hợp với số khách và hình thức thanh toán này.'; return; }
+            offerStatus.textContent = data.liveAvailabilityChecked ? 'Đã kiểm tra phòng trống cho từng đêm. Số phòng chỉ mang tính tham khảo và có thể thay đổi.' : 'Đây là giá tham khảo — hãy chọn ngày để kiểm tra phòng trống thực tế.';
             data.offers.forEach(offer => {
                 const card = document.createElement('article');
                 card.className = 'rounded-2xl border border-border bg-white p-4';
-                const availability = data.liveAvailabilityChecked ? (offer.eligible ? `Available: ${offer.availableQuantity} for this stay` : offer.unavailableReason) : 'Live stock not checked';
+                const availability = data.liveAvailabilityChecked ? (offer.eligible ? `Còn ${offer.availableQuantity} phòng cho kỳ lưu trú này` : 'Phòng không đáp ứng điều kiện đã chọn') : 'Chưa kiểm tra phòng trống thực tế';
                 const total = offer.totalStay == null
-                    ? (data.liveAvailabilityChecked ? `Choose up to ${offer.availableQuantity} compatible room(s); total updates for your selection.` : 'Indicative total shown after dates are selected')
-                    : `${formatVnd(offer.totalStay)} VND total for ${offer.requestedQuantity} room(s), ${offer.nights} night(s)`;
+                    ? (data.liveAvailabilityChecked ? `Chọn tối đa ${offer.availableQuantity} phòng phù hợp; tổng tiền cập nhật theo lựa chọn.` : 'Tổng tiền tham khảo hiển thị sau khi chọn ngày')
+                    : `${formatVnd(offer.totalStay)} VND cho ${offer.requestedQuantity} phòng, ${offer.nights} đêm`;
                 const heading = document.createElement('h3'); heading.className = 'font-black';
                 heading.textContent = `${offer.roomTypeName} · ${offer.ratePlanName}`;
                 const price = document.createElement('span'); price.className = 'text-sm font-bold';
-                price.textContent = `${formatVnd(offer.nightlyPerRoom)} VND / room / night`;
+                price.textContent = `${formatVnd(offer.nightlyPerRoom)} VND / phòng / đêm`;
                 const meta = document.createElement('p'); meta.className = 'mt-1 text-sm text-text-gray';
-                meta.textContent = `${offer.requestedQuantity} room(s) · ${offer.priceBasis}`;
+                meta.textContent = `${offer.requestedQuantity} phòng · Giá theo phòng mỗi đêm`;
                 const totalLine = document.createElement('p'); totalLine.className = 'mt-3 text-sm'; totalLine.textContent = total;
                 const stockLine = document.createElement('p'); stockLine.className = 'mt-1 text-xs text-text-gray'; stockLine.textContent = availability;
                 const top = document.createElement('div'); top.className = 'flex flex-wrap items-start justify-between gap-3';
@@ -260,22 +265,22 @@
                     const allocationPicker = document.createElement('fieldset');
                     allocationPicker.className = 'mt-3 flex flex-wrap gap-3';
                     const legend = document.createElement('legend'); legend.className = 'mb-2 text-sm font-bold';
-                    legend.textContent = 'Assign rooms to this type'; allocationPicker.append(legend);
+                    legend.textContent = 'Chọn phòng cho hạng phòng này'; allocationPicker.append(legend);
                     roomOccupancies.forEach((room,index) => {
                         const alreadyUsed=selectedOffers.some(selection=>selection.roomOccupancies.some(selected=>selected.index===index));
                         const label=document.createElement('label'); label.className='flex items-center gap-2 text-sm';
                         const checkbox=document.createElement('input'); checkbox.type='checkbox'; checkbox.dataset.roomIndex=String(index);
                         checkbox.checked=false; checkbox.disabled=alreadyUsed || !offer.eligibleRoomOrdinals.includes(index+1); checkbox.className='h-4 w-4';
                         const text=document.createElement('span');
-                        text.textContent=`Room ${index+1}: ${room.adults} adult(s), ${room.childrenAges.length} child(ren)`;
+                        text.textContent=`Phòng ${index+1}: ${room.adults} người lớn, ${room.childrenAges.length} trẻ em`;
                         label.append(checkbox,text); allocationPicker.append(label);
                     });
                     const button = document.createElement('button');
                     button.type = 'button'; button.className = 'mt-3 rounded-xl border border-primary-500 px-4 py-2 font-bold text-primary-700';
-                    button.textContent = 'Add selected rooms';
+                    button.textContent = 'Thêm phòng đã chọn';
                     button.addEventListener('click', () => {
                         const indices=[...allocationPicker.querySelectorAll('input:checked')].map(input=>Number(input.dataset.roomIndex));
-                        if(!indices.length) { offerStatus.textContent='Select at least one room allocation for this item.'; return; }
+                        if(!indices.length) { offerStatus.textContent='Hãy chọn ít nhất một phòng cho mục này.'; return; }
                         const selected=indices.map(index=>({...roomOccupancies[index],index}));
                         addOffer(offer,selected);
                     });
@@ -284,7 +289,7 @@
                 offerResults.append(card);
             });
         } catch (error) {
-            offerStatus.textContent = error.message.includes('409') ? 'Inventory changed. Search again and review the updated offer.' : error.message;
+            offerStatus.textContent = error.message.includes('409') ? 'Số phòng trống đã thay đổi. Hãy tìm lại và xem thông tin mới.' : error.message;
         }
     });
     roomCount.addEventListener('change', renderOccupancies);
@@ -310,25 +315,25 @@
             items
         };
         if(!quoteRequest.checkIn||!quoteRequest.checkOut) {
-            offerStatus.textContent='Choose check-in and check-out dates before requesting a server quote.';
+            offerStatus.textContent='Chọn ngày nhận phòng và trả phòng trước khi yêu cầu báo giá.';
             return;
         }
-        offerStatus.textContent = 'Creating a server quote…';
+        offerStatus.textContent = 'Đang tạo báo giá hệ thống…';
         try {
             const response = await fetch('/api/v1/booking-quotes', {method:'POST',
                 headers:{'Content-Type':'application/json',[csrfHeader]:csrfToken}, body:JSON.stringify(quoteRequest)});
             const payload = await response.json();
-            if (!response.ok || !payload.success) throw new Error(apiError(payload,'Unable to create a quote.'));
+            if (!response.ok || !payload.success) throw new Error(apiError(payload,'Không thể tạo báo giá.'));
             acceptedQuote = payload.data;
             checkoutKey = crypto.randomUUID();
             document.getElementById('quote-summary').textContent =
-                `${formatVnd(acceptedQuote.totalStay)} VND total · Pay online ${formatVnd(acceptedQuote.dueOnline)} VND · Direct Host balance ${formatVnd(acceptedQuote.balanceDueHost)} VND · expires ${acceptedQuote.quoteExpiresAt}`;
+                `Tổng ${formatVnd(acceptedQuote.totalStay)} VND · Trả trực tuyến ${formatVnd(acceptedQuote.dueOnline)} VND · Trả chủ chỗ nghỉ ${formatVnd(acceptedQuote.balanceDueHost)} VND · hết hạn ${acceptedQuote.quoteExpiresAt}`;
             document.getElementById('quote-panel').classList.remove('hidden');
             document.getElementById('quote-consent').checked = false;
             document.getElementById('confirm-quote').disabled = true;
             document.getElementById('confirm-quote').textContent =
-                `Confirm booking & pay ${formatVnd(acceptedQuote.dueOnline)} VND online`;
-            offerStatus.textContent = 'Review the server total and payment split, accept the quote, then confirm to open VNPay checkout.';
+                `Xác nhận đặt phòng & trả trực tuyến ${formatVnd(acceptedQuote.dueOnline)} VND`;
+            offerStatus.textContent = 'Kiểm tra tổng tiền và các khoản thanh toán, chấp nhận báo giá rồi xác nhận để thanh toán qua VNPay.';
         } catch (error) {
             acceptedQuote = null;
             offerStatus.textContent = error.message;
@@ -338,28 +343,28 @@
         if (!acceptedQuote || !document.getElementById('quote-consent').checked || !checkoutKey) return;
         const confirmButton=document.getElementById('confirm-quote');
         confirmButton.disabled=true;
-        confirmButton.textContent='Preparing secure payment…';
-        offerStatus.textContent='Creating your booking hold and preparing VNPay checkout…';
+        confirmButton.textContent='Đang chuẩn bị thanh toán an toàn…';
+        offerStatus.textContent='Đang giữ phòng và chuẩn bị thanh toán qua VNPay…';
         try {
             const response = await fetch('/api/v1/bookings', {method:'POST',
                 headers:{'Content-Type':'application/json',[csrfHeader]:csrfToken,'Idempotency-Key':checkoutKey},
                 body:JSON.stringify({quoteId:acceptedQuote.quoteId,acceptedPolicyVersion:acceptedQuote.policyVersion,
                     acceptedFixtureVersion:acceptedQuote.fixtureVersion,acceptedQuoteHash:acceptedQuote.quoteHash})});
             const payload = await response.json();
-            if (!response.ok || !payload.success) throw new Error(apiError(payload,'Unable to create the booking.'));
-            if(!payload.data?.checkoutUrl) throw new Error('Booking created without a payment checkout URL. Check the VNPay sandbox configuration before retrying.');
-            offerStatus.textContent='Booking hold created. Redirecting to VNPay…';
+            if (!response.ok || !payload.success) throw new Error(apiError(payload,'Không thể tạo đơn đặt phòng.'));
+            if(!payload.data?.checkoutUrl) throw new Error('Đã tạo đặt phòng nhưng chưa có đường dẫn thanh toán. Kiểm tra cấu hình VNPay thử nghiệm trước khi thử lại.');
+            offerStatus.textContent='Đã giữ phòng. Đang chuyển đến VNPay…';
             window.location.assign(payload.data.checkoutUrl);
         } catch (error) {
-            if (error.message.includes('expired')||error.message.includes('changed')||error.message.includes('no longer available')) {
+            if (error.message.includes('expired')||error.message.includes('changed')||error.message.includes('no longer available')||error.message.includes('hết hạn')||error.message.includes('đã thay đổi')||error.message.includes('không còn trống')) {
                 acceptedQuote = null;
                 checkoutKey = null;
                 document.getElementById('quote-panel').classList.add('hidden');
                 offerStatus.textContent = error.message;
             } else {
                 confirmButton.disabled=false;
-                confirmButton.textContent=`Confirm booking & pay ${formatVnd(acceptedQuote.dueOnline)} VND online`;
-                offerStatus.textContent = `${error.message} If this was a network interruption, retry with the same quote; the idempotency key prevents duplicate bookings.`;
+                confirmButton.textContent=`Xác nhận đặt phòng & trả trực tuyến ${formatVnd(acceptedQuote.dueOnline)} VND`;
+                offerStatus.textContent = `${error.message} Nếu kết nối bị gián đoạn, hãy thử lại với cùng báo giá; khóa chống trùng lặp giúp tránh tạo nhiều đơn.`;
             }
         }
     });

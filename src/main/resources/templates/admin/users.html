@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="_csrf" th:content="${_csrf.token}">
     <meta name="_csrf_header" th:content="${_csrf.headerName}">
-    <title>Manage Users - StayHub Admin</title>
+    <title>Quản lý người dùng - Quản trị StayHub</title>
     <link th:href="@{/css/tailwind.css}" rel="stylesheet">
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
@@ -13,35 +13,35 @@
     <!-- Admin Sidebar -->
     <aside class="w-64 bg-bg-white border-r border-border flex flex-col hidden md:flex">
         <div class="h-16 flex items-center px-6 border-b border-border">
-            <span class="text-xl font-bold text-primary-500">StayHub Admin</span>
+            <span class="text-xl font-bold text-primary-500">Quản trị StayHub</span>
         </div>
         <nav class="flex-1 p-4 space-y-2">
             <a th:href="@{/admin/bookings}" class="block px-4 py-3 rounded-lg text-text-gray hover:bg-bg-light hover:text-text-900 transition">
-                Dashboard & Bookings
+                Tổng quan & đặt phòng
             </a>
             <a th:href="@{/admin/users}" class="block px-4 py-3 rounded-lg bg-primary-500 bg-opacity-10 text-primary-600 font-semibold">
-                Manage Users
+                Quản lý người dùng
             </a>
             <a th:href="@{/}" class="block px-4 py-3 rounded-lg text-text-gray hover:bg-bg-light hover:text-text-900 transition mt-auto">
-                Back to Website
+                Về trang chủ
             </a>
         </nav>
     </aside>
 
     <!-- Main Content -->
     <main class="flex-1 p-8" x-data="userManagement()">
-        <h1 class="text-2xl font-bold mb-6">User Management</h1>
+        <h1 class="text-2xl font-bold mb-6">Quản lý người dùng</h1>
 
         <div class="bg-bg-white border border-border rounded-xl shadow-sm overflow-hidden">
             <table class="w-full text-left border-collapse">
                 <thead class="bg-bg-light border-b border-border">
                     <tr>
                         <th class="px-6 py-4 font-semibold text-sm">ID</th>
-                        <th class="px-6 py-4 font-semibold text-sm">Full Name</th>
+                        <th class="px-6 py-4 font-semibold text-sm">Họ và tên</th>
                         <th class="px-6 py-4 font-semibold text-sm">Email</th>
-                        <th class="px-6 py-4 font-semibold text-sm">Role</th>
-                        <th class="px-6 py-4 font-semibold text-sm">Status</th>
-                        <th class="px-6 py-4 font-semibold text-sm">Actions</th>
+                        <th class="px-6 py-4 font-semibold text-sm">Vai trò</th>
+                        <th class="px-6 py-4 font-semibold text-sm">Trạng thái</th>
+                        <th class="px-6 py-4 font-semibold text-sm">Thao tác</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-border">
@@ -55,15 +55,15 @@
                             <select th:disabled="${user.role.name() == 'ADMIN'}"
                                     @change="changeRole([[${user.id}]], $event.target.value)"
                                     class="rounded-lg border border-border bg-white px-3 py-2 text-xs font-bold text-primary-600 disabled:cursor-not-allowed disabled:bg-bg-light">
-                                <option value="GUEST" th:selected="${user.role.name() == 'GUEST'}">GUEST</option>
-                                <option value="HOST" th:selected="${user.role.name() == 'HOST'}">HOST</option>
-                                <option value="ADMIN" th:selected="${user.role.name() == 'ADMIN'}">ADMIN</option>
+                                <option value="GUEST" th:selected="${user.role.name() == 'GUEST'}">Khách</option>
+                                <option value="HOST" th:selected="${user.role.name() == 'HOST'}">Chủ chỗ nghỉ</option>
+                                <option value="ADMIN" th:selected="${user.role.name() == 'ADMIN'}">Quản trị viên</option>
                             </select>
                         </td>
                         
                         <!-- Status Badge -->
                         <td class="px-6 py-4">
-                            <span th:text="${user.status}" 
+                            <span th:text="${user.status.displayName}"
                                   th:classappend="${user.status.name() == 'ACTIVE' ? 'bg-success-500 bg-opacity-10 text-success-500' : 'bg-text-gray bg-opacity-10 text-text-gray'}"
                                   class="px-3 py-1 rounded-full text-xs font-bold">
                             </span>
@@ -74,31 +74,31 @@
                             <button th:if="${user.status.name() == 'ACTIVE' and user.role.name() != 'ADMIN'}"
                                     @click="toggleStatus([[${user.id}]], 'lock')"
                                     class="mr-3 text-sm font-semibold text-primary-500 hover:underline">
-                                Lock
+                                Khóa
                             </button>
                             <button th:if="${user.status.name() == 'LOCKED'}"
                                     @click="toggleStatus([[${user.id}]], 'unlock')"
                                     class="text-sm font-semibold text-success-500 hover:underline">
-                                Unlock
+                                Mở khóa
                             </button>
                         </td>
                     </tr>
                     <tr th:if="${userPage.empty}">
-                        <td colspan="6" class="px-6 py-10 text-center text-text-gray">No users found.</td>
+                        <td colspan="6" class="px-6 py-10 text-center text-text-gray">Không tìm thấy người dùng.</td>
                     </tr>
                 </tbody>
             </table>
         </div>
 
-        <nav th:if="${userPage.totalPages > 1}" class="mt-6 flex items-center justify-between" aria-label="User pagination">
+        <nav th:if="${userPage.totalPages > 1}" class="mt-6 flex items-center justify-between" aria-label="Phân trang người dùng">
             <a th:href="@{/admin/users(page=${userPage.number - 1},size=${userPage.size})}"
                th:classappend="${userPage.first} ? 'pointer-events-none opacity-50' : ''"
-               class="px-4 py-2 border border-border rounded-lg font-semibold hover:bg-bg-white">Previous</a>
+               class="px-4 py-2 border border-border rounded-lg font-semibold hover:bg-bg-white">Trước</a>
             <span class="text-sm text-text-gray"
-                  th:text="|Page ${userPage.number + 1} of ${userPage.totalPages} (${userPage.totalElements} users)|"></span>
+                  th:text="|Trang ${userPage.number + 1} / ${userPage.totalPages} (${userPage.totalElements} người dùng)|"></span>
             <a th:href="@{/admin/users(page=${userPage.number + 1},size=${userPage.size})}"
                th:classappend="${userPage.last} ? 'pointer-events-none opacity-50' : ''"
-               class="px-4 py-2 border border-border rounded-lg font-semibold hover:bg-bg-white">Next</a>
+               class="px-4 py-2 border border-border rounded-lg font-semibold hover:bg-bg-white">Sau</a>
         </nav>
     </main>
 
@@ -113,7 +113,7 @@
                     };
                 },
                 async toggleStatus(userId, action) {
-                    if(!confirm(`Are you sure you want to ${action} this user?`)) return;
+                    if(!confirm(`Bạn có chắc muốn ${action === 'lock' ? 'khóa' : 'mở khóa'} tài khoản này?`)) return;
 
                     const csrf = this.csrf();
 
@@ -128,7 +128,7 @@
                         });
                         const contentType = response.headers.get('content-type') || '';
                         if (!contentType.includes('application/json')) {
-                            throw new Error('The server returned an unexpected response.');
+                            throw new Error('Máy chủ trả về phản hồi không hợp lệ.');
                         }
 
                         const data = await response.json();
@@ -136,13 +136,13 @@
                             window.location.reload();
                             return;
                         }
-                        alert(data.message || 'The request could not be completed.');
+                        alert(data.message || 'Không thể hoàn tất yêu cầu.');
                     } catch (error) {
-                        alert(error.message || 'The request could not be completed.');
+                        alert(error.message || 'Không thể hoàn tất yêu cầu.');
                     }
                 },
                 async changeRole(userId, role) {
-                    if(!confirm(`Change this account role to ${role}?`)) {
+                    if(!confirm(`Đổi vai trò tài khoản thành ${{GUEST:'Khách',HOST:'Chủ chỗ nghỉ',ADMIN:'Quản trị viên'}[role]}?`)) {
                         window.location.reload();
                         return;
                     }
@@ -163,10 +163,10 @@
                             window.location.reload();
                             return;
                         }
-                        alert(data.message || 'The role could not be updated.');
+                        alert(data.message || 'Không thể cập nhật vai trò.');
                         window.location.reload();
                     } catch (error) {
-                        alert(error.message || 'The role could not be updated.');
+                        alert(error.message || 'Không thể cập nhật vai trò.');
                         window.location.reload();
                     }
                 }
