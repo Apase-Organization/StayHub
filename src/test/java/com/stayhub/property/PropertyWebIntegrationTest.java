@@ -95,6 +95,26 @@ class PropertyWebIntegrationTest extends PostgreSqlIntegrationTest {
     }
 
     @Test
+    void vietnameseSearchAndEmptyResultsPreserveFormContracts() throws Exception {
+        mockMvc.perform(get("/"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("lang=\"vi\"")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Tìm kiếm")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("data-account-menu-panel hidden")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("document.addEventListener('click'")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Điểm đến nổi bật")))
+                .andExpect(content().string(org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString("Popular Destinations"))))
+                .andExpect(content().string(org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString("248 chỗ ở"))))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Sign Up")));
+
+        mockMvc.perform(get("/properties").param("location", "NoSuchDestination"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Không có chỗ nghỉ phù hợp với bộ lọc")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("value=\"pricePerNight,asc\"")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("aria-label=\"Giá thấp nhất\"")));
+    }
+
+    @Test
     void rendersPublicPropertyDetail() throws Exception {
         mockMvc.perform(get("/properties/{id}", property.getId()))
                 .andExpect(status().isOk())
@@ -102,7 +122,39 @@ class PropertyWebIntegrationTest extends PostgreSqlIntegrationTest {
                 .andExpect(model().attributeExists("property"))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("Riverside Retreat")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("room-occupancies")))
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("Find eligible offers")));
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Tìm phòng phù hợp")));
+    }
+
+    @Test
+    void profileRequestsEmailChangeAndKeepsCurrentAddressUntilOtpIsVerified() throws Exception {
+        UserPrincipal principal = UserPrincipal.create(host);
+        var authenticationToken = new UsernamePasswordAuthenticationToken(
+                principal, principal.getPassword(), principal.getAuthorities());
+
+        mockMvc.perform(get("/profile").with(authentication(authenticationToken)))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Email nhận thông báo")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("type=\"email\"")));
+
+        mockMvc.perform(post("/profile")
+                        .with(authentication(authenticationToken))
+                        .with(csrf())
+                        .param("email", "new-profile-email@example.com")
+                        .param("fullName", "Updated Host")
+                        .param("phone", "+84 901 234 567"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name("redirect:/profile"));
+
+        User savedHost = userRepository.findById(host.getId()).orElseThrow();
+        org.assertj.core.api.Assertions.assertThat(savedHost.getEmail()).isEqualTo("web-host@example.com");
+        org.assertj.core.api.Assertions.assertThat(savedHost.getFullName()).isEqualTo("Updated Host");
+        org.assertj.core.api.Assertions.assertThat(savedHost.getPhone()).isEqualTo("+84 901 234 567");
+
+        mockMvc.perform(get("/profile").with(authentication(authenticationToken)))
+                .andExpect(status().isOk())
+                .andExpect(model().attribute("pendingEmailChange", "new-profile-email@example.com"))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Xác minh email mới")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("new-profile-email@example.com")));
     }
 
     @Test
@@ -113,7 +165,7 @@ class PropertyWebIntegrationTest extends PostgreSqlIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(model().attribute("selfBookingBlocked",true))
                 .andExpect(model().attribute("canBookProperty",false))
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("does not allow booking your own property")));
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("không cho phép tự đặt chỗ nghỉ")));
 
         User guest=userRepository.save(User.builder().email("detail-guest@example.com").passwordHash("hash")
                 .fullName("Detail Guest").role(UserRole.GUEST).status(UserStatus.ACTIVE).build());
@@ -122,6 +174,17 @@ class PropertyWebIntegrationTest extends PostgreSqlIntegrationTest {
         mockMvc.perform(get("/properties/{id}",property.getId()).with(authentication(guestAuth)))
                 .andExpect(status().isOk()).andExpect(model().attribute("selfBookingBlocked",false))
                 .andExpect(model().attribute("canBookProperty",true));
+
+        User admin = userRepository.save(User.builder().email("detail-admin@example.com").passwordHash("hash")
+                .fullName("Detail Admin").role(UserRole.ADMIN).status(UserStatus.ACTIVE).build());
+        UserPrincipal adminPrincipal = UserPrincipal.create(admin);
+        var adminAuth = new UsernamePasswordAuthenticationToken(
+                adminPrincipal, adminPrincipal.getPassword(), adminPrincipal.getAuthorities());
+        mockMvc.perform(get("/properties/{id}", property.getId()).with(authentication(adminAuth)))
+                .andExpect(status().isOk())
+                .andExpect(model().attribute("canBookProperty", false))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Tài khoản quản trị viên chỉ dùng để quản lý hệ thống")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("id=\"quote-access-note\"")));
     }
 
     @Test

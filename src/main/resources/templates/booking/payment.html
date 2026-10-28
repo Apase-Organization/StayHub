@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Payment success - StayHub</title>
+    <title>Thanh toán thành công - StayHub</title>
     <link th:href="@{/css/tailwind.css}" rel="stylesheet">
 </head>
 <body class="min-h-screen bg-bg-light text-text-900">
@@ -12,50 +12,50 @@
 <main class="mx-auto max-w-4xl px-5 py-10 lg:px-10">
     <section class="overflow-hidden rounded-[2rem] bg-white shadow-xl shadow-slate-200/60">
         <div class="bg-text-900 px-6 py-10 text-white lg:px-10">
-            <p class="text-sm font-bold uppercase tracking-[0.18em] text-primary-500">Mock payment success</p>
-            <h1 class="mt-3 text-3xl font-black tracking-tight md:text-5xl">Your request is waiting for host approval</h1>
-            <p class="mt-4 max-w-2xl text-white/75" th:text="${paymentMessage}">Mock payment completed successfully.</p>
+            <p class="text-sm font-bold uppercase tracking-[0.18em] text-primary-500">Thanh toán thử nghiệm thành công</p>
+            <h1 class="mt-3 text-3xl font-black tracking-tight md:text-5xl">Yêu cầu đang chờ chủ chỗ nghỉ chấp thuận</h1>
+            <p class="mt-4 max-w-2xl text-white/75" th:text="${paymentMessage}">Đã hoàn tất thanh toán thử nghiệm.</p>
         </div>
 
         <div class="grid gap-8 p-6 lg:grid-cols-[1fr_320px] lg:p-10">
             <div>
-                <h2 class="text-2xl font-black" th:text="${booking.propertyTitle}">Property title</h2>
-                <p class="mt-2 text-text-gray" th:text="|${booking.propertyCity} · Hosted by ${booking.hostName}|">City</p>
+                <h2 class="text-2xl font-black" th:text="${booking.propertyTitle}">Tên chỗ nghỉ</h2>
+                <p class="mt-2 text-text-gray" th:text="|${booking.propertyCity} · Chủ chỗ nghỉ: ${booking.hostName}|">Thành phố</p>
 
                 <div class="mt-8 grid gap-4 sm:grid-cols-3">
                     <div class="rounded-3xl border border-border p-4">
-                        <p class="text-sm font-bold text-text-gray">Check-in</p>
+                        <p class="text-sm font-bold text-text-gray">Nhận phòng</p>
                         <p class="mt-2 font-black" th:text="${booking.checkInDate}">2026-09-20</p>
                     </div>
                     <div class="rounded-3xl border border-border p-4">
-                        <p class="text-sm font-bold text-text-gray">Check-out</p>
+                        <p class="text-sm font-bold text-text-gray">Trả phòng</p>
                         <p class="mt-2 font-black" th:text="${booking.checkOutDate}">2026-09-23</p>
                     </div>
                     <div class="rounded-3xl border border-border p-4">
-                        <p class="text-sm font-bold text-text-gray">Guests</p>
+                        <p class="text-sm font-bold text-text-gray">Khách</p>
                         <p class="mt-2 font-black" th:text="${booking.guests}">2</p>
                     </div>
                 </div>
 
                 <div class="mt-8 rounded-3xl bg-bg-light p-5">
-                    <p class="text-sm font-bold uppercase tracking-wide text-text-gray">Booking status</p>
-                    <p class="mt-2 inline-flex rounded-full bg-amber-100 px-4 py-2 text-sm font-black text-amber-800" th:text="${booking.status}">PENDING</p>
-                    <p class="mt-4 text-sm leading-6 text-text-gray">The host can accept or reject this request from the host dashboard. Your mock payment has been recorded as SUCCESS.</p>
+                    <p class="text-sm font-bold uppercase tracking-wide text-text-gray">Trạng thái đặt phòng</p>
+                    <p class="mt-2 inline-flex rounded-full bg-amber-100 px-4 py-2 text-sm font-black text-amber-800" th:text="${booking.status.name() == 'CONFIRMED' ? 'Đã xác nhận' : (booking.status.name() == 'COMPLETED' ? 'Đã hoàn tất' : (booking.status.name() == 'CANCELLED' ? 'Đã hủy' : (booking.status.name() == 'REJECTED' ? 'Đã từ chối' : (booking.status.name() == 'PENDING_PAYMENT' ? 'Chờ thanh toán' : 'Đang chờ'))))}">Đang chờ</p>
+                    <p class="mt-4 text-sm leading-6 text-text-gray">Chủ chỗ nghỉ có thể chấp nhận hoặc từ chối yêu cầu trong bảng quản lý. Thanh toán thử nghiệm của bạn đã được ghi nhận thành công.</p>
                 </div>
             </div>
 
             <aside class="rounded-3xl border border-border p-5">
-                <h2 class="text-xl font-black">Paid amount</h2>
+                <h2 class="text-xl font-black">Số tiền đã thanh toán</h2>
                 <div class="mt-5 space-y-3 text-sm">
-                    <div class="flex justify-between"><span class="text-text-gray" th:text="|${#numbers.formatDecimal(booking.nightlyPrice, 0, 'COMMA', 0, 'POINT')} x ${booking.nights} nights|">Nightly</span><strong th:text="${#numbers.formatDecimal(booking.subtotal, 0, 'COMMA', 0, 'POINT')}">0</strong></div>
-                    <div class="flex justify-between"><span class="text-text-gray">Cleaning fee</span><strong th:text="${#numbers.formatDecimal(booking.cleaningFee, 0, 'COMMA', 0, 'POINT')}">0</strong></div>
-                    <div class="flex justify-between"><span class="text-text-gray">Service fee</span><strong th:text="${#numbers.formatDecimal(booking.serviceFee, 0, 'COMMA', 0, 'POINT')}">0</strong></div>
+                    <div class="flex justify-between"><span class="text-text-gray" th:text="|${#numbers.formatDecimal(booking.nightlyPrice, 0, 'COMMA', 0, 'POINT')} x ${booking.nights} đêm|">Giá mỗi đêm</span><strong th:text="${#numbers.formatDecimal(booking.subtotal, 0, 'COMMA', 0, 'POINT')}">0</strong></div>
+                    <div class="flex justify-between"><span class="text-text-gray">Phí vệ sinh</span><strong th:text="${#numbers.formatDecimal(booking.cleaningFee, 0, 'COMMA', 0, 'POINT')}">0</strong></div>
+                    <div class="flex justify-between"><span class="text-text-gray">Phí dịch vụ</span><strong th:text="${#numbers.formatDecimal(booking.serviceFee, 0, 'COMMA', 0, 'POINT')}">0</strong></div>
                     <div class="border-t border-border pt-3">
-                        <div class="flex justify-between text-lg"><span class="font-black">Total</span><strong th:text="${#numbers.formatDecimal(booking.totalPrice, 0, 'COMMA', 0, 'POINT')}">0</strong></div>
+                        <div class="flex justify-between text-lg"><span class="font-black">Tổng cộng</span><strong th:text="${#numbers.formatDecimal(booking.totalPrice, 0, 'COMMA', 0, 'POINT')}">0</strong></div>
                     </div>
                 </div>
-                <a th:href="@{/bookings/{id}(id=${booking.id})}" class="mt-6 block rounded-2xl bg-primary-500 px-5 py-3 text-center font-bold text-white hover:bg-primary-600">View booking</a>
-                <a th:href="@{/bookings(tab='pending')}" class="mt-3 block rounded-2xl border border-text-900 px-5 py-3 text-center font-bold hover:bg-text-900 hover:text-white">My bookings</a>
+                <a th:href="@{/bookings/{id}(id=${booking.id})}" class="mt-6 block rounded-2xl bg-primary-500 px-5 py-3 text-center font-bold text-white hover:bg-primary-600">Xem đơn đặt phòng</a>
+                <a th:href="@{/bookings(tab=${booking.status.name() == 'CONFIRMED' ? 'upcoming' : (booking.status.name() == 'COMPLETED' ? 'completed' : (booking.status.name() == 'CANCELLED' or booking.status.name() == 'REJECTED' ? 'cancelled' : 'pending'))})}" class="mt-3 block rounded-2xl border border-text-900 px-5 py-3 text-center font-bold hover:bg-text-900 hover:text-white">Đặt phòng của tôi</a>
             </aside>
         </div>
     </section>

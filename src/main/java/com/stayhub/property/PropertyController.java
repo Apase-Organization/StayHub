@@ -40,8 +40,14 @@ public class PropertyController {
         boolean self=viewer!=null&&property.getHostId()!=null&&property.getHostId().equals(viewer.getId());
         boolean guestOrHost=viewer!=null&&(viewer.getAuthorities().stream().anyMatch(authority->
                 authority.getAuthority().equals("ROLE_GUEST")||authority.getAuthority().equals("ROLE_HOST")));
+        String viewerRole=viewer==null?null:viewer.getAuthorities().stream()
+                .map(Object::toString)
+                .filter(authority->authority.startsWith("ROLE_"))
+                .map(authority->authority.substring("ROLE_".length()))
+                .findFirst().orElse(null);
         model.addAttribute("canBookProperty",guestOrHost&&!self);
         model.addAttribute("selfBookingBlocked",self);
+        model.addAttribute("viewerRole",viewerRole);
         return "property/property-detail";
     }
 }

@@ -27,11 +27,11 @@ BEGIN
     -- ----------------------------------------------------------------------
     -- DESTINATION: Hanoi
     -- ----------------------------------------------------------------------
-    -- Property: Hanoi La Siesta Classic Hotel & Spa
-    SELECT id INTO v_prop_id FROM properties WHERE title = 'Hanoi La Siesta Classic Hotel & Spa' LIMIT 1;
+    -- Property: Khách Sạn & Spa Cổ Điển La Siesta Phố Cổ Hà Nội
+    SELECT id INTO v_prop_id FROM properties WHERE title = 'Khách Sạn & Spa Cổ Điển La Siesta Phố Cổ Hà Nội' LIMIT 1;
     IF v_prop_id IS NULL THEN
         INSERT INTO properties (host_id, title, description, address, city, price_per_night, cleaning_fee, max_guests, bedrooms, beds, bathrooms, property_type, sale_mode, timezone, status, rating_avg)
-        VALUES (v_host_id, 'Hanoi La Siesta Classic Hotel & Spa', 'Khách sạn phong cách boutique sang trọng tọa lạc tại trung tâm Phố Cổ Hà Nội, chỉ vài bước chân tới Hồ Hoàn Kiếm và chợ đêm.', '94 Mã Mây, Phường Hàng Buồm, Quận Hoàn Kiếm', 'Hanoi', 1200000, 150000, 6, 3, 3, 2, 'HOTEL_ROOM', 'ROOM_BASED', 'Asia/Ho_Chi_Minh', 'ACTIVE', 4.9)
+        VALUES (v_host_id, 'Khách Sạn & Spa Cổ Điển La Siesta Phố Cổ Hà Nội', 'Khách sạn phong cách boutique sang trọng tọa lạc tại trung tâm Phố Cổ Hà Nội, chỉ vài bước chân tới Hồ Hoàn Kiếm và chợ đêm.', '94 Mã Mây, Phường Hàng Buồm, Quận Hoàn Kiếm', 'Hanoi', 1200000, 150000, 6, 3, 3, 2, 'HOTEL_ROOM', 'ROOM_BASED', 'Asia/Ho_Chi_Minh', 'ACTIVE', 4.9)
         RETURNING id INTO v_prop_id;
     END IF;
 
@@ -58,11 +58,11 @@ BEGIN
     SELECT v_prop_id, id FROM amenities WHERE name = 'Workspace'
     ON CONFLICT DO NOTHING;
 
-    -- RoomType: Deluxe Double Classic
-    SELECT id INTO v_rt_id FROM room_types WHERE property_id = v_prop_id AND name = 'Deluxe Double Classic' LIMIT 1;
+    -- RoomType: Phòng Deluxe Giường Đôi Cổ Điển
+    SELECT id INTO v_rt_id FROM room_types WHERE property_id = v_prop_id AND name = 'Phòng Deluxe Giường Đôi Cổ Điển' LIMIT 1;
     IF v_rt_id IS NULL THEN
         INSERT INTO room_types (property_id, sale_mode, name, base_quantity, max_adults, max_occupants, status, metadata, version)
-        VALUES (v_prop_id, 'ROOM_BASED', 'Deluxe Double Classic', 8, 2, 3, 'ACTIVE', '{"description": "Deluxe Double Classic"}'::jsonb, 0)
+        VALUES (v_prop_id, 'ROOM_BASED', 'Phòng Deluxe Giường Đôi Cổ Điển', 8, 2, 3, 'ACTIVE', '{"description": "Phòng Deluxe Giường Đôi Cổ Điển"}'::jsonb, 0)
         RETURNING id INTO v_rt_id;
     END IF;
 
@@ -71,11 +71,11 @@ BEGIN
     VALUES (v_prop_id, v_rt_id, 'Gói Tiêu Chuẩn Linh Hoạt', 'VND', 's0-policy-v1', 1200000, '["FULL_PREPAY","HYBRID_DEPOSIT"]'::jsonb, '{}'::jsonb, 'ACTIVE', 0)
     ON CONFLICT (id, room_type_id, property_id) DO UPDATE SET nightly_price = EXCLUDED.nightly_price;
 
-    -- RoomType: Executive City View Suite
-    SELECT id INTO v_rt_id FROM room_types WHERE property_id = v_prop_id AND name = 'Executive City View Suite' LIMIT 1;
+    -- RoomType: Phòng Suite Executive Tầm Nhìn Thành Phố
+    SELECT id INTO v_rt_id FROM room_types WHERE property_id = v_prop_id AND name = 'Phòng Suite Executive Tầm Nhìn Thành Phố' LIMIT 1;
     IF v_rt_id IS NULL THEN
         INSERT INTO room_types (property_id, sale_mode, name, base_quantity, max_adults, max_occupants, status, metadata, version)
-        VALUES (v_prop_id, 'ROOM_BASED', 'Executive City View Suite', 5, 2, 3, 'ACTIVE', '{"description": "Executive City View Suite"}'::jsonb, 0)
+        VALUES (v_prop_id, 'ROOM_BASED', 'Phòng Suite Executive Tầm Nhìn Thành Phố', 5, 2, 3, 'ACTIVE', '{"description": "Phòng Suite Executive Tầm Nhìn Thành Phố"}'::jsonb, 0)
         RETURNING id INTO v_rt_id;
     END IF;
 
@@ -84,11 +84,11 @@ BEGIN
     VALUES (v_prop_id, v_rt_id, 'Gói Tiêu Chuẩn Linh Hoạt', 'VND', 's0-policy-v1', 1850000, '["FULL_PREPAY","HYBRID_DEPOSIT"]'::jsonb, '{}'::jsonb, 'ACTIVE', 0)
     ON CONFLICT (id, room_type_id, property_id) DO UPDATE SET nightly_price = EXCLUDED.nightly_price;
 
-    -- RoomType: Grand Heritage Family Suite
-    SELECT id INTO v_rt_id FROM room_types WHERE property_id = v_prop_id AND name = 'Grand Heritage Family Suite' LIMIT 1;
+    -- RoomType: Phòng Suite Gia Đình Di Sản Grand
+    SELECT id INTO v_rt_id FROM room_types WHERE property_id = v_prop_id AND name = 'Phòng Suite Gia Đình Di Sản Grand' LIMIT 1;
     IF v_rt_id IS NULL THEN
         INSERT INTO room_types (property_id, sale_mode, name, base_quantity, max_adults, max_occupants, status, metadata, version)
-        VALUES (v_prop_id, 'ROOM_BASED', 'Grand Heritage Family Suite', 3, 4, 5, 'ACTIVE', '{"description": "Grand Heritage Family Suite"}'::jsonb, 0)
+        VALUES (v_prop_id, 'ROOM_BASED', 'Phòng Suite Gia Đình Di Sản Grand', 3, 4, 5, 'ACTIVE', '{"description": "Phòng Suite Gia Đình Di Sản Grand"}'::jsonb, 0)
         RETURNING id INTO v_rt_id;
     END IF;
 
@@ -97,11 +97,11 @@ BEGIN
     VALUES (v_prop_id, v_rt_id, 'Gói Tiêu Chuẩn Linh Hoạt', 'VND', 's0-policy-v1', 3200000, '["FULL_PREPAY","HYBRID_DEPOSIT"]'::jsonb, '{}'::jsonb, 'ACTIVE', 0)
     ON CONFLICT (id, room_type_id, property_id) DO UPDATE SET nightly_price = EXCLUDED.nightly_price;
 
-    -- Property: The West Lake Heritage Residence
-    SELECT id INTO v_prop_id FROM properties WHERE title = 'The West Lake Heritage Residence' LIMIT 1;
+    -- Property: Khu Căn Hộ Dịch Vụ Di Sản Hồ Tây
+    SELECT id INTO v_prop_id FROM properties WHERE title = 'Khu Căn Hộ Dịch Vụ Di Sản Hồ Tây' LIMIT 1;
     IF v_prop_id IS NULL THEN
         INSERT INTO properties (host_id, title, description, address, city, price_per_night, cleaning_fee, max_guests, bedrooms, beds, bathrooms, property_type, sale_mode, timezone, status, rating_avg)
-        VALUES (v_host_id, 'The West Lake Heritage Residence', 'Khu căn hộ dịch vụ cao cấp hướng trọn tầm nhìn ra Hồ Tây thơ mộng, không gian yên tĩnh, ban công thoáng đãng và tiện nghi chuẩn quốc tế.', '68 Từ Hoa, Phường Quảng An, Quận Tây Hồ', 'Hanoi', 1400000, 200000, 6, 3, 3, 2, 'APARTMENT', 'ROOM_BASED', 'Asia/Ho_Chi_Minh', 'ACTIVE', 4.85)
+        VALUES (v_host_id, 'Khu Căn Hộ Dịch Vụ Di Sản Hồ Tây', 'Khu căn hộ dịch vụ cao cấp hướng trọn tầm nhìn ra Hồ Tây thơ mộng, không gian yên tĩnh, ban công thoáng đãng và tiện nghi chuẩn quốc tế.', '68 Từ Hoa, Phường Quảng An, Quận Tây Hồ', 'Hanoi', 1400000, 200000, 6, 3, 3, 2, 'APARTMENT', 'ROOM_BASED', 'Asia/Ho_Chi_Minh', 'ACTIVE', 4.85)
         RETURNING id INTO v_prop_id;
     END IF;
 
@@ -134,11 +134,11 @@ BEGIN
     SELECT v_prop_id, id FROM amenities WHERE name = 'Workspace'
     ON CONFLICT DO NOTHING;
 
-    -- RoomType: Studio Lake View Balcony
-    SELECT id INTO v_rt_id FROM room_types WHERE property_id = v_prop_id AND name = 'Studio Lake View Balcony' LIMIT 1;
+    -- RoomType: Căn Hộ Studio Ban Công Hướng Hồ Tây
+    SELECT id INTO v_rt_id FROM room_types WHERE property_id = v_prop_id AND name = 'Căn Hộ Studio Ban Công Hướng Hồ Tây' LIMIT 1;
     IF v_rt_id IS NULL THEN
         INSERT INTO room_types (property_id, sale_mode, name, base_quantity, max_adults, max_occupants, status, metadata, version)
-        VALUES (v_prop_id, 'ROOM_BASED', 'Studio Lake View Balcony', 6, 2, 2, 'ACTIVE', '{"description": "Studio Lake View Balcony"}'::jsonb, 0)
+        VALUES (v_prop_id, 'ROOM_BASED', 'Căn Hộ Studio Ban Công Hướng Hồ Tây', 6, 2, 2, 'ACTIVE', '{"description": "Căn Hộ Studio Ban Công Hướng Hồ Tây"}'::jsonb, 0)
         RETURNING id INTO v_rt_id;
     END IF;
 
@@ -147,11 +147,11 @@ BEGIN
     VALUES (v_prop_id, v_rt_id, 'Gói Tiêu Chuẩn Linh Hoạt', 'VND', 's0-policy-v1', 1400000, '["FULL_PREPAY","HYBRID_DEPOSIT"]'::jsonb, '{}'::jsonb, 'ACTIVE', 0)
     ON CONFLICT (id, room_type_id, property_id) DO UPDATE SET nightly_price = EXCLUDED.nightly_price;
 
-    -- RoomType: One-Bedroom Executive Apartment
-    SELECT id INTO v_rt_id FROM room_types WHERE property_id = v_prop_id AND name = 'One-Bedroom Executive Apartment' LIMIT 1;
+    -- RoomType: Căn Hộ 1 Phòng Ngủ Hạng Executive
+    SELECT id INTO v_rt_id FROM room_types WHERE property_id = v_prop_id AND name = 'Căn Hộ 1 Phòng Ngủ Hạng Executive' LIMIT 1;
     IF v_rt_id IS NULL THEN
         INSERT INTO room_types (property_id, sale_mode, name, base_quantity, max_adults, max_occupants, status, metadata, version)
-        VALUES (v_prop_id, 'ROOM_BASED', 'One-Bedroom Executive Apartment', 5, 2, 3, 'ACTIVE', '{"description": "One-Bedroom Executive Apartment"}'::jsonb, 0)
+        VALUES (v_prop_id, 'ROOM_BASED', 'Căn Hộ 1 Phòng Ngủ Hạng Executive', 5, 2, 3, 'ACTIVE', '{"description": "Căn Hộ 1 Phòng Ngủ Hạng Executive"}'::jsonb, 0)
         RETURNING id INTO v_rt_id;
     END IF;
 
@@ -160,11 +160,11 @@ BEGIN
     VALUES (v_prop_id, v_rt_id, 'Gói Tiêu Chuẩn Linh Hoạt', 'VND', 's0-policy-v1', 2200000, '["FULL_PREPAY","HYBRID_DEPOSIT"]'::jsonb, '{}'::jsonb, 'ACTIVE', 0)
     ON CONFLICT (id, room_type_id, property_id) DO UPDATE SET nightly_price = EXCLUDED.nightly_price;
 
-    -- RoomType: Two-Bedroom Panoramic Penthouse
-    SELECT id INTO v_rt_id FROM room_types WHERE property_id = v_prop_id AND name = 'Two-Bedroom Panoramic Penthouse' LIMIT 1;
+    -- RoomType: Căn Hộ Penthouse 2 Phòng Ngủ Toàn Cảnh
+    SELECT id INTO v_rt_id FROM room_types WHERE property_id = v_prop_id AND name = 'Căn Hộ Penthouse 2 Phòng Ngủ Toàn Cảnh' LIMIT 1;
     IF v_rt_id IS NULL THEN
         INSERT INTO room_types (property_id, sale_mode, name, base_quantity, max_adults, max_occupants, status, metadata, version)
-        VALUES (v_prop_id, 'ROOM_BASED', 'Two-Bedroom Panoramic Penthouse', 2, 4, 5, 'ACTIVE', '{"description": "Two-Bedroom Panoramic Penthouse"}'::jsonb, 0)
+        VALUES (v_prop_id, 'ROOM_BASED', 'Căn Hộ Penthouse 2 Phòng Ngủ Toàn Cảnh', 2, 4, 5, 'ACTIVE', '{"description": "Căn Hộ Penthouse 2 Phòng Ngủ Toàn Cảnh"}'::jsonb, 0)
         RETURNING id INTO v_rt_id;
     END IF;
 
@@ -173,11 +173,11 @@ BEGIN
     VALUES (v_prop_id, v_rt_id, 'Gói Tiêu Chuẩn Linh Hoạt', 'VND', 's0-policy-v1', 4200000, '["FULL_PREPAY","HYBRID_DEPOSIT"]'::jsonb, '{}'::jsonb, 'ACTIVE', 0)
     ON CONFLICT (id, room_type_id, property_id) DO UPDATE SET nightly_price = EXCLUDED.nightly_price;
 
-    -- Property: Old Quarter French Colonial Villa
-    SELECT id INTO v_prop_id FROM properties WHERE title = 'Old Quarter French Colonial Villa' LIMIT 1;
+    -- Property: Biệt Thự Kiến Trúc Pháp Cổ Phố Cổ Hà Nội
+    SELECT id INTO v_prop_id FROM properties WHERE title = 'Biệt Thự Kiến Trúc Pháp Cổ Phố Cổ Hà Nội' LIMIT 1;
     IF v_prop_id IS NULL THEN
         INSERT INTO properties (host_id, title, description, address, city, price_per_night, cleaning_fee, max_guests, bedrooms, beds, bathrooms, property_type, sale_mode, timezone, status, rating_avg)
-        VALUES (v_host_id, 'Old Quarter French Colonial Villa', 'Biệt thự kiến trúc Pháp cổ kính nguyên bản hòa quyện nội thất gỗ ấm cúng, khu vườn nhiệt đới xanh mát giữa lòng thủ đô.', '42 Hàng Bè, Phường Hàng Bạc, Quận Hoàn Kiếm', 'Hanoi', 1600000, 250000, 6, 3, 3, 2, 'VILLA', 'ROOM_BASED', 'Asia/Ho_Chi_Minh', 'ACTIVE', 4.88)
+        VALUES (v_host_id, 'Biệt Thự Kiến Trúc Pháp Cổ Phố Cổ Hà Nội', 'Biệt thự kiến trúc Pháp cổ kính nguyên bản hòa quyện nội thất gỗ ấm cúng, khu vườn nhiệt đới xanh mát giữa lòng thủ đô.', '42 Hàng Bè, Phường Hàng Bạc, Quận Hoàn Kiếm', 'Hanoi', 1600000, 250000, 6, 3, 3, 2, 'VILLA', 'ROOM_BASED', 'Asia/Ho_Chi_Minh', 'ACTIVE', 4.88)
         RETURNING id INTO v_prop_id;
     END IF;
 
@@ -207,11 +207,11 @@ BEGIN
     SELECT v_prop_id, id FROM amenities WHERE name = 'Workspace'
     ON CONFLICT DO NOTHING;
 
-    -- RoomType: Colonial Queen Garden Room
-    SELECT id INTO v_rt_id FROM room_types WHERE property_id = v_prop_id AND name = 'Colonial Queen Garden Room' LIMIT 1;
+    -- RoomType: Phòng Colonial Queen Ban Công Sân Vườn
+    SELECT id INTO v_rt_id FROM room_types WHERE property_id = v_prop_id AND name = 'Phòng Colonial Queen Ban Công Sân Vườn' LIMIT 1;
     IF v_rt_id IS NULL THEN
         INSERT INTO room_types (property_id, sale_mode, name, base_quantity, max_adults, max_occupants, status, metadata, version)
-        VALUES (v_prop_id, 'ROOM_BASED', 'Colonial Queen Garden Room', 4, 2, 2, 'ACTIVE', '{"description": "Colonial Queen Garden Room"}'::jsonb, 0)
+        VALUES (v_prop_id, 'ROOM_BASED', 'Phòng Colonial Queen Ban Công Sân Vườn', 4, 2, 2, 'ACTIVE', '{"description": "Phòng Colonial Queen Ban Công Sân Vườn"}'::jsonb, 0)
         RETURNING id INTO v_rt_id;
     END IF;
 
@@ -220,11 +220,11 @@ BEGIN
     VALUES (v_prop_id, v_rt_id, 'Gói Tiêu Chuẩn Linh Hoạt', 'VND', 's0-policy-v1', 1600000, '["FULL_PREPAY","HYBRID_DEPOSIT"]'::jsonb, '{}'::jsonb, 'ACTIVE', 0)
     ON CONFLICT (id, room_type_id, property_id) DO UPDATE SET nightly_price = EXCLUDED.nightly_price;
 
-    -- RoomType: Courtyard Premium Suite
-    SELECT id INTO v_rt_id FROM room_types WHERE property_id = v_prop_id AND name = 'Courtyard Premium Suite' LIMIT 1;
+    -- RoomType: Phòng Suite Sân Vườn Cao Cấp
+    SELECT id INTO v_rt_id FROM room_types WHERE property_id = v_prop_id AND name = 'Phòng Suite Sân Vườn Cao Cấp' LIMIT 1;
     IF v_rt_id IS NULL THEN
         INSERT INTO room_types (property_id, sale_mode, name, base_quantity, max_adults, max_occupants, status, metadata, version)
-        VALUES (v_prop_id, 'ROOM_BASED', 'Courtyard Premium Suite', 3, 2, 3, 'ACTIVE', '{"description": "Courtyard Premium Suite"}'::jsonb, 0)
+        VALUES (v_prop_id, 'ROOM_BASED', 'Phòng Suite Sân Vườn Cao Cấp', 3, 2, 3, 'ACTIVE', '{"description": "Phòng Suite Sân Vườn Cao Cấp"}'::jsonb, 0)
         RETURNING id INTO v_rt_id;
     END IF;
 
@@ -233,11 +233,11 @@ BEGIN
     VALUES (v_prop_id, v_rt_id, 'Gói Tiêu Chuẩn Linh Hoạt', 'VND', 's0-policy-v1', 2500000, '["FULL_PREPAY","HYBRID_DEPOSIT"]'::jsonb, '{}'::jsonb, 'ACTIVE', 0)
     ON CONFLICT (id, room_type_id, property_id) DO UPDATE SET nightly_price = EXCLUDED.nightly_price;
 
-    -- RoomType: French Heritage Master Residence
-    SELECT id INTO v_rt_id FROM room_types WHERE property_id = v_prop_id AND name = 'French Heritage Master Residence' LIMIT 1;
+    -- RoomType: Biệt Thự Di Sản Pháp Nguyên Bản
+    SELECT id INTO v_rt_id FROM room_types WHERE property_id = v_prop_id AND name = 'Biệt Thự Di Sản Pháp Nguyên Bản' LIMIT 1;
     IF v_rt_id IS NULL THEN
         INSERT INTO room_types (property_id, sale_mode, name, base_quantity, max_adults, max_occupants, status, metadata, version)
-        VALUES (v_prop_id, 'ROOM_BASED', 'French Heritage Master Residence', 2, 4, 6, 'ACTIVE', '{"description": "French Heritage Master Residence"}'::jsonb, 0)
+        VALUES (v_prop_id, 'ROOM_BASED', 'Biệt Thự Di Sản Pháp Nguyên Bản', 2, 4, 6, 'ACTIVE', '{"description": "Biệt Thự Di Sản Pháp Nguyên Bản"}'::jsonb, 0)
         RETURNING id INTO v_rt_id;
     END IF;
 
@@ -249,11 +249,11 @@ BEGIN
     -- ----------------------------------------------------------------------
     -- DESTINATION: Ho Chi Minh
     -- ----------------------------------------------------------------------
-    -- Property: The Myst Dong Khoi Boutique Hotel
-    SELECT id INTO v_prop_id FROM properties WHERE title = 'The Myst Dong Khoi Boutique Hotel' LIMIT 1;
+    -- Property: Khách Sạn Phong Cách Boutique The Myst Đồng Khởi
+    SELECT id INTO v_prop_id FROM properties WHERE title = 'Khách Sạn Phong Cách Boutique The Myst Đồng Khởi' LIMIT 1;
     IF v_prop_id IS NULL THEN
         INSERT INTO properties (host_id, title, description, address, city, price_per_night, cleaning_fee, max_guests, bedrooms, beds, bathrooms, property_type, sale_mode, timezone, status, rating_avg)
-        VALUES (v_host_id, 'The Myst Dong Khoi Boutique Hotel', 'Ốc đảo xanh thanh bình giữa trung tâm Quận 1 sầm uất, nổi bật với ban công phủ đầy cây xanh, bồn tắm gỗ teak và nội thất gỗ tái sinh.', '6-8 Hồ Huấn Nghiệp, Phường Bến Nghé, Quận 1', 'Ho Chi Minh', 1800000, 200000, 6, 3, 3, 2, 'HOTEL_ROOM', 'ROOM_BASED', 'Asia/Ho_Chi_Minh', 'ACTIVE', 4.92)
+        VALUES (v_host_id, 'Khách Sạn Phong Cách Boutique The Myst Đồng Khởi', 'Ốc đảo xanh thanh bình giữa trung tâm Quận 1 sầm uất, nổi bật với ban công phủ đầy cây xanh, bồn tắm gỗ teak và nội thất gỗ tái sinh.', '6-8 Hồ Huấn Nghiệp, Phường Bến Nghé, Quận 1', 'Ho Chi Minh', 1800000, 200000, 6, 3, 3, 2, 'HOTEL_ROOM', 'ROOM_BASED', 'Asia/Ho_Chi_Minh', 'ACTIVE', 4.92)
         RETURNING id INTO v_prop_id;
     END IF;
 
@@ -283,11 +283,11 @@ BEGIN
     SELECT v_prop_id, id FROM amenities WHERE name = 'Workspace'
     ON CONFLICT DO NOTHING;
 
-    -- RoomType: Dong Khoi City View Room
-    SELECT id INTO v_rt_id FROM room_types WHERE property_id = v_prop_id AND name = 'Dong Khoi City View Room' LIMIT 1;
+    -- RoomType: Phòng Deluxe View Phố Đồng Khởi
+    SELECT id INTO v_rt_id FROM room_types WHERE property_id = v_prop_id AND name = 'Phòng Deluxe View Phố Đồng Khởi' LIMIT 1;
     IF v_rt_id IS NULL THEN
         INSERT INTO room_types (property_id, sale_mode, name, base_quantity, max_adults, max_occupants, status, metadata, version)
-        VALUES (v_prop_id, 'ROOM_BASED', 'Dong Khoi City View Room', 10, 2, 2, 'ACTIVE', '{"description": "Dong Khoi City View Room"}'::jsonb, 0)
+        VALUES (v_prop_id, 'ROOM_BASED', 'Phòng Deluxe View Phố Đồng Khởi', 10, 2, 2, 'ACTIVE', '{"description": "Phòng Deluxe View Phố Đồng Khởi"}'::jsonb, 0)
         RETURNING id INTO v_rt_id;
     END IF;
 
@@ -296,11 +296,11 @@ BEGIN
     VALUES (v_prop_id, v_rt_id, 'Gói Tiêu Chuẩn Linh Hoạt', 'VND', 's0-policy-v1', 1800000, '["FULL_PREPAY","HYBRID_DEPOSIT"]'::jsonb, '{}'::jsonb, 'ACTIVE', 0)
     ON CONFLICT (id, room_type_id, property_id) DO UPDATE SET nightly_price = EXCLUDED.nightly_price;
 
-    -- RoomType: Saigon River View Suite
-    SELECT id INTO v_rt_id FROM room_types WHERE property_id = v_prop_id AND name = 'Saigon River View Suite' LIMIT 1;
+    -- RoomType: Phòng Suite Hướng Sông Sài Gòn
+    SELECT id INTO v_rt_id FROM room_types WHERE property_id = v_prop_id AND name = 'Phòng Suite Hướng Sông Sài Gòn' LIMIT 1;
     IF v_rt_id IS NULL THEN
         INSERT INTO room_types (property_id, sale_mode, name, base_quantity, max_adults, max_occupants, status, metadata, version)
-        VALUES (v_prop_id, 'ROOM_BASED', 'Saigon River View Suite', 6, 2, 3, 'ACTIVE', '{"description": "Saigon River View Suite"}'::jsonb, 0)
+        VALUES (v_prop_id, 'ROOM_BASED', 'Phòng Suite Hướng Sông Sài Gòn', 6, 2, 3, 'ACTIVE', '{"description": "Phòng Suite Hướng Sông Sài Gòn"}'::jsonb, 0)
         RETURNING id INTO v_rt_id;
     END IF;
 
@@ -309,11 +309,11 @@ BEGIN
     VALUES (v_prop_id, v_rt_id, 'Gói Tiêu Chuẩn Linh Hoạt', 'VND', 's0-policy-v1', 2850000, '["FULL_PREPAY","HYBRID_DEPOSIT"]'::jsonb, '{}'::jsonb, 'ACTIVE', 0)
     ON CONFLICT (id, room_type_id, property_id) DO UPDATE SET nightly_price = EXCLUDED.nightly_price;
 
-    -- RoomType: Presidential Garden Terrace Suite
-    SELECT id INTO v_rt_id FROM room_types WHERE property_id = v_prop_id AND name = 'Presidential Garden Terrace Suite' LIMIT 1;
+    -- RoomType: Phòng Suite Tổng Thống Sân Vườn Trên Cao
+    SELECT id INTO v_rt_id FROM room_types WHERE property_id = v_prop_id AND name = 'Phòng Suite Tổng Thống Sân Vườn Trên Cao' LIMIT 1;
     IF v_rt_id IS NULL THEN
         INSERT INTO room_types (property_id, sale_mode, name, base_quantity, max_adults, max_occupants, status, metadata, version)
-        VALUES (v_prop_id, 'ROOM_BASED', 'Presidential Garden Terrace Suite', 2, 4, 5, 'ACTIVE', '{"description": "Presidential Garden Terrace Suite"}'::jsonb, 0)
+        VALUES (v_prop_id, 'ROOM_BASED', 'Phòng Suite Tổng Thống Sân Vườn Trên Cao', 2, 4, 5, 'ACTIVE', '{"description": "Phòng Suite Tổng Thống Sân Vườn Trên Cao"}'::jsonb, 0)
         RETURNING id INTO v_rt_id;
     END IF;
 
@@ -322,11 +322,11 @@ BEGIN
     VALUES (v_prop_id, v_rt_id, 'Gói Tiêu Chuẩn Linh Hoạt', 'VND', 's0-policy-v1', 5500000, '["FULL_PREPAY","HYBRID_DEPOSIT"]'::jsonb, '{}'::jsonb, 'ACTIVE', 0)
     ON CONFLICT (id, room_type_id, property_id) DO UPDATE SET nightly_price = EXCLUDED.nightly_price;
 
-    -- Property: Vinhomes Central Park Sky Residence
-    SELECT id INTO v_prop_id FROM properties WHERE title = 'Vinhomes Central Park Sky Residence' LIMIT 1;
+    -- Property: Căn Hộ Cao Cấp Vinhomes Central Park Landmark 81
+    SELECT id INTO v_prop_id FROM properties WHERE title = 'Căn Hộ Cao Cấp Vinhomes Central Park Landmark 81' LIMIT 1;
     IF v_prop_id IS NULL THEN
         INSERT INTO properties (host_id, title, description, address, city, price_per_night, cleaning_fee, max_guests, bedrooms, beds, bathrooms, property_type, sale_mode, timezone, status, rating_avg)
-        VALUES (v_host_id, 'Vinhomes Central Park Sky Residence', 'Căn hộ chung cư cao cấp liền kề công viên Landmark 81 ven sông Sài Gòn, hồ bơi tràn bờ và đầy đủ tiện nghi sinh hoạt gia đình.', '208 Nguyễn Hữu Cảnh, Phường 22, Quận Bình Thạnh', 'Ho Chi Minh', 1100000, 180000, 6, 3, 3, 2, 'APARTMENT', 'ROOM_BASED', 'Asia/Ho_Chi_Minh', 'ACTIVE', 4.82)
+        VALUES (v_host_id, 'Căn Hộ Cao Cấp Vinhomes Central Park Landmark 81', 'Căn hộ chung cư cao cấp liền kề công viên Landmark 81 ven sông Sài Gòn, hồ bơi tràn bờ và đầy đủ tiện nghi sinh hoạt gia đình.', '208 Nguyễn Hữu Cảnh, Phường 22, Quận Bình Thạnh', 'Ho Chi Minh', 1100000, 180000, 6, 3, 3, 2, 'APARTMENT', 'ROOM_BASED', 'Asia/Ho_Chi_Minh', 'ACTIVE', 4.82)
         RETURNING id INTO v_prop_id;
     END IF;
 
@@ -362,11 +362,11 @@ BEGIN
     SELECT v_prop_id, id FROM amenities WHERE name = 'Parking'
     ON CONFLICT DO NOTHING;
 
-    -- RoomType: One-Bedroom Modern City Suite
-    SELECT id INTO v_rt_id FROM room_types WHERE property_id = v_prop_id AND name = 'One-Bedroom Modern City Suite' LIMIT 1;
+    -- RoomType: Căn Hộ 1 Phòng Ngủ Đô Thị Hiện Đại
+    SELECT id INTO v_rt_id FROM room_types WHERE property_id = v_prop_id AND name = 'Căn Hộ 1 Phòng Ngủ Đô Thị Hiện Đại' LIMIT 1;
     IF v_rt_id IS NULL THEN
         INSERT INTO room_types (property_id, sale_mode, name, base_quantity, max_adults, max_occupants, status, metadata, version)
-        VALUES (v_prop_id, 'ROOM_BASED', 'One-Bedroom Modern City Suite', 8, 2, 2, 'ACTIVE', '{"description": "One-Bedroom Modern City Suite"}'::jsonb, 0)
+        VALUES (v_prop_id, 'ROOM_BASED', 'Căn Hộ 1 Phòng Ngủ Đô Thị Hiện Đại', 8, 2, 2, 'ACTIVE', '{"description": "Căn Hộ 1 Phòng Ngủ Đô Thị Hiện Đại"}'::jsonb, 0)
         RETURNING id INTO v_rt_id;
     END IF;
 
@@ -375,11 +375,11 @@ BEGIN
     VALUES (v_prop_id, v_rt_id, 'Gói Tiêu Chuẩn Linh Hoạt', 'VND', 's0-policy-v1', 1100000, '["FULL_PREPAY","HYBRID_DEPOSIT"]'::jsonb, '{}'::jsonb, 'ACTIVE', 0)
     ON CONFLICT (id, room_type_id, property_id) DO UPDATE SET nightly_price = EXCLUDED.nightly_price;
 
-    -- RoomType: Two-Bedroom Family Riverview Suite
-    SELECT id INTO v_rt_id FROM room_types WHERE property_id = v_prop_id AND name = 'Two-Bedroom Family Riverview Suite' LIMIT 1;
+    -- RoomType: Căn Hộ Gia Đình 2 Phòng Ngủ View Sông
+    SELECT id INTO v_rt_id FROM room_types WHERE property_id = v_prop_id AND name = 'Căn Hộ Gia Đình 2 Phòng Ngủ View Sông' LIMIT 1;
     IF v_rt_id IS NULL THEN
         INSERT INTO room_types (property_id, sale_mode, name, base_quantity, max_adults, max_occupants, status, metadata, version)
-        VALUES (v_prop_id, 'ROOM_BASED', 'Two-Bedroom Family Riverview Suite', 6, 4, 5, 'ACTIVE', '{"description": "Two-Bedroom Family Riverview Suite"}'::jsonb, 0)
+        VALUES (v_prop_id, 'ROOM_BASED', 'Căn Hộ Gia Đình 2 Phòng Ngủ View Sông', 6, 4, 5, 'ACTIVE', '{"description": "Căn Hộ Gia Đình 2 Phòng Ngủ View Sông"}'::jsonb, 0)
         RETURNING id INTO v_rt_id;
     END IF;
 
@@ -388,11 +388,11 @@ BEGIN
     VALUES (v_prop_id, v_rt_id, 'Gói Tiêu Chuẩn Linh Hoạt', 'VND', 's0-policy-v1', 2100000, '["FULL_PREPAY","HYBRID_DEPOSIT"]'::jsonb, '{}'::jsonb, 'ACTIVE', 0)
     ON CONFLICT (id, room_type_id, property_id) DO UPDATE SET nightly_price = EXCLUDED.nightly_price;
 
-    -- RoomType: Three-Bedroom Sky Penthouse
-    SELECT id INTO v_rt_id FROM room_types WHERE property_id = v_prop_id AND name = 'Three-Bedroom Sky Penthouse' LIMIT 1;
+    -- RoomType: Căn Hộ Penthouse 3 Phòng Ngủ Trên Cao
+    SELECT id INTO v_rt_id FROM room_types WHERE property_id = v_prop_id AND name = 'Căn Hộ Penthouse 3 Phòng Ngủ Trên Cao' LIMIT 1;
     IF v_rt_id IS NULL THEN
         INSERT INTO room_types (property_id, sale_mode, name, base_quantity, max_adults, max_occupants, status, metadata, version)
-        VALUES (v_prop_id, 'ROOM_BASED', 'Three-Bedroom Sky Penthouse', 2, 6, 7, 'ACTIVE', '{"description": "Three-Bedroom Sky Penthouse"}'::jsonb, 0)
+        VALUES (v_prop_id, 'ROOM_BASED', 'Căn Hộ Penthouse 3 Phòng Ngủ Trên Cao', 2, 6, 7, 'ACTIVE', '{"description": "Căn Hộ Penthouse 3 Phòng Ngủ Trên Cao"}'::jsonb, 0)
         RETURNING id INTO v_rt_id;
     END IF;
 
@@ -401,11 +401,11 @@ BEGIN
     VALUES (v_prop_id, v_rt_id, 'Gói Tiêu Chuẩn Linh Hoạt', 'VND', 's0-policy-v1', 3900000, '["FULL_PREPAY","HYBRID_DEPOSIT"]'::jsonb, '{}'::jsonb, 'ACTIVE', 0)
     ON CONFLICT (id, room_type_id, property_id) DO UPDATE SET nightly_price = EXCLUDED.nightly_price;
 
-    -- Property: Thao Dien Eco Riverfront Villa
-    SELECT id INTO v_prop_id FROM properties WHERE title = 'Thao Dien Eco Riverfront Villa' LIMIT 1;
+    -- Property: Biệt Thự Sinh Thái Ven Sông Sài Gòn Thảo Điền
+    SELECT id INTO v_prop_id FROM properties WHERE title = 'Biệt Thự Sinh Thái Ven Sông Sài Gòn Thảo Điền' LIMIT 1;
     IF v_prop_id IS NULL THEN
         INSERT INTO properties (host_id, title, description, address, city, price_per_night, cleaning_fee, max_guests, bedrooms, beds, bathrooms, property_type, sale_mode, timezone, status, rating_avg)
-        VALUES (v_host_id, 'Thao Dien Eco Riverfront Villa', 'Biệt thự nghỉ dưỡng phong cách nhiệt đới ven sông Sài Gòn tại Thảo Điền, sân vườn thoáng rộng, hồ bơi riêng và bếp BBQ ngoài trời.', '189 Nguyễn Văn Hưởng, Thảo Điền, TP. Thủ Đức', 'Ho Chi Minh', 1900000, 300000, 6, 3, 3, 2, 'VILLA', 'ROOM_BASED', 'Asia/Ho_Chi_Minh', 'ACTIVE', 4.89)
+        VALUES (v_host_id, 'Biệt Thự Sinh Thái Ven Sông Sài Gòn Thảo Điền', 'Biệt thự nghỉ dưỡng phong cách nhiệt đới ven sông Sài Gòn tại Thảo Điền, sân vườn thoáng rộng, hồ bơi riêng và bếp BBQ ngoài trời.', '189 Nguyễn Văn Hưởng, Thảo Điền, TP. Thủ Đức', 'Ho Chi Minh', 1900000, 300000, 6, 3, 3, 2, 'VILLA', 'ROOM_BASED', 'Asia/Ho_Chi_Minh', 'ACTIVE', 4.89)
         RETURNING id INTO v_prop_id;
     END IF;
 
@@ -438,11 +438,11 @@ BEGIN
     SELECT v_prop_id, id FROM amenities WHERE name = 'Workspace'
     ON CONFLICT DO NOTHING;
 
-    -- RoomType: Garden View Deluxe Room
-    SELECT id INTO v_rt_id FROM room_types WHERE property_id = v_prop_id AND name = 'Garden View Deluxe Room' LIMIT 1;
+    -- RoomType: Phòng Deluxe Ban Công Hướng Vườn
+    SELECT id INTO v_rt_id FROM room_types WHERE property_id = v_prop_id AND name = 'Phòng Deluxe Ban Công Hướng Vườn' LIMIT 1;
     IF v_rt_id IS NULL THEN
         INSERT INTO room_types (property_id, sale_mode, name, base_quantity, max_adults, max_occupants, status, metadata, version)
-        VALUES (v_prop_id, 'ROOM_BASED', 'Garden View Deluxe Room', 5, 2, 2, 'ACTIVE', '{"description": "Garden View Deluxe Room"}'::jsonb, 0)
+        VALUES (v_prop_id, 'ROOM_BASED', 'Phòng Deluxe Ban Công Hướng Vườn', 5, 2, 2, 'ACTIVE', '{"description": "Phòng Deluxe Ban Công Hướng Vườn"}'::jsonb, 0)
         RETURNING id INTO v_rt_id;
     END IF;
 
@@ -451,11 +451,11 @@ BEGIN
     VALUES (v_prop_id, v_rt_id, 'Gói Tiêu Chuẩn Linh Hoạt', 'VND', 's0-policy-v1', 1900000, '["FULL_PREPAY","HYBRID_DEPOSIT"]'::jsonb, '{}'::jsonb, 'ACTIVE', 0)
     ON CONFLICT (id, room_type_id, property_id) DO UPDATE SET nightly_price = EXCLUDED.nightly_price;
 
-    -- RoomType: Poolside Luxury King Suite
-    SELECT id INTO v_rt_id FROM room_types WHERE property_id = v_prop_id AND name = 'Poolside Luxury King Suite' LIMIT 1;
+    -- RoomType: Phòng Suite King Cao Cấp Cạnh Hồ Bơi
+    SELECT id INTO v_rt_id FROM room_types WHERE property_id = v_prop_id AND name = 'Phòng Suite King Cao Cấp Cạnh Hồ Bơi' LIMIT 1;
     IF v_rt_id IS NULL THEN
         INSERT INTO room_types (property_id, sale_mode, name, base_quantity, max_adults, max_occupants, status, metadata, version)
-        VALUES (v_prop_id, 'ROOM_BASED', 'Poolside Luxury King Suite', 4, 2, 3, 'ACTIVE', '{"description": "Poolside Luxury King Suite"}'::jsonb, 0)
+        VALUES (v_prop_id, 'ROOM_BASED', 'Phòng Suite King Cao Cấp Cạnh Hồ Bơi', 4, 2, 3, 'ACTIVE', '{"description": "Phòng Suite King Cao Cấp Cạnh Hồ Bơi"}'::jsonb, 0)
         RETURNING id INTO v_rt_id;
     END IF;
 
@@ -464,11 +464,11 @@ BEGIN
     VALUES (v_prop_id, v_rt_id, 'Gói Tiêu Chuẩn Linh Hoạt', 'VND', 's0-policy-v1', 3200000, '["FULL_PREPAY","HYBRID_DEPOSIT"]'::jsonb, '{}'::jsonb, 'ACTIVE', 0)
     ON CONFLICT (id, room_type_id, property_id) DO UPDATE SET nightly_price = EXCLUDED.nightly_price;
 
-    -- RoomType: Riverfront Master Residence Suite
-    SELECT id INTO v_rt_id FROM room_types WHERE property_id = v_prop_id AND name = 'Riverfront Master Residence Suite' LIMIT 1;
+    -- RoomType: Biệt Thự Master Ven Sông Sài Gòn
+    SELECT id INTO v_rt_id FROM room_types WHERE property_id = v_prop_id AND name = 'Biệt Thự Master Ven Sông Sài Gòn' LIMIT 1;
     IF v_rt_id IS NULL THEN
         INSERT INTO room_types (property_id, sale_mode, name, base_quantity, max_adults, max_occupants, status, metadata, version)
-        VALUES (v_prop_id, 'ROOM_BASED', 'Riverfront Master Residence Suite', 2, 4, 6, 'ACTIVE', '{"description": "Riverfront Master Residence Suite"}'::jsonb, 0)
+        VALUES (v_prop_id, 'ROOM_BASED', 'Biệt Thự Master Ven Sông Sài Gòn', 2, 4, 6, 'ACTIVE', '{"description": "Biệt Thự Master Ven Sông Sài Gòn"}'::jsonb, 0)
         RETURNING id INTO v_rt_id;
     END IF;
 
@@ -480,11 +480,11 @@ BEGIN
     -- ----------------------------------------------------------------------
     -- DESTINATION: Da Nang
     -- ----------------------------------------------------------------------
-    -- Property: My Khe Oceanfront Luxury Resort
-    SELECT id INTO v_prop_id FROM properties WHERE title = 'My Khe Oceanfront Luxury Resort' LIMIT 1;
+    -- Property: Khu Nghỉ Dưỡng Cao Cấp Ven Biển Mỹ Khê
+    SELECT id INTO v_prop_id FROM properties WHERE title = 'Khu Nghỉ Dưỡng Cao Cấp Ven Biển Mỹ Khê' LIMIT 1;
     IF v_prop_id IS NULL THEN
         INSERT INTO properties (host_id, title, description, address, city, price_per_night, cleaning_fee, max_guests, bedrooms, beds, bathrooms, property_type, sale_mode, timezone, status, rating_avg)
-        VALUES (v_host_id, 'My Khe Oceanfront Luxury Resort', 'Khu nghỉ dưỡng 5 sao sát biển Mỹ Khê, hồ bơi vô cực ngắm trọn bình minh biển Đông, spa cao cấp và nhà hàng hải sản phong phú.', '256 Võ Nguyên Giáp, Phường Phước Mỹ, Quận Sơn Trà', 'Da Nang', 2200000, 250000, 6, 3, 3, 2, 'RESORT', 'ROOM_BASED', 'Asia/Ho_Chi_Minh', 'ACTIVE', 4.95)
+        VALUES (v_host_id, 'Khu Nghỉ Dưỡng Cao Cấp Ven Biển Mỹ Khê', 'Khu nghỉ dưỡng 5 sao sát biển Mỹ Khê, hồ bơi vô cực ngắm trọn bình minh biển Đông, spa cao cấp và nhà hàng hải sản phong phú.', '256 Võ Nguyên Giáp, Phường Phước Mỹ, Quận Sơn Trà', 'Da Nang', 2200000, 250000, 6, 3, 3, 2, 'RESORT', 'ROOM_BASED', 'Asia/Ho_Chi_Minh', 'ACTIVE', 4.95)
         RETURNING id INTO v_prop_id;
     END IF;
 
@@ -517,11 +517,11 @@ BEGIN
     SELECT v_prop_id, id FROM amenities WHERE name = 'Workspace'
     ON CONFLICT DO NOTHING;
 
-    -- RoomType: Ocean Deluxe King Room
-    SELECT id INTO v_rt_id FROM room_types WHERE property_id = v_prop_id AND name = 'Ocean Deluxe King Room' LIMIT 1;
+    -- RoomType: Phòng King Deluxe Hướng Trọn Biển Đông
+    SELECT id INTO v_rt_id FROM room_types WHERE property_id = v_prop_id AND name = 'Phòng King Deluxe Hướng Trọn Biển Đông' LIMIT 1;
     IF v_rt_id IS NULL THEN
         INSERT INTO room_types (property_id, sale_mode, name, base_quantity, max_adults, max_occupants, status, metadata, version)
-        VALUES (v_prop_id, 'ROOM_BASED', 'Ocean Deluxe King Room', 12, 2, 3, 'ACTIVE', '{"description": "Ocean Deluxe King Room"}'::jsonb, 0)
+        VALUES (v_prop_id, 'ROOM_BASED', 'Phòng King Deluxe Hướng Trọn Biển Đông', 12, 2, 3, 'ACTIVE', '{"description": "Phòng King Deluxe Hướng Trọn Biển Đông"}'::jsonb, 0)
         RETURNING id INTO v_rt_id;
     END IF;
 
@@ -530,11 +530,11 @@ BEGIN
     VALUES (v_prop_id, v_rt_id, 'Gói Tiêu Chuẩn Linh Hoạt', 'VND', 's0-policy-v1', 2200000, '["FULL_PREPAY","HYBRID_DEPOSIT"]'::jsonb, '{}'::jsonb, 'ACTIVE', 0)
     ON CONFLICT (id, room_type_id, property_id) DO UPDATE SET nightly_price = EXCLUDED.nightly_price;
 
-    -- RoomType: Premier Oceanfront Suite
-    SELECT id INTO v_rt_id FROM room_types WHERE property_id = v_prop_id AND name = 'Premier Oceanfront Suite' LIMIT 1;
+    -- RoomType: Phòng Suite Premier Sát Biển Mỹ Khê
+    SELECT id INTO v_rt_id FROM room_types WHERE property_id = v_prop_id AND name = 'Phòng Suite Premier Sát Biển Mỹ Khê' LIMIT 1;
     IF v_rt_id IS NULL THEN
         INSERT INTO room_types (property_id, sale_mode, name, base_quantity, max_adults, max_occupants, status, metadata, version)
-        VALUES (v_prop_id, 'ROOM_BASED', 'Premier Oceanfront Suite', 8, 2, 3, 'ACTIVE', '{"description": "Premier Oceanfront Suite"}'::jsonb, 0)
+        VALUES (v_prop_id, 'ROOM_BASED', 'Phòng Suite Premier Sát Biển Mỹ Khê', 8, 2, 3, 'ACTIVE', '{"description": "Phòng Suite Premier Sát Biển Mỹ Khê"}'::jsonb, 0)
         RETURNING id INTO v_rt_id;
     END IF;
 
@@ -543,11 +543,11 @@ BEGIN
     VALUES (v_prop_id, v_rt_id, 'Gói Tiêu Chuẩn Linh Hoạt', 'VND', 's0-policy-v1', 3500000, '["FULL_PREPAY","HYBRID_DEPOSIT"]'::jsonb, '{}'::jsonb, 'ACTIVE', 0)
     ON CONFLICT (id, room_type_id, property_id) DO UPDATE SET nightly_price = EXCLUDED.nightly_price;
 
-    -- RoomType: Beachfront Family Duplex Suite
-    SELECT id INTO v_rt_id FROM room_types WHERE property_id = v_prop_id AND name = 'Beachfront Family Duplex Suite' LIMIT 1;
+    -- RoomType: Căn Hộ Duplex Gia Đình Mặt Biển
+    SELECT id INTO v_rt_id FROM room_types WHERE property_id = v_prop_id AND name = 'Căn Hộ Duplex Gia Đình Mặt Biển' LIMIT 1;
     IF v_rt_id IS NULL THEN
         INSERT INTO room_types (property_id, sale_mode, name, base_quantity, max_adults, max_occupants, status, metadata, version)
-        VALUES (v_prop_id, 'ROOM_BASED', 'Beachfront Family Duplex Suite', 4, 4, 6, 'ACTIVE', '{"description": "Beachfront Family Duplex Suite"}'::jsonb, 0)
+        VALUES (v_prop_id, 'ROOM_BASED', 'Căn Hộ Duplex Gia Đình Mặt Biển', 4, 4, 6, 'ACTIVE', '{"description": "Căn Hộ Duplex Gia Đình Mặt Biển"}'::jsonb, 0)
         RETURNING id INTO v_rt_id;
     END IF;
 
@@ -556,11 +556,11 @@ BEGIN
     VALUES (v_prop_id, v_rt_id, 'Gói Tiêu Chuẩn Linh Hoạt', 'VND', 's0-policy-v1', 6200000, '["FULL_PREPAY","HYBRID_DEPOSIT"]'::jsonb, '{}'::jsonb, 'ACTIVE', 0)
     ON CONFLICT (id, room_type_id, property_id) DO UPDATE SET nightly_price = EXCLUDED.nightly_price;
 
-    -- Property: Han River Modern Skyline Suites
-    SELECT id INTO v_prop_id FROM properties WHERE title = 'Han River Modern Skyline Suites' LIMIT 1;
+    -- Property: Căn Hộ Khách Sạn Cao Cấp Bờ Sông Hàn
+    SELECT id INTO v_prop_id FROM properties WHERE title = 'Căn Hộ Khách Sạn Cao Cấp Bờ Sông Hàn' LIMIT 1;
     IF v_prop_id IS NULL THEN
         INSERT INTO properties (host_id, title, description, address, city, price_per_night, cleaning_fee, max_guests, bedrooms, beds, bathrooms, property_type, sale_mode, timezone, status, rating_avg)
-        VALUES (v_host_id, 'Han River Modern Skyline Suites', 'Căn hộ khách sạn cao cấp bên bờ sông Hàn thơ mộng, view trực diện Cầu Rồng phun lửa, tiện nghi hiện đại và quầy bar tầng thượng.', '120 Bạch Đằng, Phường Hải Châu 1, Quận Hải Châu', 'Da Nang', 1150000, 150000, 6, 3, 3, 2, 'APARTMENT', 'ROOM_BASED', 'Asia/Ho_Chi_Minh', 'ACTIVE', 4.8)
+        VALUES (v_host_id, 'Căn Hộ Khách Sạn Cao Cấp Bờ Sông Hàn', 'Căn hộ khách sạn cao cấp bên bờ sông Hàn thơ mộng, view trực diện Cầu Rồng phun lửa, tiện nghi hiện đại và quầy bar tầng thượng.', '120 Bạch Đằng, Phường Hải Châu 1, Quận Hải Châu', 'Da Nang', 1150000, 150000, 6, 3, 3, 2, 'APARTMENT', 'ROOM_BASED', 'Asia/Ho_Chi_Minh', 'ACTIVE', 4.8)
         RETURNING id INTO v_prop_id;
     END IF;
 
@@ -593,11 +593,11 @@ BEGIN
     SELECT v_prop_id, id FROM amenities WHERE name = 'Workspace'
     ON CONFLICT DO NOTHING;
 
-    -- RoomType: Studio Dragon Bridge View
-    SELECT id INTO v_rt_id FROM room_types WHERE property_id = v_prop_id AND name = 'Studio Dragon Bridge View' LIMIT 1;
+    -- RoomType: Căn Hộ Studio View Trực Diện Cầu Rồng
+    SELECT id INTO v_rt_id FROM room_types WHERE property_id = v_prop_id AND name = 'Căn Hộ Studio View Trực Diện Cầu Rồng' LIMIT 1;
     IF v_rt_id IS NULL THEN
         INSERT INTO room_types (property_id, sale_mode, name, base_quantity, max_adults, max_occupants, status, metadata, version)
-        VALUES (v_prop_id, 'ROOM_BASED', 'Studio Dragon Bridge View', 8, 2, 2, 'ACTIVE', '{"description": "Studio Dragon Bridge View"}'::jsonb, 0)
+        VALUES (v_prop_id, 'ROOM_BASED', 'Căn Hộ Studio View Trực Diện Cầu Rồng', 8, 2, 2, 'ACTIVE', '{"description": "Căn Hộ Studio View Trực Diện Cầu Rồng"}'::jsonb, 0)
         RETURNING id INTO v_rt_id;
     END IF;
 
@@ -606,11 +606,11 @@ BEGIN
     VALUES (v_prop_id, v_rt_id, 'Gói Tiêu Chuẩn Linh Hoạt', 'VND', 's0-policy-v1', 1150000, '["FULL_PREPAY","HYBRID_DEPOSIT"]'::jsonb, '{}'::jsonb, 'ACTIVE', 0)
     ON CONFLICT (id, room_type_id, property_id) DO UPDATE SET nightly_price = EXCLUDED.nightly_price;
 
-    -- RoomType: Executive Riverview Suite
-    SELECT id INTO v_rt_id FROM room_types WHERE property_id = v_prop_id AND name = 'Executive Riverview Suite' LIMIT 1;
+    -- RoomType: Phòng Suite Executive View Sông Hàn
+    SELECT id INTO v_rt_id FROM room_types WHERE property_id = v_prop_id AND name = 'Phòng Suite Executive View Sông Hàn' LIMIT 1;
     IF v_rt_id IS NULL THEN
         INSERT INTO room_types (property_id, sale_mode, name, base_quantity, max_adults, max_occupants, status, metadata, version)
-        VALUES (v_prop_id, 'ROOM_BASED', 'Executive Riverview Suite', 6, 2, 3, 'ACTIVE', '{"description": "Executive Riverview Suite"}'::jsonb, 0)
+        VALUES (v_prop_id, 'ROOM_BASED', 'Phòng Suite Executive View Sông Hàn', 6, 2, 3, 'ACTIVE', '{"description": "Phòng Suite Executive View Sông Hàn"}'::jsonb, 0)
         RETURNING id INTO v_rt_id;
     END IF;
 
@@ -619,11 +619,11 @@ BEGIN
     VALUES (v_prop_id, v_rt_id, 'Gói Tiêu Chuẩn Linh Hoạt', 'VND', 's0-policy-v1', 1950000, '["FULL_PREPAY","HYBRID_DEPOSIT"]'::jsonb, '{}'::jsonb, 'ACTIVE', 0)
     ON CONFLICT (id, room_type_id, property_id) DO UPDATE SET nightly_price = EXCLUDED.nightly_price;
 
-    -- RoomType: Grand Han Skyline Apartment
-    SELECT id INTO v_rt_id FROM room_types WHERE property_id = v_prop_id AND name = 'Grand Han Skyline Apartment' LIMIT 1;
+    -- RoomType: Căn Hộ Grand Skyline Bờ Sông Hàn
+    SELECT id INTO v_rt_id FROM room_types WHERE property_id = v_prop_id AND name = 'Căn Hộ Grand Skyline Bờ Sông Hàn' LIMIT 1;
     IF v_rt_id IS NULL THEN
         INSERT INTO room_types (property_id, sale_mode, name, base_quantity, max_adults, max_occupants, status, metadata, version)
-        VALUES (v_prop_id, 'ROOM_BASED', 'Grand Han Skyline Apartment', 3, 4, 5, 'ACTIVE', '{"description": "Grand Han Skyline Apartment"}'::jsonb, 0)
+        VALUES (v_prop_id, 'ROOM_BASED', 'Căn Hộ Grand Skyline Bờ Sông Hàn', 3, 4, 5, 'ACTIVE', '{"description": "Căn Hộ Grand Skyline Bờ Sông Hàn"}'::jsonb, 0)
         RETURNING id INTO v_rt_id;
     END IF;
 
@@ -632,11 +632,11 @@ BEGIN
     VALUES (v_prop_id, v_rt_id, 'Gói Tiêu Chuẩn Linh Hoạt', 'VND', 's0-policy-v1', 3400000, '["FULL_PREPAY","HYBRID_DEPOSIT"]'::jsonb, '{}'::jsonb, 'ACTIVE', 0)
     ON CONFLICT (id, room_type_id, property_id) DO UPDATE SET nightly_price = EXCLUDED.nightly_price;
 
-    -- Property: Son Tra Peninsula Retreat Homestay
-    SELECT id INTO v_prop_id FROM properties WHERE title = 'Son Tra Peninsula Retreat Homestay' LIMIT 1;
+    -- Property: Homestay Nghỉ Dưỡng Sinh Thái Bán Đảo Sơn Trà
+    SELECT id INTO v_prop_id FROM properties WHERE title = 'Homestay Nghỉ Dưỡng Sinh Thái Bán Đảo Sơn Trà' LIMIT 1;
     IF v_prop_id IS NULL THEN
         INSERT INTO properties (host_id, title, description, address, city, price_per_night, cleaning_fee, max_guests, bedrooms, beds, bathrooms, property_type, sale_mode, timezone, status, rating_avg)
-        VALUES (v_host_id, 'Son Tra Peninsula Retreat Homestay', 'Khu homestay sinh thái nép mình dưới chân núi Sơn Trà, không khí trong lành thoang thoảng gió biển, view đồi rừng khoáng đạt.', 'Bãi Bụt, Bán đảo Sơn Trà, Quận Sơn Trà', 'Da Nang', 850000, 100000, 6, 3, 3, 2, 'HOMESTAY', 'ROOM_BASED', 'Asia/Ho_Chi_Minh', 'ACTIVE', 4.75)
+        VALUES (v_host_id, 'Homestay Nghỉ Dưỡng Sinh Thái Bán Đảo Sơn Trà', 'Khu homestay sinh thái nép mình dưới chân núi Sơn Trà, không khí trong lành thoang thoảng gió biển, view đồi rừng khoáng đạt.', 'Bãi Bụt, Bán đảo Sơn Trà, Quận Sơn Trà', 'Da Nang', 850000, 100000, 6, 3, 3, 2, 'HOMESTAY', 'ROOM_BASED', 'Asia/Ho_Chi_Minh', 'ACTIVE', 4.75)
         RETURNING id INTO v_prop_id;
     END IF;
 
@@ -705,11 +705,11 @@ BEGIN
     -- ----------------------------------------------------------------------
     -- DESTINATION: Da Lat
     -- ----------------------------------------------------------------------
-    -- Property: Dalat Pine Forest Heritage Resort
-    SELECT id INTO v_prop_id FROM properties WHERE title = 'Dalat Pine Forest Heritage Resort' LIMIT 1;
+    -- Property: Khu Nghỉ Dưỡng Di Sản Rừng Thông Đà Lạt
+    SELECT id INTO v_prop_id FROM properties WHERE title = 'Khu Nghỉ Dưỡng Di Sản Rừng Thông Đà Lạt' LIMIT 1;
     IF v_prop_id IS NULL THEN
         INSERT INTO properties (host_id, title, description, address, city, price_per_night, cleaning_fee, max_guests, bedrooms, beds, bathrooms, property_type, sale_mode, timezone, status, rating_avg)
-        VALUES (v_host_id, 'Dalat Pine Forest Heritage Resort', 'Resort phong cách biệt thự Pháp cổ ẩn giữa rừng thông bạt ngàn Đà Lạt, lò sưởi ấm cúng, trà chiều sân vườn ngắm sương mù lãng mạn.', '02 Trần Phú, Phường 3, TP. Đà Lạt', 'Da Lat', 1600000, 200000, 6, 3, 3, 2, 'RESORT', 'ROOM_BASED', 'Asia/Ho_Chi_Minh', 'ACTIVE', 4.91)
+        VALUES (v_host_id, 'Khu Nghỉ Dưỡng Di Sản Rừng Thông Đà Lạt', 'Resort phong cách biệt thự Pháp cổ ẩn giữa rừng thông bạt ngàn Đà Lạt, lò sưởi ấm cúng, trà chiều sân vườn ngắm sương mù lãng mạn.', '02 Trần Phú, Phường 3, TP. Đà Lạt', 'Da Lat', 1600000, 200000, 6, 3, 3, 2, 'RESORT', 'ROOM_BASED', 'Asia/Ho_Chi_Minh', 'ACTIVE', 4.91)
         RETURNING id INTO v_prop_id;
     END IF;
 
@@ -736,11 +736,11 @@ BEGIN
     SELECT v_prop_id, id FROM amenities WHERE name = 'Workspace'
     ON CONFLICT DO NOTHING;
 
-    -- RoomType: Pine Hill Deluxe Room
-    SELECT id INTO v_rt_id FROM room_types WHERE property_id = v_prop_id AND name = 'Pine Hill Deluxe Room' LIMIT 1;
+    -- RoomType: Phòng Deluxe Đồi Thông Lãng Mạn
+    SELECT id INTO v_rt_id FROM room_types WHERE property_id = v_prop_id AND name = 'Phòng Deluxe Đồi Thông Lãng Mạn' LIMIT 1;
     IF v_rt_id IS NULL THEN
         INSERT INTO room_types (property_id, sale_mode, name, base_quantity, max_adults, max_occupants, status, metadata, version)
-        VALUES (v_prop_id, 'ROOM_BASED', 'Pine Hill Deluxe Room', 8, 2, 3, 'ACTIVE', '{"description": "Pine Hill Deluxe Room"}'::jsonb, 0)
+        VALUES (v_prop_id, 'ROOM_BASED', 'Phòng Deluxe Đồi Thông Lãng Mạn', 8, 2, 3, 'ACTIVE', '{"description": "Phòng Deluxe Đồi Thông Lãng Mạn"}'::jsonb, 0)
         RETURNING id INTO v_rt_id;
     END IF;
 
@@ -749,11 +749,11 @@ BEGIN
     VALUES (v_prop_id, v_rt_id, 'Gói Tiêu Chuẩn Linh Hoạt', 'VND', 's0-policy-v1', 1600000, '["FULL_PREPAY","HYBRID_DEPOSIT"]'::jsonb, '{}'::jsonb, 'ACTIVE', 0)
     ON CONFLICT (id, room_type_id, property_id) DO UPDATE SET nightly_price = EXCLUDED.nightly_price;
 
-    -- RoomType: Heritage Valley View Suite
-    SELECT id INTO v_rt_id FROM room_types WHERE property_id = v_prop_id AND name = 'Heritage Valley View Suite' LIMIT 1;
+    -- RoomType: Phòng Suite Di Sản View Thung Lũng
+    SELECT id INTO v_rt_id FROM room_types WHERE property_id = v_prop_id AND name = 'Phòng Suite Di Sản View Thung Lũng' LIMIT 1;
     IF v_rt_id IS NULL THEN
         INSERT INTO room_types (property_id, sale_mode, name, base_quantity, max_adults, max_occupants, status, metadata, version)
-        VALUES (v_prop_id, 'ROOM_BASED', 'Heritage Valley View Suite', 6, 2, 3, 'ACTIVE', '{"description": "Heritage Valley View Suite"}'::jsonb, 0)
+        VALUES (v_prop_id, 'ROOM_BASED', 'Phòng Suite Di Sản View Thung Lũng', 6, 2, 3, 'ACTIVE', '{"description": "Phòng Suite Di Sản View Thung Lũng"}'::jsonb, 0)
         RETURNING id INTO v_rt_id;
     END IF;
 
@@ -775,11 +775,11 @@ BEGIN
     VALUES (v_prop_id, v_rt_id, 'Gói Tiêu Chuẩn Linh Hoạt', 'VND', 's0-policy-v1', 4500000, '["FULL_PREPAY","HYBRID_DEPOSIT"]'::jsonb, '{}'::jsonb, 'ACTIVE', 0)
     ON CONFLICT (id, room_type_id, property_id) DO UPDATE SET nightly_price = EXCLUDED.nightly_price;
 
-    -- Property: Tuyen Lam Lake View Villa & Spa
-    SELECT id INTO v_prop_id FROM properties WHERE title = 'Tuyen Lam Lake View Villa & Spa' LIMIT 1;
+    -- Property: Biệt Thự & Spa Nghỉ Dưỡng Hồ Tuyền Lâm
+    SELECT id INTO v_prop_id FROM properties WHERE title = 'Biệt Thự & Spa Nghỉ Dưỡng Hồ Tuyền Lâm' LIMIT 1;
     IF v_prop_id IS NULL THEN
         INSERT INTO properties (host_id, title, description, address, city, price_per_night, cleaning_fee, max_guests, bedrooms, beds, bathrooms, property_type, sale_mode, timezone, status, rating_avg)
-        VALUES (v_host_id, 'Tuyen Lam Lake View Villa & Spa', 'Quần thể villa mang hơi thở vùng núi Thụy Sĩ bên bờ hồ Tuyền Lâm phẳng lặng, bến du thuyền riêng và không gian nghỉ dưỡng tuyệt hảo.', 'Khu du lịch Hồ Tuyền Lâm, Phường 4, TP. Đà Lạt', 'Da Lat', 1850000, 250000, 6, 3, 3, 2, 'VILLA', 'ROOM_BASED', 'Asia/Ho_Chi_Minh', 'ACTIVE', 4.93)
+        VALUES (v_host_id, 'Biệt Thự & Spa Nghỉ Dưỡng Hồ Tuyền Lâm', 'Quần thể villa mang hơi thở vùng núi Thụy Sĩ bên bờ hồ Tuyền Lâm phẳng lặng, bến du thuyền riêng và không gian nghỉ dưỡng tuyệt hảo.', 'Khu du lịch Hồ Tuyền Lâm, Phường 4, TP. Đà Lạt', 'Da Lat', 1850000, 250000, 6, 3, 3, 2, 'VILLA', 'ROOM_BASED', 'Asia/Ho_Chi_Minh', 'ACTIVE', 4.93)
         RETURNING id INTO v_prop_id;
     END IF;
 
@@ -809,11 +809,11 @@ BEGIN
     SELECT v_prop_id, id FROM amenities WHERE name = 'TV'
     ON CONFLICT DO NOTHING;
 
-    -- RoomType: Lakeview Superior Balcony Room
-    SELECT id INTO v_rt_id FROM room_types WHERE property_id = v_prop_id AND name = 'Lakeview Superior Balcony Room' LIMIT 1;
+    -- RoomType: Phòng Superior Ban Công View Hồ Tuyền Lâm
+    SELECT id INTO v_rt_id FROM room_types WHERE property_id = v_prop_id AND name = 'Phòng Superior Ban Công View Hồ Tuyền Lâm' LIMIT 1;
     IF v_rt_id IS NULL THEN
         INSERT INTO room_types (property_id, sale_mode, name, base_quantity, max_adults, max_occupants, status, metadata, version)
-        VALUES (v_prop_id, 'ROOM_BASED', 'Lakeview Superior Balcony Room', 7, 2, 2, 'ACTIVE', '{"description": "Lakeview Superior Balcony Room"}'::jsonb, 0)
+        VALUES (v_prop_id, 'ROOM_BASED', 'Phòng Superior Ban Công View Hồ Tuyền Lâm', 7, 2, 2, 'ACTIVE', '{"description": "Phòng Superior Ban Công View Hồ Tuyền Lâm"}'::jsonb, 0)
         RETURNING id INTO v_rt_id;
     END IF;
 
@@ -822,11 +822,11 @@ BEGIN
     VALUES (v_prop_id, v_rt_id, 'Gói Tiêu Chuẩn Linh Hoạt', 'VND', 's0-policy-v1', 1850000, '["FULL_PREPAY","HYBRID_DEPOSIT"]'::jsonb, '{}'::jsonb, 'ACTIVE', 0)
     ON CONFLICT (id, room_type_id, property_id) DO UPDATE SET nightly_price = EXCLUDED.nightly_price;
 
-    -- RoomType: Romantic Lake Mist Suite
-    SELECT id INTO v_rt_id FROM room_types WHERE property_id = v_prop_id AND name = 'Romantic Lake Mist Suite' LIMIT 1;
+    -- RoomType: Phòng Suite Lãng Mạn Sương Mờ Hồ Tuyền Lâm
+    SELECT id INTO v_rt_id FROM room_types WHERE property_id = v_prop_id AND name = 'Phòng Suite Lãng Mạn Sương Mờ Hồ Tuyền Lâm' LIMIT 1;
     IF v_rt_id IS NULL THEN
         INSERT INTO room_types (property_id, sale_mode, name, base_quantity, max_adults, max_occupants, status, metadata, version)
-        VALUES (v_prop_id, 'ROOM_BASED', 'Romantic Lake Mist Suite', 5, 2, 3, 'ACTIVE', '{"description": "Romantic Lake Mist Suite"}'::jsonb, 0)
+        VALUES (v_prop_id, 'ROOM_BASED', 'Phòng Suite Lãng Mạn Sương Mờ Hồ Tuyền Lâm', 5, 2, 3, 'ACTIVE', '{"description": "Phòng Suite Lãng Mạn Sương Mờ Hồ Tuyền Lâm"}'::jsonb, 0)
         RETURNING id INTO v_rt_id;
     END IF;
 
@@ -835,11 +835,11 @@ BEGIN
     VALUES (v_prop_id, v_rt_id, 'Gói Tiêu Chuẩn Linh Hoạt', 'VND', 's0-policy-v1', 2950000, '["FULL_PREPAY","HYBRID_DEPOSIT"]'::jsonb, '{}'::jsonb, 'ACTIVE', 0)
     ON CONFLICT (id, room_type_id, property_id) DO UPDATE SET nightly_price = EXCLUDED.nightly_price;
 
-    -- RoomType: Lakeside Family Villa Unit
-    SELECT id INTO v_rt_id FROM room_types WHERE property_id = v_prop_id AND name = 'Lakeside Family Villa Unit' LIMIT 1;
+    -- RoomType: Biệt Thự Gia Đình Ven Hồ Tuyền Lâm
+    SELECT id INTO v_rt_id FROM room_types WHERE property_id = v_prop_id AND name = 'Biệt Thự Gia Đình Ven Hồ Tuyền Lâm' LIMIT 1;
     IF v_rt_id IS NULL THEN
         INSERT INTO room_types (property_id, sale_mode, name, base_quantity, max_adults, max_occupants, status, metadata, version)
-        VALUES (v_prop_id, 'ROOM_BASED', 'Lakeside Family Villa Unit', 2, 4, 6, 'ACTIVE', '{"description": "Lakeside Family Villa Unit"}'::jsonb, 0)
+        VALUES (v_prop_id, 'ROOM_BASED', 'Biệt Thự Gia Đình Ven Hồ Tuyền Lâm', 2, 4, 6, 'ACTIVE', '{"description": "Biệt Thự Gia Đình Ven Hồ Tuyền Lâm"}'::jsonb, 0)
         RETURNING id INTO v_rt_id;
     END IF;
 
@@ -848,11 +848,11 @@ BEGIN
     VALUES (v_prop_id, v_rt_id, 'Gói Tiêu Chuẩn Linh Hoạt', 'VND', 's0-policy-v1', 5200000, '["FULL_PREPAY","HYBRID_DEPOSIT"]'::jsonb, '{}'::jsonb, 'ACTIVE', 0)
     ON CONFLICT (id, room_type_id, property_id) DO UPDATE SET nightly_price = EXCLUDED.nightly_price;
 
-    -- Property: Le Petit Dalat Vintage Homestay
-    SELECT id INTO v_prop_id FROM properties WHERE title = 'Le Petit Dalat Vintage Homestay' LIMIT 1;
+    -- Property: Homestay Vintage Gỗ Mộc Le Petit Đà Lạt
+    SELECT id INTO v_prop_id FROM properties WHERE title = 'Homestay Vintage Gỗ Mộc Le Petit Đà Lạt' LIMIT 1;
     IF v_prop_id IS NULL THEN
         INSERT INTO properties (host_id, title, description, address, city, price_per_night, cleaning_fee, max_guests, bedrooms, beds, bathrooms, property_type, sale_mode, timezone, status, rating_avg)
-        VALUES (v_host_id, 'Le Petit Dalat Vintage Homestay', 'Ngôi nhà gỗ vintage ngập tràn hoa cẩm tú cầu, hiên nhà thưởng cà phê ngắm đồi dã quỳ và thung lũng đèn đêm huyền ảo.', '88 Mai Anh Đào, Phường 8, TP. Đà Lạt', 'Da Lat', 750000, 80000, 6, 3, 3, 2, 'HOMESTAY', 'ROOM_BASED', 'Asia/Ho_Chi_Minh', 'ACTIVE', 4.84)
+        VALUES (v_host_id, 'Homestay Vintage Gỗ Mộc Le Petit Đà Lạt', 'Ngôi nhà gỗ vintage ngập tràn hoa cẩm tú cầu, hiên nhà thưởng cà phê ngắm đồi dã quỳ và thung lũng đèn đêm huyền ảo.', '88 Mai Anh Đào, Phường 8, TP. Đà Lạt', 'Da Lat', 750000, 80000, 6, 3, 3, 2, 'HOMESTAY', 'ROOM_BASED', 'Asia/Ho_Chi_Minh', 'ACTIVE', 4.84)
         RETURNING id INTO v_prop_id;
     END IF;
 
@@ -918,11 +918,11 @@ BEGIN
     -- ----------------------------------------------------------------------
     -- DESTINATION: Phu Quoc
     -- ----------------------------------------------------------------------
-    -- Property: Phu Quoc Emerald Bay Luxury Resort
-    SELECT id INTO v_prop_id FROM properties WHERE title = 'Phu Quoc Emerald Bay Luxury Resort' LIMIT 1;
+    -- Property: Khu Nghỉ Dưỡng 5 Sao Bãi Khem Phú Quốc
+    SELECT id INTO v_prop_id FROM properties WHERE title = 'Khu Nghỉ Dưỡng 5 Sao Bãi Khem Phú Quốc' LIMIT 1;
     IF v_prop_id IS NULL THEN
         INSERT INTO properties (host_id, title, description, address, city, price_per_night, cleaning_fee, max_guests, bedrooms, beds, bathrooms, property_type, sale_mode, timezone, status, rating_avg)
-        VALUES (v_host_id, 'Phu Quoc Emerald Bay Luxury Resort', 'Resort biển danh giá bên Bãi Khem cát trắng như kem, kiến trúc đại học Pháp độc bản, hồ bơi vỏ sò biểu tượng và bãi tắm riêng biệt.', 'Bãi Khem, Phường An Thới, TP. Phú Quốc', 'Phu Quoc', 2800000, 350000, 6, 3, 3, 2, 'RESORT', 'ROOM_BASED', 'Asia/Ho_Chi_Minh', 'ACTIVE', 4.97)
+        VALUES (v_host_id, 'Khu Nghỉ Dưỡng 5 Sao Bãi Khem Phú Quốc', 'Resort biển danh giá bên Bãi Khem cát trắng như kem, kiến trúc đại học Pháp độc bản, hồ bơi vỏ sò biểu tượng và bãi tắm riêng biệt.', 'Bãi Khem, Phường An Thới, TP. Phú Quốc', 'Phu Quoc', 2800000, 350000, 6, 3, 3, 2, 'RESORT', 'ROOM_BASED', 'Asia/Ho_Chi_Minh', 'ACTIVE', 4.97)
         RETURNING id INTO v_prop_id;
     END IF;
 
@@ -955,11 +955,11 @@ BEGIN
     SELECT v_prop_id, id FROM amenities WHERE name = 'Workspace'
     ON CONFLICT DO NOTHING;
 
-    -- RoomType: Emerald Ocean Deluxe Room
-    SELECT id INTO v_rt_id FROM room_types WHERE property_id = v_prop_id AND name = 'Emerald Ocean Deluxe Room' LIMIT 1;
+    -- RoomType: Phòng Deluxe Biển Ngọc Bãi Khem
+    SELECT id INTO v_rt_id FROM room_types WHERE property_id = v_prop_id AND name = 'Phòng Deluxe Biển Ngọc Bãi Khem' LIMIT 1;
     IF v_rt_id IS NULL THEN
         INSERT INTO room_types (property_id, sale_mode, name, base_quantity, max_adults, max_occupants, status, metadata, version)
-        VALUES (v_prop_id, 'ROOM_BASED', 'Emerald Ocean Deluxe Room', 15, 2, 3, 'ACTIVE', '{"description": "Emerald Ocean Deluxe Room"}'::jsonb, 0)
+        VALUES (v_prop_id, 'ROOM_BASED', 'Phòng Deluxe Biển Ngọc Bãi Khem', 15, 2, 3, 'ACTIVE', '{"description": "Phòng Deluxe Biển Ngọc Bãi Khem"}'::jsonb, 0)
         RETURNING id INTO v_rt_id;
     END IF;
 
@@ -968,11 +968,11 @@ BEGIN
     VALUES (v_prop_id, v_rt_id, 'Gói Tiêu Chuẩn Linh Hoạt', 'VND', 's0-policy-v1', 2800000, '["FULL_PREPAY","HYBRID_DEPOSIT"]'::jsonb, '{}'::jsonb, 'ACTIVE', 0)
     ON CONFLICT (id, room_type_id, property_id) DO UPDATE SET nightly_price = EXCLUDED.nightly_price;
 
-    -- RoomType: Bayview Premier Pavilion Suite
-    SELECT id INTO v_rt_id FROM room_types WHERE property_id = v_prop_id AND name = 'Bayview Premier Pavilion Suite' LIMIT 1;
+    -- RoomType: Phòng Suite Pavilion Premier View Vịnh Biển
+    SELECT id INTO v_rt_id FROM room_types WHERE property_id = v_prop_id AND name = 'Phòng Suite Pavilion Premier View Vịnh Biển' LIMIT 1;
     IF v_rt_id IS NULL THEN
         INSERT INTO room_types (property_id, sale_mode, name, base_quantity, max_adults, max_occupants, status, metadata, version)
-        VALUES (v_prop_id, 'ROOM_BASED', 'Bayview Premier Pavilion Suite', 8, 2, 3, 'ACTIVE', '{"description": "Bayview Premier Pavilion Suite"}'::jsonb, 0)
+        VALUES (v_prop_id, 'ROOM_BASED', 'Phòng Suite Pavilion Premier View Vịnh Biển', 8, 2, 3, 'ACTIVE', '{"description": "Phòng Suite Pavilion Premier View Vịnh Biển"}'::jsonb, 0)
         RETURNING id INTO v_rt_id;
     END IF;
 
@@ -981,11 +981,11 @@ BEGIN
     VALUES (v_prop_id, v_rt_id, 'Gói Tiêu Chuẩn Linh Hoạt', 'VND', 's0-policy-v1', 4600000, '["FULL_PREPAY","HYBRID_DEPOSIT"]'::jsonb, '{}'::jsonb, 'ACTIVE', 0)
     ON CONFLICT (id, room_type_id, property_id) DO UPDATE SET nightly_price = EXCLUDED.nightly_price;
 
-    -- RoomType: Beachfront Private Pool Villa Suite
-    SELECT id INTO v_rt_id FROM room_types WHERE property_id = v_prop_id AND name = 'Beachfront Private Pool Villa Suite' LIMIT 1;
+    -- RoomType: Biệt Thự Hồ Bơi Riêng Sát Biển Bãi Khem
+    SELECT id INTO v_rt_id FROM room_types WHERE property_id = v_prop_id AND name = 'Biệt Thự Hồ Bơi Riêng Sát Biển Bãi Khem' LIMIT 1;
     IF v_rt_id IS NULL THEN
         INSERT INTO room_types (property_id, sale_mode, name, base_quantity, max_adults, max_occupants, status, metadata, version)
-        VALUES (v_prop_id, 'ROOM_BASED', 'Beachfront Private Pool Villa Suite', 3, 4, 6, 'ACTIVE', '{"description": "Beachfront Private Pool Villa Suite"}'::jsonb, 0)
+        VALUES (v_prop_id, 'ROOM_BASED', 'Biệt Thự Hồ Bơi Riêng Sát Biển Bãi Khem', 3, 4, 6, 'ACTIVE', '{"description": "Biệt Thự Hồ Bơi Riêng Sát Biển Bãi Khem"}'::jsonb, 0)
         RETURNING id INTO v_rt_id;
     END IF;
 
@@ -994,11 +994,11 @@ BEGIN
     VALUES (v_prop_id, v_rt_id, 'Gói Tiêu Chuẩn Linh Hoạt', 'VND', 's0-policy-v1', 8900000, '["FULL_PREPAY","HYBRID_DEPOSIT"]'::jsonb, '{}'::jsonb, 'ACTIVE', 0)
     ON CONFLICT (id, room_type_id, property_id) DO UPDATE SET nightly_price = EXCLUDED.nightly_price;
 
-    -- Property: Sunset Sanato Beachside Villas
-    SELECT id INTO v_prop_id FROM properties WHERE title = 'Sunset Sanato Beachside Villas' LIMIT 1;
+    -- Property: Biệt Thự Nghỉ Dưỡng Hoàng Hôn Sunset Sanato Phú Quốc
+    SELECT id INTO v_prop_id FROM properties WHERE title = 'Biệt Thự Nghỉ Dưỡng Hoàng Hôn Sunset Sanato Phú Quốc' LIMIT 1;
     IF v_prop_id IS NULL THEN
         INSERT INTO properties (host_id, title, description, address, city, price_per_night, cleaning_fee, max_guests, bedrooms, beds, bathrooms, property_type, sale_mode, timezone, status, rating_avg)
-        VALUES (v_host_id, 'Sunset Sanato Beachside Villas', 'Quần thể biệt thự nghỉ dưỡng bên bờ biển Bãi Trường nổi tiếng với hoàng hôn rực rỡ, bãi biển dài và không gian tiệc cocktail lãng mạn.', 'Khu Bãi Trường, Xã Dương Tơ, TP. Phú Quốc', 'Phu Quoc', 1750000, 200000, 6, 3, 3, 2, 'VILLA', 'ROOM_BASED', 'Asia/Ho_Chi_Minh', 'ACTIVE', 4.86)
+        VALUES (v_host_id, 'Biệt Thự Nghỉ Dưỡng Hoàng Hôn Sunset Sanato Phú Quốc', 'Quần thể biệt thự nghỉ dưỡng bên bờ biển Bãi Trường nổi tiếng với hoàng hôn rực rỡ, bãi biển dài và không gian tiệc cocktail lãng mạn.', 'Khu Bãi Trường, Xã Dương Tơ, TP. Phú Quốc', 'Phu Quoc', 1750000, 200000, 6, 3, 3, 2, 'VILLA', 'ROOM_BASED', 'Asia/Ho_Chi_Minh', 'ACTIVE', 4.86)
         RETURNING id INTO v_prop_id;
     END IF;
 
@@ -1028,11 +1028,11 @@ BEGIN
     SELECT v_prop_id, id FROM amenities WHERE name = 'Parking'
     ON CONFLICT DO NOTHING;
 
-    -- RoomType: Sunset Deluxe Queen Room
-    SELECT id INTO v_rt_id FROM room_types WHERE property_id = v_prop_id AND name = 'Sunset Deluxe Queen Room' LIMIT 1;
+    -- RoomType: Phòng Queen Deluxe View Hoàng Hôn Bãi Trường
+    SELECT id INTO v_rt_id FROM room_types WHERE property_id = v_prop_id AND name = 'Phòng Queen Deluxe View Hoàng Hôn Bãi Trường' LIMIT 1;
     IF v_rt_id IS NULL THEN
         INSERT INTO room_types (property_id, sale_mode, name, base_quantity, max_adults, max_occupants, status, metadata, version)
-        VALUES (v_prop_id, 'ROOM_BASED', 'Sunset Deluxe Queen Room', 8, 2, 2, 'ACTIVE', '{"description": "Sunset Deluxe Queen Room"}'::jsonb, 0)
+        VALUES (v_prop_id, 'ROOM_BASED', 'Phòng Queen Deluxe View Hoàng Hôn Bãi Trường', 8, 2, 2, 'ACTIVE', '{"description": "Phòng Queen Deluxe View Hoàng Hôn Bãi Trường"}'::jsonb, 0)
         RETURNING id INTO v_rt_id;
     END IF;
 
@@ -1041,11 +1041,11 @@ BEGIN
     VALUES (v_prop_id, v_rt_id, 'Gói Tiêu Chuẩn Linh Hoạt', 'VND', 's0-policy-v1', 1750000, '["FULL_PREPAY","HYBRID_DEPOSIT"]'::jsonb, '{}'::jsonb, 'ACTIVE', 0)
     ON CONFLICT (id, room_type_id, property_id) DO UPDATE SET nightly_price = EXCLUDED.nightly_price;
 
-    -- RoomType: Beachside Garden Villa Suite
-    SELECT id INTO v_rt_id FROM room_types WHERE property_id = v_prop_id AND name = 'Beachside Garden Villa Suite' LIMIT 1;
+    -- RoomType: Biệt Thự Sân Vườn Ven Biển Sunset Sanato
+    SELECT id INTO v_rt_id FROM room_types WHERE property_id = v_prop_id AND name = 'Biệt Thự Sân Vườn Ven Biển Sunset Sanato' LIMIT 1;
     IF v_rt_id IS NULL THEN
         INSERT INTO room_types (property_id, sale_mode, name, base_quantity, max_adults, max_occupants, status, metadata, version)
-        VALUES (v_prop_id, 'ROOM_BASED', 'Beachside Garden Villa Suite', 5, 2, 3, 'ACTIVE', '{"description": "Beachside Garden Villa Suite"}'::jsonb, 0)
+        VALUES (v_prop_id, 'ROOM_BASED', 'Biệt Thự Sân Vườn Ven Biển Sunset Sanato', 5, 2, 3, 'ACTIVE', '{"description": "Biệt Thự Sân Vườn Ven Biển Sunset Sanato"}'::jsonb, 0)
         RETURNING id INTO v_rt_id;
     END IF;
 
@@ -1054,11 +1054,11 @@ BEGIN
     VALUES (v_prop_id, v_rt_id, 'Gói Tiêu Chuẩn Linh Hoạt', 'VND', 's0-policy-v1', 2950000, '["FULL_PREPAY","HYBRID_DEPOSIT"]'::jsonb, '{}'::jsonb, 'ACTIVE', 0)
     ON CONFLICT (id, room_type_id, property_id) DO UPDATE SET nightly_price = EXCLUDED.nightly_price;
 
-    -- RoomType: Three-Bedroom Ocean Panorama Villa
-    SELECT id INTO v_rt_id FROM room_types WHERE property_id = v_prop_id AND name = 'Three-Bedroom Ocean Panorama Villa' LIMIT 1;
+    -- RoomType: Biệt Thự 3 Phòng Ngủ Toàn Cảnh Hoàng Hôn Biển
+    SELECT id INTO v_rt_id FROM room_types WHERE property_id = v_prop_id AND name = 'Biệt Thự 3 Phòng Ngủ Toàn Cảnh Hoàng Hôn Biển' LIMIT 1;
     IF v_rt_id IS NULL THEN
         INSERT INTO room_types (property_id, sale_mode, name, base_quantity, max_adults, max_occupants, status, metadata, version)
-        VALUES (v_prop_id, 'ROOM_BASED', 'Three-Bedroom Ocean Panorama Villa', 2, 6, 8, 'ACTIVE', '{"description": "Three-Bedroom Ocean Panorama Villa"}'::jsonb, 0)
+        VALUES (v_prop_id, 'ROOM_BASED', 'Biệt Thự 3 Phòng Ngủ Toàn Cảnh Hoàng Hôn Biển', 2, 6, 8, 'ACTIVE', '{"description": "Biệt Thự 3 Phòng Ngủ Toàn Cảnh Hoàng Hôn Biển"}'::jsonb, 0)
         RETURNING id INTO v_rt_id;
     END IF;
 
@@ -1067,11 +1067,11 @@ BEGIN
     VALUES (v_prop_id, v_rt_id, 'Gói Tiêu Chuẩn Linh Hoạt', 'VND', 's0-policy-v1', 6500000, '["FULL_PREPAY","HYBRID_DEPOSIT"]'::jsonb, '{}'::jsonb, 'ACTIVE', 0)
     ON CONFLICT (id, room_type_id, property_id) DO UPDATE SET nightly_price = EXCLUDED.nightly_price;
 
-    -- Property: Duong Dong Central Boutique Hotel
-    SELECT id INTO v_prop_id FROM properties WHERE title = 'Duong Dong Central Boutique Hotel' LIMIT 1;
+    -- Property: Khách Sạn Trung Tâm Thị Trấn Dương Đông Phú Quốc
+    SELECT id INTO v_prop_id FROM properties WHERE title = 'Khách Sạn Trung Tâm Thị Trấn Dương Đông Phú Quốc' LIMIT 1;
     IF v_prop_id IS NULL THEN
         INSERT INTO properties (host_id, title, description, address, city, price_per_night, cleaning_fee, max_guests, bedrooms, beds, bathrooms, property_type, sale_mode, timezone, status, rating_avg)
-        VALUES (v_host_id, 'Duong Dong Central Boutique Hotel', 'Khách sạn phong cách hiện đại ngay trung tâm thị trấn Dương Đông, cách chợ đêm ẩm thực Phú Quốc 3 phút đi bộ, bể bơi tầng thượng.', '145 Trần Hưng Đạo, Phường Dương Đông, TP. Phú Quốc', 'Phu Quoc', 950000, 100000, 6, 3, 3, 2, 'HOTEL_ROOM', 'ROOM_BASED', 'Asia/Ho_Chi_Minh', 'ACTIVE', 4.79)
+        VALUES (v_host_id, 'Khách Sạn Trung Tâm Thị Trấn Dương Đông Phú Quốc', 'Khách sạn phong cách hiện đại ngay trung tâm thị trấn Dương Đông, cách chợ đêm ẩm thực Phú Quốc 3 phút đi bộ, bể bơi tầng thượng.', '145 Trần Hưng Đạo, Phường Dương Đông, TP. Phú Quốc', 'Phu Quoc', 950000, 100000, 6, 3, 3, 2, 'HOTEL_ROOM', 'ROOM_BASED', 'Asia/Ho_Chi_Minh', 'ACTIVE', 4.79)
         RETURNING id INTO v_prop_id;
     END IF;
 
@@ -1101,11 +1101,11 @@ BEGIN
     SELECT v_prop_id, id FROM amenities WHERE name = 'Workspace'
     ON CONFLICT DO NOTHING;
 
-    -- RoomType: Standard Queen Central Room
-    SELECT id INTO v_rt_id FROM room_types WHERE property_id = v_prop_id AND name = 'Standard Queen Central Room' LIMIT 1;
+    -- RoomType: Phòng Queen Tiêu Chuẩn Trung Tâm Dương Đông
+    SELECT id INTO v_rt_id FROM room_types WHERE property_id = v_prop_id AND name = 'Phòng Queen Tiêu Chuẩn Trung Tâm Dương Đông' LIMIT 1;
     IF v_rt_id IS NULL THEN
         INSERT INTO room_types (property_id, sale_mode, name, base_quantity, max_adults, max_occupants, status, metadata, version)
-        VALUES (v_prop_id, 'ROOM_BASED', 'Standard Queen Central Room', 10, 2, 2, 'ACTIVE', '{"description": "Standard Queen Central Room"}'::jsonb, 0)
+        VALUES (v_prop_id, 'ROOM_BASED', 'Phòng Queen Tiêu Chuẩn Trung Tâm Dương Đông', 10, 2, 2, 'ACTIVE', '{"description": "Phòng Queen Tiêu Chuẩn Trung Tâm Dương Đông"}'::jsonb, 0)
         RETURNING id INTO v_rt_id;
     END IF;
 
@@ -1114,11 +1114,11 @@ BEGIN
     VALUES (v_prop_id, v_rt_id, 'Gói Tiêu Chuẩn Linh Hoạt', 'VND', 's0-policy-v1', 950000, '["FULL_PREPAY","HYBRID_DEPOSIT"]'::jsonb, '{}'::jsonb, 'ACTIVE', 0)
     ON CONFLICT (id, room_type_id, property_id) DO UPDATE SET nightly_price = EXCLUDED.nightly_price;
 
-    -- RoomType: Deluxe Balcony Sea Breeze Room
-    SELECT id INTO v_rt_id FROM room_types WHERE property_id = v_prop_id AND name = 'Deluxe Balcony Sea Breeze Room' LIMIT 1;
+    -- RoomType: Phòng Deluxe Ban Công Lộng Gió Biển
+    SELECT id INTO v_rt_id FROM room_types WHERE property_id = v_prop_id AND name = 'Phòng Deluxe Ban Công Lộng Gió Biển' LIMIT 1;
     IF v_rt_id IS NULL THEN
         INSERT INTO room_types (property_id, sale_mode, name, base_quantity, max_adults, max_occupants, status, metadata, version)
-        VALUES (v_prop_id, 'ROOM_BASED', 'Deluxe Balcony Sea Breeze Room', 8, 2, 3, 'ACTIVE', '{"description": "Deluxe Balcony Sea Breeze Room"}'::jsonb, 0)
+        VALUES (v_prop_id, 'ROOM_BASED', 'Phòng Deluxe Ban Công Lộng Gió Biển', 8, 2, 3, 'ACTIVE', '{"description": "Phòng Deluxe Ban Công Lộng Gió Biển"}'::jsonb, 0)
         RETURNING id INTO v_rt_id;
     END IF;
 
@@ -1127,11 +1127,11 @@ BEGIN
     VALUES (v_prop_id, v_rt_id, 'Gói Tiêu Chuẩn Linh Hoạt', 'VND', 's0-policy-v1', 1550000, '["FULL_PREPAY","HYBRID_DEPOSIT"]'::jsonb, '{}'::jsonb, 'ACTIVE', 0)
     ON CONFLICT (id, room_type_id, property_id) DO UPDATE SET nightly_price = EXCLUDED.nightly_price;
 
-    -- RoomType: Family Connecting City Suite
-    SELECT id INTO v_rt_id FROM room_types WHERE property_id = v_prop_id AND name = 'Family Connecting City Suite' LIMIT 1;
+    -- RoomType: Căn Hộ Gia Đình Thông Nhau Trung Tâm Phố Biển
+    SELECT id INTO v_rt_id FROM room_types WHERE property_id = v_prop_id AND name = 'Căn Hộ Gia Đình Thông Nhau Trung Tâm Phố Biển' LIMIT 1;
     IF v_rt_id IS NULL THEN
         INSERT INTO room_types (property_id, sale_mode, name, base_quantity, max_adults, max_occupants, status, metadata, version)
-        VALUES (v_prop_id, 'ROOM_BASED', 'Family Connecting City Suite', 4, 4, 5, 'ACTIVE', '{"description": "Family Connecting City Suite"}'::jsonb, 0)
+        VALUES (v_prop_id, 'ROOM_BASED', 'Căn Hộ Gia Đình Thông Nhau Trung Tâm Phố Biển', 4, 4, 5, 'ACTIVE', '{"description": "Căn Hộ Gia Đình Thông Nhau Trung Tâm Phố Biển"}'::jsonb, 0)
         RETURNING id INTO v_rt_id;
     END IF;
 

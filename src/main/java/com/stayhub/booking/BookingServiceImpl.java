@@ -148,6 +148,14 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
+    public List<BookingResponse> getRecentConfirmedBookingsByHost(Long hostId) {
+        return bookingRepository.findRecentBookingsByHost(hostId, BookingStatus.CONFIRMED,
+                        org.springframework.data.domain.PageRequest.of(0, 20)).stream()
+                .map(bookingMapper::toResponse)
+                .toList();
+    }
+
+    @Override
     @Transactional
     public BookingResponse acceptBooking(Long hostId, Long bookingId) {
         Booking booking = findHostBookingForUpdate(hostId, bookingId);

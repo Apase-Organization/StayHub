@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register - StayHub</title>
+    <title>Sign Up - StayHub</title>
     <link th:href="@{/css/tailwind.css}" rel="stylesheet">
 </head>
 <body class="bg-bg-light text-text-900 font-sans flex flex-col min-h-screen">
@@ -12,7 +12,7 @@
 
     <main class="flex-grow flex items-center justify-center p-6">
         <div class="bg-bg-white border border-border rounded-xl shadow-sm w-full max-w-md p-8">
-            <h1 class="text-2xl font-bold text-center mb-6">Create an account</h1>
+            <h1 class="text-2xl font-bold text-center mb-6">Tạo tài khoản</h1>
 
             <!-- Business Error Message (e.g., Email exists) -->
             <div th:if="${errorMessage}" class="bg-primary-500 bg-opacity-10 text-primary-600 p-3 rounded-lg mb-4 text-sm text-center" 
@@ -22,12 +22,12 @@
             <!-- Registration Form -->
             <form th:action="@{/register}" th:object="${registerRequest}" method="post" class="space-y-4">
                 <div th:if="${#fields.hasGlobalErrors()}" class="bg-primary-500 bg-opacity-10 text-primary-600 p-3 rounded-lg mb-4 text-sm text-center">
-                    <p th:each="error : ${#fields.globalErrors()}" th:text="${error}">Registration error</p>
+                    <p th:each="error : ${#fields.globalErrors()}" th:text="${error}">Lỗi đăng ký</p>
                 </div>
                 
                 <!-- Full Name Field -->
                 <div>
-                    <label for="fullName" class="block text-sm font-semibold mb-1">Full Name</label>
+                    <label for="fullName" class="block text-sm font-semibold mb-1">Họ và tên</label>
                     <input type="text" id="fullName" th:field="*{fullName}" required
                            class="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:outline-none transition"
                            th:classappend="${#fields.hasErrors('fullName')} ? 'border-primary-500' : ''">
@@ -36,7 +36,7 @@
 
                 <!-- Username Field -->
                 <div>
-                    <label for="username" class="block text-sm font-semibold mb-1">Username</label>
+                    <label for="username" class="block text-sm font-semibold mb-1">Tên đăng nhập</label>
                     <input type="text" id="username" th:field="*{username}" required
                            class="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:outline-none transition"
                            th:classappend="${#fields.hasErrors('username')} ? 'border-primary-500' : ''">
@@ -54,7 +54,7 @@
 
                 <!-- Password Field -->
                 <div>
-                    <label for="password" class="block text-sm font-semibold mb-1">Password</label>
+                    <label for="password" class="block text-sm font-semibold mb-1">Mật khẩu</label>
                     <input type="password" id="password" th:field="*{password}" required
                            class="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:outline-none transition"
                            th:classappend="${#fields.hasErrors('password')} ? 'border-primary-500' : ''">
@@ -63,7 +63,7 @@
 
                 <!-- Confirm Password Field -->
                 <div>
-                    <label for="confirmPassword" class="block text-sm font-semibold mb-1">Confirm Password</label>
+                    <label for="confirmPassword" class="block text-sm font-semibold mb-1">Xác nhận mật khẩu</label>
                     <input type="password" id="confirmPassword" th:field="*{confirmPassword}" required
                            class="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:outline-none transition"
                            th:classappend="${#fields.hasErrors('confirmPassword')} ? 'border-primary-500' : ''">
@@ -72,24 +72,24 @@
 
                 <button type="submit" 
                         class="w-full bg-primary-500 hover:bg-primary-600 text-bg-white font-bold py-3 rounded-lg transition mt-2">
-                    Send verification code
+                    Gửi mã xác minh
                 </button>
             </form>
 
             <div class="my-5 flex items-center gap-3 text-xs font-bold uppercase tracking-wide text-text-gray">
                 <span class="h-px flex-1 bg-border"></span>
-                or
+                hoặc
                 <span class="h-px flex-1 bg-border"></span>
             </div>
 
             <a th:href="@{/oauth2/authorization/google}"
                class="flex w-full items-center justify-center gap-3 rounded-lg border border-border bg-white px-4 py-3 font-bold text-text-900 transition hover:bg-bg-light">
                 <span class="text-lg">G</span>
-                Continue with Google
+                Tiếp tục với Google
             </a>
 
             <div class="mt-6 text-center text-sm text-text-gray">
-                Already have an account? 
+                Bạn đã có tài khoản?
                 <a th:href="@{/login}" class="text-primary-500 hover:underline font-semibold">Sign in</a>
             </div>
         </div>

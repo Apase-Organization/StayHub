@@ -43,7 +43,7 @@ public class AuthController {
             authService.requestRegistrationOtp(request);
             return "redirect:/register/verify?email=" + request.getEmail();
         } catch (DuplicateEmailException exception) {
-            bindingResult.rejectValue("email", exception.getErrorCode(), exception.getMessage());
+            bindingResult.rejectValue("email", exception.getErrorCode(), "Email này đã được đăng ký.");
             request.setPassword(null);
             request.setConfirmPassword(null);
             return "auth/register";
@@ -73,21 +73,21 @@ public class AuthController {
             authService.verifyRegistration(request.getEmail(), request.getOtp());
             return "redirect:/login?registered=true";
         } catch (DuplicateEmailException exception) {
-            bindingResult.rejectValue("email", exception.getErrorCode(), exception.getMessage());
+            bindingResult.rejectValue("email", exception.getErrorCode(), "Email này đã được đăng ký.");
             return "auth/verify-registration";
         } catch (BusinessException exception) {
-            bindingResult.rejectValue("otp", exception.getErrorCode(), exception.getMessage());
+            bindingResult.rejectValue("otp", exception.getErrorCode(), com.stayhub.common.exception.MvcExceptionHandler.displayMessage(exception.getMessage()));
             return "auth/verify-registration";
         }
     }
 
     private void rejectRegistrationBusinessError(BusinessException exception, BindingResult bindingResult) {
         if ("ERR_USERNAME_EXISTS".equals(exception.getErrorCode())) {
-            bindingResult.rejectValue("username", exception.getErrorCode(), exception.getMessage());
+            bindingResult.rejectValue("username", exception.getErrorCode(), com.stayhub.common.exception.MvcExceptionHandler.displayMessage(exception.getMessage()));
         } else if ("ERR_PASSWORD_MISMATCH".equals(exception.getErrorCode())) {
-            bindingResult.rejectValue("confirmPassword", exception.getErrorCode(), exception.getMessage());
+            bindingResult.rejectValue("confirmPassword", exception.getErrorCode(), com.stayhub.common.exception.MvcExceptionHandler.displayMessage(exception.getMessage()));
         } else {
-            bindingResult.reject(exception.getErrorCode(), exception.getMessage());
+            bindingResult.reject(exception.getErrorCode(), com.stayhub.common.exception.MvcExceptionHandler.displayMessage(exception.getMessage()));
         }
     }
 }

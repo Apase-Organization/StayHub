@@ -36,10 +36,10 @@
         <!-- Status Badges -->
         <div class="mt-6 flex flex-wrap justify-center gap-2">
             <span id="badge-payment" class="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3.5 py-1 text-xs font-semibold text-amber-700 border border-amber-200">
-                Thanh toán: <span id="text-payment-status">PENDING (Chờ xác nhận)</span>
+                Thanh toán: <span id="text-payment-status">Chờ xác nhận</span>
             </span>
             <span id="badge-booking" class="inline-flex items-center gap-1.5 rounded-full bg-slate-50 px-3.5 py-1 text-xs font-semibold text-slate-700 border border-slate-200">
-                Booking: <span id="text-booking-status">Đang đối soát</span>
+                Đặt phòng: <span id="text-booking-status">Đang đối soát</span>
             </span>
         </div>
 
@@ -50,17 +50,20 @@
                 <span id="txn-ref" class="font-mono font-bold text-slate-800" th:text="${txnRef}">N/A</span>
             </div>
             <div class="flex justify-between items-center py-1 border-b border-slate-200/60">
-                <span class="text-text-gray">Mã kết quả VNPay Gateway:</span>
+                <span class="text-text-gray">Mã kết quả cổng VNPay:</span>
                 <span id="response-code-span" class="font-mono font-bold text-slate-800" th:text="${responseCode}">N/A</span>
             </div>
             <div class="flex justify-between items-center py-1">
                 <span class="text-text-gray">Nguồn xác nhận hợp lệ:</span>
-                <span class="text-xs font-medium text-slate-500">Chỉ chấp nhận chữ ký số server-to-server (IPN)</span>
+                <span class="text-xs font-medium text-slate-500">Chữ ký VNPay đã xác minh tại máy chủ (IPN hoặc POST demo)</span>
             </div>
         </div>
 
         <!-- Action Buttons -->
         <div class="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
+            <button id="retry-status" type="button" class="hidden rounded-xl border border-primary-500 px-6 py-3.5 font-bold text-primary-700 hover:bg-primary-50">
+                Kiểm tra lại trạng thái
+            </button>
             <a id="booking-link" th:href="${localBookingsUrl}" class="inline-flex items-center justify-center rounded-xl bg-primary-500 px-6 py-3.5 font-bold text-white shadow-md shadow-primary-500/20 hover:bg-primary-600 transition-colors">
                 Xem danh sách phòng đã đặt
             </a>
@@ -76,6 +79,10 @@
 <script th:inline="javascript">
     const txnRef = /*[[${txnRef}]]*/ '';
     const responseCode = /*[[${responseCode}]]*/ '';
+    const demoReturnVerificationEnabled = /*[[${demoReturnVerificationEnabled}]]*/ false;
+    const signedReturnParams = /*[[${signedReturnParams}]]*/ {};
+    const csrfToken = /*[[${_csrf.token}]]*/ '';
+    const csrfHeader = /*[[${_csrf.headerName}]]*/ 'X-CSRF-TOKEN';
     const message = document.getElementById('status-message');
     const headline = document.getElementById('headline-title');
     const paymentStatusSpan = document.getElementById('text-payment-status');
@@ -85,11 +92,25 @@
     const iconSpinner = document.getElementById('icon-spinner');
     const iconSuccess = document.getElementById('icon-success');
     const iconFailed = document.getElementById('icon-failed');
+    const retryButton = document.getElementById('retry-status');
+    const bookingLink = document.getElementById('booking-link');
+    const bookingsUrl = bookingLink.href;
+    function setBookingsTab(status) {
+        const url = new URL(bookingsUrl);
+        url.searchParams.set('tab', status === 'CONFIRMED' ? 'upcoming' :
+            status === 'COMPLETED' ? 'completed' :
+            ['CANCELLED', 'REJECTED'].includes(status) ? 'cancelled' : 'pending');
+        bookingLink.href = url.toString();
+    }
+    setBookingsTab(null);
 
+    const statusLabels = {PENDING:'Chờ xác nhận',PENDING_PAYMENT:'Chờ thanh toán',CONFIRMED:'Đã xác nhận',COMPLETED:'Đã hoàn tất',REJECTED:'Đã từ chối',SUCCESS:'Thành công',FAILED:'Thất bại',CANCELLED:'Đã hủy',EXPIRED:'Hết hạn'};
+    const displayStatus = value => statusLabels[value] || 'Đang đối soát';
     let pollAttempts = 0;
     const maxPollAttempts = 15;
 
     function renderFailed(reason) {
+        retryButton.classList.add('hidden');
         iconSpinner.classList.add('hidden');
         iconFailed.classList.remove('hidden');
         iconSuccess.classList.add('hidden');
@@ -97,29 +118,31 @@
         headline.classList.add('text-rose-600');
         message.textContent = reason || 'Giao dịch đã bị huỷ hoặc thanh toán không thành công trên VNPay.';
         badgePayment.className = 'inline-flex items-center gap-1.5 rounded-full bg-rose-50 px-3.5 py-1 text-xs font-semibold text-rose-700 border border-rose-200';
-        paymentStatusSpan.textContent = 'FAILED / CANCELLED';
+        paymentStatusSpan.textContent = 'Thất bại / Đã hủy';
     }
 
     function renderSuccess(bookingStatus) {
+        retryButton.classList.add('hidden');
         iconSpinner.classList.add('hidden');
         iconFailed.classList.add('hidden');
         iconSuccess.classList.remove('hidden');
         headline.textContent = 'Thanh toán thành công!';
         headline.classList.remove('text-rose-600');
         headline.classList.add('text-emerald-600');
-        message.textContent = 'VNPay IPN đã xác thực thành công số tiền. Đơn đặt phòng của bạn đã được ghi nhận an toàn!';
+        message.textContent = 'Máy chủ đã xác thực thanh toán VNPay. Đơn đặt phòng của bạn đã được ghi nhận an toàn!';
         badgePayment.className = 'inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3.5 py-1 text-xs font-semibold text-emerald-700 border border-emerald-200';
-        paymentStatusSpan.textContent = 'SUCCESS (Đã xác minh)';
+        paymentStatusSpan.textContent = 'Thành công (Đã xác minh)';
         badgeBooking.className = 'inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3.5 py-1 text-xs font-semibold text-emerald-700 border border-emerald-200';
-        bookingStatusSpan.textContent = bookingStatus || 'CONFIRMED';
+        bookingStatusSpan.textContent = displayStatus(bookingStatus || 'CONFIRMED');
     }
 
     function renderStatusAccessRequired() {
+        retryButton.classList.add('hidden');
         iconSpinner.classList.add('hidden');
         headline.textContent = 'Chưa thể xác minh trạng thái';
-        message.textContent = 'Phiên Guest không có trên địa chỉ trả về hoặc không sở hữu giao dịch này. Thanh toán chưa được xác nhận tại StayHub; hãy mở lại ứng dụng trên localhost và kiểm tra My Bookings. Không thanh toán lần hai cho đến khi đối soát xong.';
+        message.textContent = 'Phiên đăng nhập của khách không có trên địa chỉ trả về hoặc không sở hữu giao dịch này. Thanh toán chưa được xác nhận tại StayHub; hãy mở lại ứng dụng trên localhost và kiểm tra Đặt phòng của tôi. Không thanh toán lần hai cho đến khi đối soát xong.';
         paymentStatusSpan.textContent = 'CHƯA XÁC MINH';
-        bookingStatusSpan.textContent = 'PENDING / CHỜ ĐỐI SOÁT';
+        bookingStatusSpan.textContent = 'Chờ đối soát';
     }
 
     async function pollStatus() {
@@ -130,7 +153,7 @@
 
         // Browser return parameters are untrusted and never determine booking/payment state.
         if (responseCode && responseCode !== '00') {
-            message.textContent = 'VNPay trả về mã ' + responseCode + '. StayHub vẫn đang kiểm tra trạng thái đã xác minh từ server.';
+            message.textContent = 'VNPay trả về mã ' + responseCode + '. StayHub vẫn đang kiểm tra trạng thái đã xác minh từ máy chủ.';
         }
 
         pollAttempts++;
@@ -146,8 +169,9 @@
             const payload = await response.json();
             if (payload.success && payload.data) {
                 const data = payload.data;
-                paymentStatusSpan.textContent = data.paymentStatus;
-                bookingStatusSpan.textContent = data.bookingStatus;
+                setBookingsTab(data.bookingStatus);
+                paymentStatusSpan.textContent = displayStatus(data.paymentStatus);
+                bookingStatusSpan.textContent = displayStatus(data.bookingStatus);
 
                 if (data.paymentStatus === 'SUCCESS') {
                     renderSuccess(data.bookingStatus);
@@ -165,11 +189,45 @@
             setTimeout(pollStatus, 2000);
         } else {
             iconSpinner.classList.add('hidden');
-            message.textContent = 'Quá trình xác thực IPN mất nhiều thời gian hơn dự kiến. Bạn có thể bấm vào "Xem danh sách phòng đã đặt" bên dưới để kiểm tra lại trạng thái cập nhật.';
+            headline.textContent = 'Chưa nhận được xác nhận thanh toán';
+            message.textContent = responseCode === '00'
+                ? 'VNPay đã chuyển bạn trở lại StayHub, nhưng máy chủ chưa nhận được xác nhận IPN đáng tin cậy. Đơn có thể vẫn đang chờ xử lý. Không thanh toán lần hai; hãy kiểm tra danh sách đặt phòng hoặc thử kiểm tra lại trạng thái sau.'
+                : 'StayHub chưa nhận được xác nhận thanh toán từ máy chủ VNPay. Đơn có thể vẫn đang chờ xử lý. Không thanh toán lần hai; hãy kiểm tra danh sách đặt phòng hoặc thử kiểm tra lại trạng thái sau.';
+            retryButton.classList.remove('hidden');
         }
     }
 
-    pollStatus();
+    retryButton.addEventListener('click', () => {
+        pollAttempts = 0;
+        retryButton.classList.add('hidden');
+        iconSpinner.classList.remove('hidden');
+        headline.textContent = 'Đang đối soát giao dịch';
+        message.textContent = 'StayHub đang kiểm tra lại trạng thái thanh toán đã được máy chủ xác thực.';
+        pollStatus();
+    });
+
+    async function verifyThenPoll() {
+        if (demoReturnVerificationEnabled && txnRef && signedReturnParams.vnp_SecureHash) {
+            try {
+                const response = await fetch('/api/v1/payments/vnpay/verify', {
+                    method: 'POST', credentials: 'same-origin',
+                    headers: {'Content-Type': 'application/json', [csrfHeader]: csrfToken},
+                    body: JSON.stringify({params: signedReturnParams})
+                });
+                if (!response.ok) {
+                    renderStatusAccessRequired();
+                    message.textContent = 'Không thể xác minh bản trả về VNPay (HTTP ' + response.status + '). Hãy đăng nhập đúng tài khoản trên localhost và kiểm tra Đặt phòng của tôi. Không thanh toán lần hai; giao dịch có thể cần IPN hoặc đối soát.';
+                    return;
+                }
+            } catch (error) {
+                renderStatusAccessRequired();
+                message.textContent = 'Không thể kết nối để xác minh thanh toán. Kiểm tra Đặt phòng của tôi; không thanh toán lần hai.';
+                return;
+            }
+        }
+        await pollStatus();
+    }
+    verifyThenPoll();
 </script>
 </body>
 </html>

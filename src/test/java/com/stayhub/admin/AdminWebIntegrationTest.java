@@ -123,6 +123,16 @@ class AdminWebIntegrationTest extends PostgreSqlIntegrationTest {
     }
 
     @Test
+    void overviewRendersHostPerformanceBeforeAnomalies() throws Exception {
+        String html = mockMvc.perform(get("/admin/dashboard").with(authentication(adminAuth)))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        String heading = "Hiệu suất & doanh thu từng chủ chỗ nghỉ";
+        assertThat(html).contains(heading, "Trung tâm Cảnh báo Vận hành", "Host User");
+        assertThat(html.indexOf(heading)).isLessThan(html.indexOf("Trung tâm Cảnh báo Vận hành"));
+        assertThat(html.split(heading, -1)).hasSize(2);
+    }
+
+    @Test
     void adminCanViewDashboardWithRealStatsAndBookingsList() throws Exception {
         Booking booking = bookingRepository.save(Booking.builder()
                 .guest(guest)

@@ -71,14 +71,14 @@ public class BookingController {
                                 RedirectAttributes redirectAttributes) {
         UserPrincipal principal = currentPrincipal(authentication);
         if (bindingResult.hasErrors()) {
-            addBookingPageModel(model, request, principal, "Please review your booking details.");
+            addBookingPageModel(model, request, principal, "Vui lòng kiểm tra thông tin đặt phòng.");
             return "booking/booking";
         }
         try {
             var booking = bookingService.createBooking(principal.getId(), request, clientIp(httpRequest));
             return "redirect:" + booking.getCheckoutUrl();
         } catch (BusinessException exception) {
-            addBookingPageModel(model, request, principal, exception.getMessage());
+            addBookingPageModel(model, request, principal, com.stayhub.common.exception.MvcExceptionHandler.displayMessage(exception.getMessage()));
             return "booking/booking";
         }
     }
@@ -90,14 +90,14 @@ public class BookingController {
         UserPrincipal principal = currentPrincipal(authentication);
         model.addAttribute("booking", bookingService.getBookingForGuest(principal.getId(), id));
         if (!model.containsAttribute("paymentMessage")) {
-            model.addAttribute("paymentMessage", "Mock payment already completed for this booking.");
+            model.addAttribute("paymentMessage", "Thanh toán mô phỏng cho đặt phòng này đã hoàn tất.");
         }
         return "booking/payment";
     }
 
     @GetMapping("/bookings")
     public String showMyBookings(Authentication authentication,
-                                 @RequestParam(defaultValue = "pending") String tab,
+                                 @RequestParam(defaultValue = "upcoming") String tab,
                                  Model model) {
         UserPrincipal principal = currentPrincipal(authentication);
         List<BookingResponse> bookings = bookingService.getGuestBookings(principal.getId());
@@ -127,7 +127,7 @@ public class BookingController {
                                 RedirectAttributes redirectAttributes) {
         UserPrincipal principal = currentPrincipal(authentication);
         bookingService.cancelBooking(principal.getId(), id);
-        redirectAttributes.addFlashAttribute("message", "Booking cancelled successfully.");
+        redirectAttributes.addFlashAttribute("message", "Đã hủy đặt phòng.");
         return "redirect:/bookings/" + id;
     }
 
@@ -193,7 +193,7 @@ public class BookingController {
             model.addAttribute("priceQuote", bookingService.quote(
                     request.getPropertyId(), request.getCheckInDate(), request.getCheckOutDate(), request.getGuests()));
         } catch (BusinessException exception) {
-            model.addAttribute("quoteError", exception.getMessage());
+            model.addAttribute("quoteError", com.stayhub.common.exception.MvcExceptionHandler.displayMessage(exception.getMessage()));
         }
     }
 

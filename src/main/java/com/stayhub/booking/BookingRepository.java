@@ -18,6 +18,19 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
             join fetch p.host
             join fetch b.guest
             left join fetch b.payment
+            where p.host.id = :hostId and b.status = :status
+            order by b.createdAt desc, b.id desc
+            """)
+    List<Booking> findRecentBookingsByHost(@Param("hostId") Long hostId,
+                                           @Param("status") BookingStatus status,
+                                           org.springframework.data.domain.Pageable pageable);
+
+    @Query("""
+            select b from Booking b
+            join fetch b.property p
+            join fetch p.host
+            join fetch b.guest
+            left join fetch b.payment
             where b.id = :bookingId
             """)
     Optional<Booking> findDetailedById(@Param("bookingId") Long bookingId);

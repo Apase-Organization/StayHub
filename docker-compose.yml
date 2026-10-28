@@ -22,7 +22,8 @@ services:
       dockerfile: Dockerfile
     restart: unless-stopped
     environment:
-      SPRING_PROFILES_ACTIVE: docker
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-docker,demo}
+      SEED_DATA_ENABLED: ${SEED_DATA_ENABLED:-true}
       DB_URL: jdbc:postgresql://db:5432/${DB_NAME:-stayhub_db}
       DB_USERNAME: ${DB_USERNAME:-stayhub_user}
       DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set}
@@ -49,8 +50,11 @@ services:
       MAIL_PASSWORD: ${MAIL_PASSWORD:-}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-stayhub-google-client-id-placeholder}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-stayhub-google-client-secret-placeholder}
+      QUOTE_VALIDITY_SECONDS: ${QUOTE_VALIDITY_SECONDS:-300}
+      APP_PAYMENT_DEMO_RETURN_VERIFICATION_ENABLED: ${APP_PAYMENT_DEMO_RETURN_VERIFICATION_ENABLED:-true}
       VNPAY_TMN_CODE: ${VNPAY_TMN_CODE:-}
       VNPAY_HASH_SECRET: ${VNPAY_HASH_SECRET:-}
+      VNPAY_CONFIG_VERSION: ${VNPAY_CONFIG_VERSION:-sandbox-local-v1}
       VNPAY_PAY_URL: ${VNPAY_PAY_URL:-https://sandbox.vnpayment.vn/paymentv2/vpcpay.html}
       VNPAY_RETURN_URL: ${VNPAY_RETURN_URL:-http://localhost:8080/payments/vnpay/return}
       VNPAY_IPN_URL: ${VNPAY_IPN_URL:-http://localhost:8080/api/v1/payments/vnpay/ipn}

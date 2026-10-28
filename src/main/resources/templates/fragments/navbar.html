@@ -1,13 +1,7 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
-    <!-- Include Alpine.js for dropdown interactions -->
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <style>
-        /* Prevent Alpine.js flickers before initialization */
-        [x-cloak] { display: none !important; }
-    </style>
 </head>
 <body>
     <!-- Navbar Fragment -->
@@ -21,9 +15,9 @@
 
         <!-- Search Bar (Center) -->
         <div class="hidden md:flex items-center border border-border rounded-full shadow-sm hover:shadow-md transition cursor-pointer px-4 py-2 text-sm font-semibold text-text-900">
-            <span class="px-4 border-r border-border">Anywhere</span>
-            <span class="px-4 border-r border-border">Any week</span>
-            <span class="px-4 text-text-gray font-normal">Add guests</span>
+            <span class="px-4 border-r border-border">Mọi điểm đến</span>
+            <span class="px-4 border-r border-border">Mọi thời điểm</span>
+            <span class="px-4 text-text-gray font-normal">Thêm khách</span>
             <div class="bg-primary-500 text-bg-white p-2 rounded-full ml-2">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
             </div>
@@ -31,13 +25,14 @@
 
         <!-- Right Menu -->
         <div class="flex items-center gap-4 text-sm font-semibold text-text-900 relative">
-            <a sec:authorize="hasAnyRole('HOST','ADMIN')" th:href="@{/host/dashboard}" class="hidden md:block hover:bg-bg-light px-4 py-2 rounded-full transition">Host workspace</a>
+            <a sec:authorize="hasAnyRole('HOST','ADMIN')" th:href="@{/host/dashboard}" class="hidden md:block hover:bg-bg-light px-4 py-2 rounded-full transition">Khu vực chủ chỗ nghỉ</a>
             
-            <!-- User Menu Pill with Alpine.js -->
-            <div x-data="{ open: false }" class="relative">
+            <!-- Account menu; behavior is initialized within this rendered fragment. -->
+            <div data-account-menu-root class="relative">
                 
                 <!-- Dropdown Trigger Button -->
-                <button @click="open = !open" @click.away="open = false"
+                <button type="button" data-account-menu-trigger aria-expanded="false" aria-controls="account-menu"
+                        aria-label="Mở menu tài khoản"
                         class="flex items-center gap-2 border border-border rounded-full p-2 hover:shadow-md transition cursor-pointer bg-bg-white focus:outline-none">
                     <!-- Hamburger Icon -->
                     <svg class="w-5 h-5 text-text-gray ml-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"></path></svg>
@@ -48,21 +43,15 @@
                 </button>
 
                 <!-- Dropdown Menu -->
-                <div x-show="open" x-cloak
-                     x-transition:enter="transition ease-out duration-100"
-                     x-transition:enter-start="transform opacity-0 scale-95"
-                     x-transition:enter-end="transform opacity-100 scale-100"
-                     x-transition:leave="transition ease-in duration-75"
-                     x-transition:leave-start="transform opacity-100 scale-100"
-                     x-transition:leave-end="transform opacity-0 scale-95"
+                <div id="account-menu" data-account-menu-panel hidden
                      class="absolute right-0 mt-2 w-64 bg-bg-white rounded-xl shadow-lg border border-border py-2 z-50">
                     
                     <!-- 1. UNAUTHENTICATED MENU (Guest is not logged in) -->
                     <div sec:authorize="isAnonymous()">
                         <a th:href="@{/login}" class="block px-4 py-3 hover:bg-bg-light font-bold text-text-900">Sign in</a>
-                        <a th:href="@{/register}" class="block px-4 py-3 hover:bg-bg-light text-text-900">Sign up</a>
+                        <a th:href="@{/register}" class="block px-4 py-3 hover:bg-bg-light text-text-900">Sign Up</a>
                         <hr class="my-1 border-border">
-                        <a href="#" class="block px-4 py-3 hover:bg-bg-light text-text-900">Help</a>
+                        <a href="#" class="block px-4 py-3 hover:bg-bg-light text-text-900">Trợ giúp</a>
                     </div>
 
                     <!-- 2. AUTHENTICATED MENU (User is logged in) -->
@@ -75,21 +64,21 @@
                         </div>
                         
                         <!-- Core Navigation -->
-                        <a th:href="@{/bookings(tab='pending')}" class="block px-4 py-3 hover:bg-bg-light font-bold text-text-900">Trips</a>
-                        <a href="#" class="block px-4 py-3 hover:bg-bg-light font-bold text-text-900">Wishlists</a>
+                        <a th:href="@{/bookings(tab='upcoming')}" class="block px-4 py-3 hover:bg-bg-light font-bold text-text-900">Chuyến đi</a>
+                        <a href="#" class="block px-4 py-3 hover:bg-bg-light font-bold text-text-900">Danh sách yêu thích</a>
                         <hr class="my-1 border-border">
                         
                         <!-- Host Features (Visible to everyone for MVP context, or restrict to HOST role) -->
-                        <a sec:authorize="hasAnyRole('HOST','ADMIN')" th:href="@{/host/dashboard}" class="block px-4 py-3 hover:bg-bg-light text-text-900">Manage listings</a>
-                        <a sec:authorize="hasRole('ADMIN')" th:href="@{/admin/dashboard}" class="block px-4 py-3 hover:bg-bg-light font-bold text-primary-500">Admin dashboard</a>
-                        <a sec:authorize="hasRole('ADMIN')" th:href="@{/admin/financial-operations}" class="block px-4 py-3 hover:bg-bg-light text-text-900">Financial operations</a>
-                        <a th:href="@{/profile}" class="block px-4 py-3 hover:bg-bg-light text-text-900">Profile</a>
+                        <a sec:authorize="hasAnyRole('HOST','ADMIN')" th:href="@{/host/dashboard}" class="block px-4 py-3 hover:bg-bg-light text-text-900">Quản lý chỗ nghỉ</a>
+                        <a sec:authorize="hasRole('ADMIN')" th:href="@{/admin/dashboard}" class="block px-4 py-3 hover:bg-bg-light font-bold text-primary-500">Bảng quản trị</a>
+                        <a sec:authorize="hasRole('ADMIN')" th:href="@{/admin/financial-operations}" class="block px-4 py-3 hover:bg-bg-light text-text-900">Vận hành tài chính</a>
+                        <a th:href="@{/profile}" class="block px-4 py-3 hover:bg-bg-light text-text-900">Hồ sơ</a>
                         <hr class="my-1 border-border">
                         
                         <!-- Logout Action (Requires POST request for Spring Security) -->
                         <form th:action="@{/logout}" method="post" class="w-full m-0 p-0">
                             <button type="submit" class="w-full text-left block px-4 py-3 hover:bg-bg-light text-primary-500 font-semibold">
-                                Log out
+                                Đăng xuất
                             </button>
                         </form>
                     </div>
@@ -97,6 +86,44 @@
                 </div>
             </div>
         </div>
+        <script>
+            (() => {
+                const root = document.querySelector('[data-account-menu-root]');
+                if (!root || root.dataset.menuInitialized === 'true') return;
+
+                root.dataset.menuInitialized = 'true';
+                const trigger = root.querySelector('[data-account-menu-trigger]');
+                const panel = root.querySelector('[data-account-menu-panel]');
+                const closeMenu = () => {
+                    panel.hidden = true;
+                    trigger.setAttribute('aria-expanded', 'false');
+                };
+
+                trigger.addEventListener('click', () => {
+                    const willOpen = panel.hidden;
+                    panel.hidden = !willOpen;
+                    trigger.setAttribute('aria-expanded', String(willOpen));
+                });
+
+                document.addEventListener('click', event => {
+                    if (!root.contains(event.target)) {
+                        closeMenu();
+                    } else if (panel.contains(event.target) && event.target.closest('a, button, form')) {
+                        closeMenu();
+                    }
+                });
+
+                document.addEventListener('keydown', event => {
+                    if (event.key === 'Escape' && !panel.hidden) {
+                        closeMenu();
+                        trigger.focus();
+                    }
+                });
+
+                window.addEventListener('pageshow', closeMenu);
+                window.addEventListener('pagehide', closeMenu);
+            })();
+        </script>
     </header>
 </body>
 </html>

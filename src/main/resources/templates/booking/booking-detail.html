@@ -1,55 +1,57 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="_csrf" th:content="${_csrf.token}">
     <meta name="_csrf_header" th:content="${_csrf.headerName}">
-    <title>Booking detail - StayHub</title>
+    <title>Chi tiết đặt phòng - StayHub</title>
     <link th:href="@{/css/tailwind.css}" rel="stylesheet">
 </head>
 <body class="min-h-screen bg-bg-light text-text-900">
 <div th:replace="~{fragments/navbar :: navbar}"></div>
 
 <main class="mx-auto max-w-5xl px-5 py-10 lg:px-10">
-    <a th:href="${viewer == 'host'} ? @{/host/dashboard} : @{/bookings}" class="mb-6 inline-flex text-sm font-bold text-primary-500 hover:text-primary-600">Back</a>
+    <a th:href="${viewer == 'host'} ? @{/host/dashboard} : @{/bookings}" class="mb-6 inline-flex text-sm font-bold text-primary-500 hover:text-primary-600">Quay lại</a>
 
     <div th:if="${message}" class="mb-6 rounded-2xl border border-green-200 bg-green-50 px-4 py-3 text-sm font-semibold text-green-800" th:text="${message}">Message</div>
+    <div th:if="${completionError}" role="alert" class="mb-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700" th:text="${completionError}">Không thể hoàn tất đặt phòng.</div>
 
     <section class="overflow-hidden rounded-[2rem] bg-white shadow-xl shadow-slate-200/60">
         <div class="grid gap-0 lg:grid-cols-[1fr_340px]">
             <div class="p-6 lg:p-8">
                 <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div>
-                        <p class="text-sm font-bold uppercase tracking-[0.18em] text-primary-500">Booking #<span th:text="${booking.id}">1</span></p>
+                        <p class="text-sm font-bold uppercase tracking-[0.18em] text-primary-500">Đặt phòng #<span th:text="${booking.id}">1</span></p>
                         <h1 class="mt-2 text-3xl font-black tracking-tight" th:text="${booking.propertyTitle}">Property title</h1>
-                        <p class="mt-2 text-text-gray" th:text="|${booking.propertyCity} · Hosted by ${booking.hostName}|">City</p>
+                        <p class="mt-2 text-text-gray" th:text="|${booking.propertyCity} · Chủ chỗ nghỉ: ${booking.hostName}|">Thành phố</p>
                     </div>
-                    <span class="inline-flex self-start rounded-full px-4 py-2 text-sm font-black"
+                    <span th:if="${booking.status.name() == 'CONFIRMED'}" class="mt-2 inline-block h-3 w-3 shrink-0 self-start rounded-full bg-green-500" role="img" th:title="${booking.status.displayName}" th:attr="aria-label=${booking.status.displayName}"></span>
+                    <span th:unless="${booking.status.name() == 'CONFIRMED'}" class="inline-flex self-start rounded-full px-4 py-2 text-sm font-black"
                           th:classappend="${booking.status.name() == 'CONFIRMED'} ? ' bg-green-100 text-green-700' : (${booking.status.name() == 'PENDING' || booking.status.name() == 'PENDING_PAYMENT'} ? ' bg-amber-100 text-amber-800' : (${booking.status.name() == 'CANCELLED' || booking.status.name() == 'REJECTED'} ? ' bg-red-100 text-red-700' : ' bg-slate-100 text-slate-700'))"
-                          th:text="${booking.status}">PENDING</span>
+                          th:text="${booking.status.displayName}">Chờ xác nhận</span>
                 </div>
 
                 <div class="mt-8 grid gap-4 sm:grid-cols-3">
                     <div class="rounded-3xl border border-border p-4">
-                        <p class="text-sm font-bold text-text-gray">Check-in</p>
+                        <p class="text-sm font-bold text-text-gray">Nhận phòng</p>
                         <p class="mt-2 font-black" th:text="${booking.checkInDate}">2026-09-20</p>
                     </div>
                     <div class="rounded-3xl border border-border p-4">
-                        <p class="text-sm font-bold text-text-gray">Check-out</p>
+                        <p class="text-sm font-bold text-text-gray">Trả phòng</p>
                         <p class="mt-2 font-black" th:text="${booking.checkOutDate}">2026-09-23</p>
                     </div>
                     <div class="rounded-3xl border border-border p-4">
-                        <p class="text-sm font-bold text-text-gray">Guests</p>
+                        <p class="text-sm font-bold text-text-gray">Khách</p>
                         <p class="mt-2 font-black" th:text="${booking.guests}">2</p>
                     </div>
                 </div>
 
                 <section class="mt-8 rounded-3xl border border-border p-5">
-                    <h2 class="text-xl font-black">Guest details</h2>
+                    <h2 class="text-xl font-black">Thông tin khách</h2>
                     <div class="mt-4 grid gap-4 sm:grid-cols-2">
                         <div>
-                            <p class="text-sm font-bold text-text-gray">Name</p>
+                            <p class="text-sm font-bold text-text-gray">Họ và tên</p>
                             <p class="mt-1 font-semibold" th:text="${booking.guestName}">Guest</p>
                         </div>
                         <div>
@@ -60,136 +62,113 @@
                 </section>
 
                 <section th:if="${directBalance != null}" class="mt-8 rounded-3xl border border-border p-5">
-                    <h2 class="text-xl font-black">Host-direct balance evidence</h2>
-                    <p class="mt-2 text-sm text-text-gray">These are Host attestations, not VNPay-verified payments. They never count as StayHub cash.</p>
+                    <h2 class="text-xl font-black">Chứng từ thanh toán trực tiếp cho chủ chỗ nghỉ</h2>
+                    <p class="mt-2 text-sm text-text-gray">Đây là khoản thu do chủ chỗ nghỉ khai báo, không phải thanh toán được VNPay xác minh và không tính vào tiền mặt của StayHub.</p>
                     <dl class="mt-4 grid gap-3 sm:grid-cols-3">
-                        <div class="rounded-xl bg-bg-light p-3"><dt class="text-xs text-text-gray">Host balance</dt><dd class="font-bold" th:text="|${#numbers.formatDecimal(directBalance.balanceDueHost,0,'COMMA',0,'POINT')} VND|">0</dd></div>
-                        <div class="rounded-xl bg-bg-light p-3"><dt class="text-xs text-text-gray">Acknowledged direct</dt><dd class="font-bold" th:text="|${#numbers.formatDecimal(directBalance.guestAcknowledged,0,'COMMA',0,'POINT')} VND|">0</dd></div>
-                        <div class="rounded-xl bg-bg-light p-3"><dt class="text-xs text-text-gray">Outstanding</dt><dd class="font-bold" th:text="|${#numbers.formatDecimal(directBalance.outstanding,0,'COMMA',0,'POINT')} VND|">0</dd></div>
+                        <div class="rounded-xl bg-bg-light p-3"><dt class="text-xs text-text-gray">Phải trả chủ chỗ nghỉ</dt><dd class="font-bold" th:text="|${#numbers.formatDecimal(directBalance.balanceDueHost,0,'COMMA',0,'POINT')} VND|">0</dd></div>
+                        <div class="rounded-xl bg-bg-light p-3"><dt class="text-xs text-text-gray">Khách đã xác nhận trả trực tiếp</dt><dd class="font-bold" th:text="|${#numbers.formatDecimal(directBalance.guestAcknowledged,0,'COMMA',0,'POINT')} VND|">0</dd></div>
+                        <div class="rounded-xl bg-bg-light p-3"><dt class="text-xs text-text-gray">Còn phải trả</dt><dd class="font-bold" th:text="|${#numbers.formatDecimal(directBalance.outstanding,0,'COMMA',0,'POINT')} VND|">0</dd></div>
                     </dl>
                     <div th:if="${!#lists.isEmpty(directReceipts)}" class="mt-4 space-y-3">
                         <article th:each="receipt : ${directReceipts}" class="rounded-2xl border border-border p-4">
-                            <div class="flex flex-wrap justify-between gap-2"><strong th:text="|${receipt.method} · ${#numbers.formatDecimal(receipt.amount,0,'COMMA',0,'POINT')} VND|">Cash</strong><span class="text-sm font-bold" th:text="${receipt.state}">ATTESTED</span></div>
-                            <p class="mt-1 text-xs text-text-gray" th:text="|Reference ${receipt.id} · ${receipt.paidAt}|">Reference</p>
-                            <div th:if="${viewer == 'guest' and receipt.state == 'ATTESTED'}" class="mt-3 flex gap-2">
-                                <button type="button" data-direct-case="true" th:data-case-id="${receipt.id}" data-disposition="ACKNOWLEDGE" class="rounded-xl bg-success-500 px-3 py-2 text-sm font-bold text-white">Acknowledge</button>
-                                <button type="button" data-direct-case="true" th:data-case-id="${receipt.id}" data-disposition="CONTEST" class="rounded-xl border border-red-300 px-3 py-2 text-sm font-bold text-red-700">Contest</button>
-                            </div>
+                            <div class="flex flex-wrap justify-between gap-2"><strong th:text="|${receipt.method == 'CASH' ? 'Tiền mặt' : 'Chuyển khoản'} · ${#numbers.formatDecimal(receipt.amount,0,'COMMA',0,'POINT')} VND|">Tiền mặt</strong><span class="text-sm font-bold" th:text="${receipt.state == 'ATTESTED' ? 'Đã khai báo' : (receipt.state == 'ACKNOWLEDGED' ? 'Đã xác nhận' : (receipt.state == 'CONTESTED' ? 'Đang tranh chấp' : (receipt.state == 'REFUSED' ? 'Đã từ chối' : 'Đã điều chỉnh')))}">Đã khai báo</span></div>
+                            <p class="mt-1 text-xs text-text-gray" th:text="|Mã tham chiếu ${receipt.id} · ${receipt.paidAt}|">Mã tham chiếu</p>
                         </article>
                     </div>
-                    <form th:if="${viewer == 'host' and directBalance.outstanding.signum() > 0 and booking.status.name() == 'CONFIRMED'}" id="direct-receipt-form" class="mt-5 grid gap-3 rounded-2xl bg-bg-light p-4 sm:grid-cols-2">
-                        <label class="text-sm font-bold">Receipt reference<input id="direct-ref" required maxlength="200" class="mt-1 w-full rounded-xl border border-border px-3 py-2"></label>
-                        <label class="text-sm font-bold">Amount (VND)<input id="direct-amount" type="number" min="1" step="1" required class="mt-1 w-full rounded-xl border border-border px-3 py-2"></label>
-                        <label class="text-sm font-bold">Method<select id="direct-method" class="mt-1 w-full rounded-xl border border-border px-3 py-2"><option value="CASH">Cash</option><option value="BANK_TRANSFER">Bank transfer</option></select></label>
-                        <label class="text-sm font-bold">Paid at<input id="direct-paid-at" type="datetime-local" required class="mt-1 w-full rounded-xl border border-border px-3 py-2"></label>
-                        <label class="text-sm font-bold sm:col-span-2">Private evidence SHA-256 digest<input id="direct-evidence" required pattern="[a-fA-F0-9]{64}" maxlength="64" class="mt-1 w-full rounded-xl border border-border px-3 py-2"></label>
-                        <button class="rounded-xl bg-text-900 px-4 py-3 font-bold text-white sm:col-span-2">Record Host attestation</button>
-                    </form>
+                    <p class="mt-4 text-sm text-text-gray">Thông tin chỉ đọc. Vui lòng liên hệ bộ phận hỗ trợ để ghi nhận hoặc xử lý chứng từ thanh toán trực tiếp.</p>
                 </section>
 
                 <section th:if="${!#lists.isEmpty(arrivalRooms)}" class="mt-8 rounded-3xl border border-border p-5">
-                    <h2 class="text-xl font-black">Per-room arrival evidence</h2>
-                    <p class="mt-2 text-sm text-text-gray">A scheduled date or payment alone does not confirm actual stay or payout eligibility.</p>
+                    <h2 class="text-xl font-black">Chứng từ nhận phòng theo từng phòng</h2>
+                    <p class="mt-2 text-sm text-text-gray">Ngày dự kiến hoặc thanh toán không đủ để xác nhận lưu trú thực tế hay điều kiện giải ngân.</p>
                     <div class="mt-4 space-y-3">
                         <article th:each="room : ${arrivalRooms}" class="rounded-2xl border border-border p-4">
-                            <div class="flex flex-wrap justify-between gap-2"><strong th:text="|${room.roomType} · ${room.ratePlan} · Room ${room.roomOrdinal}|">Room</strong><span class="text-sm font-bold" th:text="${room.state != null ? room.state : 'NO ARRIVAL EVIDENCE'}">State</span></div>
-                            <p th:if="${room.actualAt != null}" class="mt-1 text-xs text-text-gray" th:text="|Actual arrival ${room.actualAt} · review needed: ${room.needsReview}|">Arrival time</p>
-                            <form th:if="${viewer == 'host' and room.state == null and booking.status.name() == 'CONFIRMED'}" data-arrival-form="true" th:data-item-id="${room.itemId}" th:data-room-ordinal="${room.roomOrdinal}" th:data-version="${room.bookingVersion}" class="mt-3 grid gap-3 sm:grid-cols-2">
-                                <label class="text-sm font-bold">Actual arrival time<input data-actual-at type="datetime-local" required class="mt-1 w-full rounded-xl border border-border px-3 py-2"></label>
-                                <label class="text-sm font-bold">Evidence SHA-256 digest<input data-evidence required pattern="[a-fA-F0-9]{64}" maxlength="64" class="mt-1 w-full rounded-xl border border-border px-3 py-2"></label>
-                                <button class="rounded-xl bg-text-900 px-4 py-3 font-bold text-white sm:col-span-2">Record actual arrival</button>
-                            </form>
-                            <div th:if="${viewer == 'guest' and room.state == 'REPORTED'}" class="mt-3 flex gap-2">
-                                <button type="button" data-arrival-decision="ACKNOWLEDGE" th:data-item-id="${room.itemId}" th:data-room-ordinal="${room.roomOrdinal}" th:data-version="${room.bookingVersion}" class="rounded-xl bg-success-500 px-3 py-2 text-sm font-bold text-white">Acknowledge</button>
-                                <button type="button" data-arrival-decision="CONTEST" th:data-item-id="${room.itemId}" th:data-room-ordinal="${room.roomOrdinal}" th:data-version="${room.bookingVersion}" class="rounded-xl border border-red-300 px-3 py-2 text-sm font-bold text-red-700">Contest</button>
-                            </div>
+                            <div class="flex flex-wrap justify-between gap-2"><strong th:text="|${room.roomType} · ${room.ratePlan} · Phòng ${room.roomOrdinal}|">Phòng</strong><span class="text-sm font-bold" th:text="${room.state == null ? 'Chưa có chứng từ nhận phòng' : (room.state == 'REPORTED' ? 'Đã khai báo' : (room.state == 'ACKNOWLEDGED' ? 'Khách đã xác nhận' : (room.state == 'CONTESTED' ? 'Đang tranh chấp' : 'Đã xác minh')))}">Trạng thái</span></div>
+                            <p th:if="${room.actualAt != null}" class="mt-1 text-xs text-text-gray" th:text="|Nhận phòng thực tế ${room.actualAt} · cần kiểm tra: ${room.needsReview ? 'Có' : 'Không'}|">Giờ nhận phòng</p>
                         </article>
                     </div>
-                    <div th:if="${arrivalEligibility != null}" class="mt-4 rounded-2xl bg-bg-light p-4">
-                        <p class="font-bold" th:text="${arrivalEligibility.eligible ? 'Eligibility gates currently clear' : 'Payout eligibility is blocked'}">Eligibility</p>
-                        <p th:if="${arrivalEligibility.earliestAt != null}" class="mt-1 text-sm text-text-gray" th:text="|Earliest arrival-based time: ${arrivalEligibility.earliestAt}|">Earliest</p>
-                        <ul class="mt-2 list-disc pl-5 text-sm text-red-700"><li th:each="blocker : ${arrivalEligibility.blockers}" th:text="${blocker}">Blocker</li></ul>
-                    </div>
+                    <p class="mt-4 text-sm text-text-gray">Thông tin chỉ đọc. Vui lòng liên hệ bộ phận hỗ trợ để ghi nhận hoặc xác minh chứng từ lưu trú thực tế.</p>
                 </section>
 
                 <section class="mt-8 rounded-3xl bg-bg-light p-5">
-                    <h2 class="text-xl font-black">Payment details</h2>
+                    <h2 class="text-xl font-black">Thông tin thanh toán</h2>
                     <div class="mt-4 grid gap-4 sm:grid-cols-3">
                         <div>
-                            <p class="text-sm font-bold text-text-gray">Payment mode</p>
-                            <p class="mt-1 font-semibold text-primary-600" th:text="${booking.paymentMode == 'HYBRID_DEPOSIT' ? 'Deposit 20% + Check-in' : 'Prepay 100%'}">Prepay 100%</p>
+                            <p class="text-sm font-bold text-text-gray">Hình thức thanh toán</p>
+                            <p class="mt-1 font-semibold text-primary-600" th:text="${booking.paymentMode == 'HYBRID_DEPOSIT' ? 'Cọc 20%, trả phần còn lại khi nhận phòng' : 'Trả trước 100%'}">Trả trước 100%</p>
                         </div>
                         <div>
-                            <p class="text-sm font-bold text-text-gray">Online payment status</p>
-                            <p class="mt-1 font-semibold" th:text="${booking.paymentStatus != null ? booking.paymentStatus : 'PENDING'}">SUCCESS</p>
+                            <p class="text-sm font-bold text-text-gray">Trạng thái thanh toán</p>
+                            <p class="mt-1 font-semibold" th:with="paymentStatus=${booking.paymentStatus != null ? booking.paymentStatus.name() : 'PENDING'}" th:text="${paymentStatus == 'SUCCESS' ? 'Thành công' : (paymentStatus == 'FAILED' ? 'Thất bại' : (paymentStatus == 'CANCELLED' ? 'Đã hủy' : (paymentStatus == 'EXPIRED' ? 'Hết hạn' : 'Chờ thanh toán')))}">Thành công</p>
                         </div>
                         <div>
-                            <p class="text-sm font-bold text-text-gray">Transaction ID</p>
+                            <p class="text-sm font-bold text-text-gray">Mã giao dịch</p>
                             <p class="mt-1 truncate font-semibold" th:text="${booking.transactionId != null ? booking.transactionId : 'N/A'}">MOCK</p>
                         </div>
                     </div>
                     <div th:if="${booking.balanceDueHost != null and booking.balanceDueHost.signum() > 0}" class="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-xs font-semibold text-amber-800">
-                        Notice: Remaining balance of <strong th:text="|${#numbers.formatDecimal(booking.balanceDueHost, 0, 'COMMA', 0, 'POINT')} VND|">0 VND</strong> is due directly to the host upon check-in.
+                        Lưu ý: Số tiền còn lại <strong th:text="|${#numbers.formatDecimal(booking.balanceDueHost, 0, 'COMMA', 0, 'POINT')} VND|">0 VND</strong> cần trả trực tiếp cho chủ chỗ nghỉ khi nhận phòng.
                     </div>
                 </section>
 
                 <section th:if="${viewer == 'guest' and booking.status.name() == 'COMPLETED'}" class="mt-8 rounded-3xl border border-border p-5">
-                    <h2 class="text-xl font-black">Your review</h2>
+                    <h2 class="text-xl font-black">Đánh giá của bạn</h2>
                     <div th:if="${reviewError}" class="mt-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700" th:text="${reviewError}">Review error</div>
                     <div th:if="${existingReview != null}" class="mt-4 rounded-2xl bg-bg-light p-4">
                         <p class="font-bold"><span class="text-rating-500">&#9733;</span> <span th:text="${existingReview.rating}">5</span> / 5</p>
-                        <p class="mt-2 whitespace-pre-line text-text-gray" th:text="${existingReview.comment != null ? existingReview.comment : 'No written comment.'}">Review comment</p>
+                        <p class="mt-2 whitespace-pre-line text-text-gray" th:text="${existingReview.comment != null ? existingReview.comment : 'Không có nhận xét.'}">Nhận xét</p>
                     </div>
                     <form th:if="${existingReview == null}" th:action="@{/bookings/{id}/reviews(id=${booking.id})}" th:object="${reviewRequest}" method="post" class="mt-4 space-y-4">
                         <label class="block">
-                            <span class="text-sm font-bold text-text-gray">Rating</span>
+                            <span class="text-sm font-bold text-text-gray">Điểm đánh giá</span>
                             <select th:field="*{rating}" class="mt-2 w-full rounded-2xl border border-border px-4 py-3 outline-none focus:border-primary-500">
-                                <option value="">Choose rating</option>
-                                <option value="5">5 - Excellent</option>
-                                <option value="4">4 - Great</option>
-                                <option value="3">3 - Good</option>
-                                <option value="2">2 - Fair</option>
-                                <option value="1">1 - Poor</option>
+                                <option value="">Chọn điểm đánh giá</option>
+                                <option value="5">5 - Xuất sắc</option>
+                                <option value="4">4 - Rất tốt</option>
+                                <option value="3">3 - Tốt</option>
+                                <option value="2">2 - Trung bình</option>
+                                <option value="1">1 - Kém</option>
                             </select>
                         </label>
                         <label class="block">
-                            <span class="text-sm font-bold text-text-gray">Comment</span>
-                            <textarea th:field="*{comment}" rows="4" maxlength="2000" class="mt-2 w-full rounded-2xl border border-border px-4 py-3 outline-none focus:border-primary-500" placeholder="Share what future guests should know."></textarea>
+                            <span class="text-sm font-bold text-text-gray">Nhận xét</span>
+                            <textarea th:field="*{comment}" rows="4" maxlength="2000" class="mt-2 w-full rounded-2xl border border-border px-4 py-3 outline-none focus:border-primary-500" placeholder="Chia sẻ những điều hữu ích cho các khách sau."></textarea>
                         </label>
-                        <button class="rounded-2xl bg-primary-500 px-5 py-3 font-bold text-white hover:bg-primary-600">Submit review</button>
+                        <button class="rounded-2xl bg-primary-500 px-5 py-3 font-bold text-white hover:bg-primary-600">Gửi đánh giá</button>
                     </form>
                 </section>
             </div>
 
             <aside class="border-t border-border bg-bg-light p-6 lg:border-l lg:border-t-0 lg:p-8">
-                <h2 class="text-xl font-black">Price summary</h2>
+                <h2 class="text-xl font-black">Chi tiết giá</h2>
                 <div class="mt-5 space-y-3 text-sm">
-                    <div class="flex justify-between"><span class="text-text-gray" th:text="|${#numbers.formatDecimal(booking.nightlyPrice, 0, 'COMMA', 0, 'POINT')} x ${booking.nights} nights|">Nightly</span><strong th:text="${#numbers.formatDecimal(booking.subtotal, 0, 'COMMA', 0, 'POINT')}">0</strong></div>
-                    <div class="flex justify-between"><span class="text-text-gray">Cleaning fee</span><strong th:text="${#numbers.formatDecimal(booking.cleaningFee, 0, 'COMMA', 0, 'POINT')}">0</strong></div>
-                    <div class="flex justify-between"><span class="text-text-gray">Service fee</span><strong th:text="${#numbers.formatDecimal(booking.serviceFee, 0, 'COMMA', 0, 'POINT')}">0</strong></div>
-                    <div th:if="${booking.discountAmount != null and booking.discountAmount.signum() > 0}" class="flex justify-between text-green-700"><span>Discount</span><strong th:text="|-${#numbers.formatDecimal(booking.discountAmount, 0, 'COMMA', 0, 'POINT')}|">0</strong></div>
+                    <div class="flex justify-between"><span class="text-text-gray" th:text="|${#numbers.formatDecimal(booking.nightlyPrice, 0, 'COMMA', 0, 'POINT')} x ${booking.nights} đêm|">Giá mỗi đêm</span><strong th:text="${#numbers.formatDecimal(booking.subtotal, 0, 'COMMA', 0, 'POINT')}">0</strong></div>
+                    <div class="flex justify-between"><span class="text-text-gray">Phí vệ sinh</span><strong th:text="${#numbers.formatDecimal(booking.cleaningFee, 0, 'COMMA', 0, 'POINT')}">0</strong></div>
+                    <div class="flex justify-between"><span class="text-text-gray">Phí dịch vụ</span><strong th:text="${#numbers.formatDecimal(booking.serviceFee, 0, 'COMMA', 0, 'POINT')}">0</strong></div>
+                    <div th:if="${booking.discountAmount != null and booking.discountAmount.signum() > 0}" class="flex justify-between text-green-700"><span>Giảm giá</span><strong th:text="|-${#numbers.formatDecimal(booking.discountAmount, 0, 'COMMA', 0, 'POINT')}|">0</strong></div>
                     <div class="border-t border-border pt-3">
-                        <div class="flex justify-between text-lg"><span class="font-black">Total</span><strong th:text="|${#numbers.formatDecimal(booking.totalPrice, 0, 'COMMA', 0, 'POINT')} VND|">0</strong></div>
+                        <div class="flex justify-between text-lg"><span class="font-black">Tổng tiền</span><strong th:text="|${#numbers.formatDecimal(booking.totalPrice, 0, 'COMMA', 0, 'POINT')} VND|">0</strong></div>
                     </div>
                 </div>
 
                 <div class="mt-8 space-y-3">
                     <form th:if="${viewer == 'guest' and (booking.status.name() == 'PENDING' or booking.status.name() == 'PENDING_PAYMENT' or booking.status.name() == 'CONFIRMED')}" th:action="@{/bookings/{id}/cancel(id=${booking.id})}" method="post">
-                        <button class="w-full rounded-2xl bg-red-600 px-5 py-3 font-bold text-white hover:bg-red-700" onclick="return confirm('Cancel this booking?')">Cancel booking</button>
+                        <button class="w-full rounded-2xl bg-red-600 px-5 py-3 font-bold text-white hover:bg-red-700" onclick="return confirm('Hủy đặt phòng này?')">Hủy đặt phòng</button>
                     </form>
                     <div th:if="${viewer == 'host' and booking.status.name() == 'PENDING'}" class="grid gap-3">
                         <form th:action="@{/host/bookings/{id}/accept(id=${booking.id})}" method="post">
-                            <button class="w-full rounded-2xl bg-success-500 px-5 py-3 font-bold text-white hover:bg-green-600">Accept request</button>
+                            <button class="w-full rounded-2xl bg-success-500 px-5 py-3 font-bold text-white hover:bg-green-600">Chấp nhận yêu cầu</button>
                         </form>
                         <form th:action="@{/host/bookings/{id}/reject(id=${booking.id})}" method="post">
-                            <button class="w-full rounded-2xl bg-red-600 px-5 py-3 font-bold text-white hover:bg-red-700">Reject request</button>
+                            <button class="w-full rounded-2xl bg-red-600 px-5 py-3 font-bold text-white hover:bg-red-700">Từ chối yêu cầu</button>
                         </form>
                     </div>
                     <form th:if="${viewer == 'host' and booking.status.name() == 'CONFIRMED'}" th:action="@{/host/bookings/{id}/complete(id=${booking.id})}" method="post">
-                        <button class="w-full rounded-2xl bg-text-900 px-5 py-3 font-bold text-white hover:bg-black">Mark as completed</button>
+                        <p class="mb-3 text-sm text-text-gray">Chỉ hoàn tất từ 11:00 ngày trả phòng (giờ Việt Nam), khi chứng từ lưu trú đã được xác minh và không còn hồ sơ cần xử lý.</p>
+                        <button class="w-full rounded-2xl bg-text-900 px-5 py-3 font-bold text-white hover:bg-black">Đánh dấu hoàn tất</button>
                     </form>
-                    <a th:href="@{/properties/{id}(id=${booking.propertyId})}" class="block rounded-2xl border border-text-900 px-5 py-3 text-center font-bold hover:bg-text-900 hover:text-white">View property</a>
-                    <a th:if="${viewer == 'guest'}" th:href="@{/bookings}" class="block rounded-2xl border border-text-900 px-5 py-3 text-center font-bold hover:bg-text-900 hover:text-white">My booking</a>
+                    <a th:href="@{/properties/{id}(id=${booking.propertyId})}" class="block rounded-2xl border border-text-900 px-5 py-3 text-center font-bold hover:bg-text-900 hover:text-white">Xem chỗ nghỉ</a>
+                    <a th:if="${viewer == 'guest'}" th:href="@{/bookings}" class="block rounded-2xl border border-text-900 px-5 py-3 text-center font-bold hover:bg-text-900 hover:text-white">Đặt phòng của tôi</a>
                 </div>
             </aside>
         </div>
@@ -197,51 +176,5 @@
 </main>
 
 <div th:replace="~{fragments/footer :: footer}"></div>
-<script th:inline="javascript">
-    const bookingId=/*[[${booking.id}]]*/0;
-    const csrfToken=document.querySelector('meta[name="_csrf"]')?.content;
-    const csrfHeader=document.querySelector('meta[name="_csrf_header"]')?.content;
-    async function sendEvidence(url,body){
-        const response=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json',[csrfHeader]:csrfToken},body:JSON.stringify(body)});
-        const payload=await response.json();if(!response.ok||!payload.success)throw new Error(payload.message||'Request failed');return payload.data;
-    }
-    document.getElementById('direct-receipt-form')?.addEventListener('submit',async event=>{
-        event.preventDefault();
-        const paidAt=new Date(document.getElementById('direct-paid-at').value).toISOString();
-        try { await sendEvidence(`/api/v1/bookings/${bookingId}/direct-receipts`,{
-            receiptRef:document.getElementById('direct-ref').value,amount:Number(document.getElementById('direct-amount').value),
-            currency:'VND',method:document.getElementById('direct-method').value,paidAt,
-            evidenceDigest:document.getElementById('direct-evidence').value,idempotencyKey:crypto.randomUUID(),
-            expectedVersion:[[${directBalance != null ? directBalance.version : 0}]]});location.reload(); }
-        catch(error){alert(error.message);}
-    });
-    document.querySelectorAll('[data-direct-case]').forEach(button=>button.addEventListener('click',async()=>{
-        const disposition=button.dataset.disposition;
-        const evidenceDigest=disposition==='CONTEST'?window.prompt('Enter the SHA-256 digest for private dispute evidence:'):null;
-        if(disposition==='CONTEST'&&!evidenceDigest)return;
-        try { await sendEvidence(`/api/v1/bookings/${bookingId}/direct-receipts/${button.dataset.caseId}/guest-disposition`,{
-            disposition,idempotencyKey:crypto.randomUUID(),evidenceDigest,
-            expectedVersion:[[${directBalance != null ? directBalance.version : 0}]]});location.reload(); }
-        catch(error){alert(error.message);}
-    }));
-    document.querySelectorAll('[data-arrival-form]').forEach(form=>form.addEventListener('submit',async event=>{
-        event.preventDefault();const itemId=Number(form.dataset.itemId),roomOrdinal=Number(form.dataset.roomOrdinal);
-        try { await sendEvidence(`/api/v1/bookings/${bookingId}/arrivals`,{itemId,roomOrdinal,
-            actualAt:new Date(form.querySelector('[data-actual-at]').value).toISOString(),
-            evidenceDigest:form.querySelector('[data-evidence]').value,idempotencyKey:crypto.randomUUID(),
-            expectedVersion:Number(form.dataset.version)});location.reload(); }
-        catch(error){alert(error.message);}
-    }));
-    document.querySelectorAll('[data-arrival-decision]').forEach(button=>button.addEventListener('click',async()=>{
-        const itemId=Number(button.dataset.itemId),roomOrdinal=Number(button.dataset.roomOrdinal);
-        const decision=button.dataset.arrivalDecision;
-        const evidenceDigest=decision==='CONTEST'?window.prompt('Enter the SHA-256 digest for private dispute evidence:'):null;
-        if(decision==='CONTEST'&&!evidenceDigest)return;
-        try { await sendEvidence(`/api/v1/bookings/${bookingId}/arrivals/${itemId}/${roomOrdinal}/guest-decision`,{
-            decision,evidenceDigest,
-            idempotencyKey:crypto.randomUUID(),expectedVersion:Number(button.dataset.version)});location.reload(); }
-        catch(error){alert(error.message);}
-    }));
-</script>
 </body>
 </html>

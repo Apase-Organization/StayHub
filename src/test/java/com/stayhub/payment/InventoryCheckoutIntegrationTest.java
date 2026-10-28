@@ -47,7 +47,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @AutoConfigureMockMvc
-@TestPropertySource(properties="app.payment.quote-validity-seconds=300")
+@TestPropertySource(properties={"app.payment.quote-validity-seconds=300", "app.payment.demo-return-verification-enabled=true"})
 @ActiveProfiles("test")
 @SpringBootTest
 class InventoryCheckoutIntegrationTest {
@@ -142,13 +142,31 @@ class InventoryCheckoutIntegrationTest {
         assertThat(jdbc.queryForObject("SELECT count(*) FROM payment_attempts WHERE booking_id=?",Integer.class,bookingId)).isEqualTo(1);
 
         var callback=signedIpn(bookingId,"22000000","TXN-QUOTE-1");
-        var paid=mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/api/v1/payments/vnpay/ipn")
-                        .params(callback))
-                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
-        assertThat(mapper.readTree(paid).path("RspCode").asText()).isEqualTo("00");
+        String verifyUrl="/api/v1/payments/vnpay/verify";
+        String signedBody=mapper.writeValueAsString(Map.of("params",asMap(callback)));
+        mvc.perform(post(verifyUrl).with(user(principal)).contentType(MediaType.APPLICATION_JSON).content(signedBody))
+                .andExpect(status().isForbidden());
+        mvc.perform(post(verifyUrl).with(user(UserPrincipal.create(users.findById(host).orElseThrow()))).with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON).content(signedBody))
+                .andExpect(status().isNotFound());
+        Map<String,String> badSignature=new TreeMap<>(asMap(callback));
+        badSignature.put("vnp_Amount","1");
+        mvc.perform(post(verifyUrl).with(user(principal)).with(csrf()).contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(Map.of("params",badSignature))))
+                .andExpect(status().isBadRequest());
+        var wrongAmount=signedIpn(bookingId,"10000000","RETURN-WRONG-AMOUNT");
+        mvc.perform(post(verifyUrl).with(user(principal)).with(csrf()).contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(Map.of("params",asMap(wrongAmount)))))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.data.paymentStatus").value("PENDING"));
+        assertThat(jdbc.queryForObject("SELECT status FROM bookings WHERE id=?",String.class,bookingId)).isEqualTo("PENDING_PAYMENT");
+        // Standard return omits outbound Version/Command/CurrCode, exactly as signedIpn supplies.
+        mvc.perform(post(verifyUrl).with(user(principal)).with(csrf()).contentType(MediaType.APPLICATION_JSON).content(signedBody))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.data.paymentStatus").value("SUCCESS"));
+        mvc.perform(post(verifyUrl).with(user(principal)).with(csrf()).contentType(MediaType.APPLICATION_JSON).content(signedBody))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.data.paymentStatus").value("SUCCESS"));
         assertThat(jdbc.queryForObject("SELECT status FROM bookings WHERE id=?",String.class,bookingId)).isEqualTo("CONFIRMED");
         assertThat(jdbc.queryForObject("SELECT state FROM inventory_commitments c JOIN booking_items i ON i.id=c.item_id WHERE i.booking_id=?",String.class,bookingId)).isEqualTo("CONFIRMED");
-        assertThat(jdbc.queryForObject("SELECT disposition FROM payment_collections WHERE booking_id=?",String.class,bookingId)).isEqualTo("ACCEPTED");
+        assertThat(jdbc.queryForObject("SELECT disposition FROM payment_collections WHERE booking_id=? AND disposition='ACCEPTED'",String.class,bookingId)).isEqualTo("ACCEPTED");
         mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/api/v1/payments/vnpay/ipn")
                         .params(callback))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.RspCode").value("02"));
@@ -156,7 +174,7 @@ class InventoryCheckoutIntegrationTest {
         mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/api/v1/payments/vnpay/ipn")
                         .params(signedIpn(bookingId,"22000000","TXN-EXTRA-2")))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.RspCode").value("00"));
-        assertThat(jdbc.queryForObject("SELECT count(*) FROM payment_collections WHERE booking_id=? AND disposition='RECONCILE'",Integer.class,bookingId)).isEqualTo(1);
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM payment_collections WHERE booking_id=? AND disposition='RECONCILE'",Integer.class,bookingId)).isEqualTo(2);
         mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/api/v1/payments/bookings/{id}/status",bookingId)
                         .with(user(principal)))
                 .andExpect(status().isOk())
@@ -589,8 +607,11 @@ class InventoryCheckoutIntegrationTest {
     private org.springframework.util.MultiValueMap<String,String> signedIpn(String ref,String amount,String responseCode,
                                                                             String transactionStatus,String transactionNo) {
         Map<String,String> params=new TreeMap<>();
-        params.put("vnp_Version","2.1.0"); params.put("vnp_Command","pay"); params.put("vnp_TmnCode","TESTMERCHANT");
-        params.put("vnp_TxnRef",ref); params.put("vnp_Amount",amount); params.put("vnp_CurrCode","VND");
+        // PAY IPN does not require outbound request Version, Command or CurrCode.
+        params.put("vnp_TmnCode","TESTMERCHANT");
+        params.put("vnp_TxnRef",ref); params.put("vnp_Amount",amount);
+        params.put("vnp_BankCode","NCB"); params.put("vnp_BankTranNo","BANK-"+transactionNo);
+        params.put("vnp_CardType","ATM"); params.put("vnp_OrderInfo","Thanh toan dat phong");
         params.put("vnp_ResponseCode",responseCode); params.put("vnp_TransactionStatus",transactionStatus);
         params.put("vnp_TransactionNo",transactionNo);
         params.put("vnp_PayDate",DateTimeFormatter.ofPattern("yyyyMMddHHmmss").format(java.time.LocalDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh"))));

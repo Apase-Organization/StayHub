@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Profile - StayHub</title>
+    <title>Hồ sơ - StayHub</title>
     <link th:href="@{/css/tailwind.css}" rel="stylesheet">
 </head>
 <body class="min-h-screen bg-bg-light text-text-900">
@@ -11,41 +11,63 @@
 
 <main class="mx-auto max-w-3xl px-5 py-10 lg:px-8">
     <div class="mb-8">
-        <p class="text-sm font-bold uppercase tracking-[0.18em] text-primary-500">Account</p>
-        <h1 class="mt-2 text-3xl font-black">Your profile</h1>
-        <p class="mt-2 text-text-gray">Manage your public StayHub account information.</p>
+        <p class="text-sm font-bold uppercase tracking-[0.18em] text-primary-500">Tài khoản</p>
+        <h1 class="mt-2 text-3xl font-black">Hồ sơ của bạn</h1>
+        <p class="mt-2 text-text-gray">Cập nhật thông tin liên hệ và email nhận thông báo về đặt phòng.</p>
     </div>
 
     <div th:if="${message}" class="mb-6 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm font-bold text-green-800" th:text="${message}"></div>
+    <div th:if="${emailChangeError}" class="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700" th:text="${emailChangeError}"></div>
 
     <section class="rounded-3xl border border-border bg-white p-6 shadow-sm">
         <div class="mb-6 grid gap-4 rounded-2xl bg-bg-light p-5 sm:grid-cols-3">
             <div>
-                <p class="text-xs font-bold uppercase text-text-gray">Email</p>
+                <p class="text-xs font-bold uppercase text-text-gray">Email hiện tại</p>
                 <p class="mt-1 font-bold" th:text="${user.email}">user@example.com</p>
             </div>
             <div>
-                <p class="text-xs font-bold uppercase text-text-gray">Role</p>
-                <p class="mt-1 font-bold" th:text="${user.role}">GUEST</p>
+                <p class="text-xs font-bold uppercase text-text-gray">Vai trò</p>
+                <p class="mt-1 font-bold" th:text="${user.role.name() == 'ADMIN' ? 'Quản trị viên' : (user.role.name() == 'HOST' ? 'Chủ chỗ nghỉ' : 'Khách')}">Khách</p>
             </div>
             <div>
-                <p class="text-xs font-bold uppercase text-text-gray">Status</p>
-                <p class="mt-1 font-bold" th:text="${user.status}">ACTIVE</p>
+                <p class="text-xs font-bold uppercase text-text-gray">Trạng thái</p>
+                <p class="mt-1 font-bold" th:text="${user.status.name() == 'ACTIVE' ? 'Đang hoạt động' : (user.status.name() == 'LOCKED' ? 'Đã khóa' : 'Ngừng hoạt động')}">Đang hoạt động</p>
             </div>
         </div>
 
         <form th:action="@{/profile}" th:object="${profileRequest}" method="post" class="space-y-5">
+            <div th:if="${#fields.hasGlobalErrors()}" class="rounded-xl border border-red-200 bg-red-50 p-3 text-sm font-semibold text-red-700">
+                <p th:each="error : ${#fields.globalErrors()}" th:text="${error}">Không thể cập nhật hồ sơ.</p>
+            </div>
             <label class="block">
-                <span class="text-sm font-bold">Full name</span>
-                <input th:field="*{fullName}" class="mt-2 w-full rounded-2xl border border-border px-4 py-3 outline-none focus:border-primary-500">
+                <span class="text-sm font-bold">Email nhận thông báo</span>
+                <input type="email" th:field="*{email}" autocomplete="email" required maxlength="255" class="mt-2 w-full rounded-2xl border border-border px-4 py-3 outline-none focus:border-primary-500">
+                <span class="mt-1 block text-xs text-text-gray">Email mới chỉ được sử dụng sau khi bạn xác minh mã gửi đến địa chỉ đó.</span>
+                <span th:if="${#fields.hasErrors('email')}" th:errors="*{email}" class="mt-1 block text-sm text-red-600"></span>
+            </label>
+            <label class="block">
+                <span class="text-sm font-bold">Họ và tên</span>
+                <input th:field="*{fullName}" autocomplete="name" required maxlength="150" class="mt-2 w-full rounded-2xl border border-border px-4 py-3 outline-none focus:border-primary-500">
                 <span th:if="${#fields.hasErrors('fullName')}" th:errors="*{fullName}" class="mt-1 block text-sm text-red-600"></span>
             </label>
             <label class="block">
-                <span class="text-sm font-bold">Phone</span>
-                <input th:field="*{phone}" class="mt-2 w-full rounded-2xl border border-border px-4 py-3 outline-none focus:border-primary-500">
+                <span class="text-sm font-bold">Số điện thoại</span>
+                <input type="tel" th:field="*{phone}" autocomplete="tel" maxlength="30" placeholder="Ví dụ: +84 901 234 567" class="mt-2 w-full rounded-2xl border border-border px-4 py-3 outline-none focus:border-primary-500">
                 <span th:if="${#fields.hasErrors('phone')}" th:errors="*{phone}" class="mt-1 block text-sm text-red-600"></span>
             </label>
-            <button class="rounded-2xl bg-primary-500 px-6 py-3 font-bold text-white hover:bg-primary-600">Save profile</button>
+            <button class="rounded-2xl bg-primary-500 px-6 py-3 font-bold text-white hover:bg-primary-600">Lưu hồ sơ</button>
+        </form>
+    </section>
+
+    <section th:if="${pendingEmailChange != null}" class="mt-6 rounded-3xl border border-amber-200 bg-amber-50 p-6 shadow-sm">
+        <h2 class="text-lg font-black text-amber-950">Xác minh email mới</h2>
+        <p class="mt-2 text-sm text-amber-900">
+            Mã xác minh đã được gửi đến <strong th:text="${pendingEmailChange}">new@example.com</strong>.
+            Email hiện tại vẫn được giữ cho đến khi xác minh thành công. Mã có hiệu lực trong 10 phút.
+        </p>
+        <form th:action="@{/profile/email/verify}" method="post" class="mt-4 flex flex-col gap-3 sm:flex-row">
+            <input name="otp" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" minlength="6" required autocomplete="one-time-code" aria-label="Mã xác minh email" placeholder="Nhập mã 6 chữ số" class="min-w-0 flex-1 rounded-xl border border-amber-300 bg-white px-4 py-3 outline-none focus:border-primary-500">
+            <button type="submit" class="rounded-xl bg-text-900 px-5 py-3 font-bold text-white hover:bg-black">Xác minh email</button>
         </form>
     </section>
 </main>

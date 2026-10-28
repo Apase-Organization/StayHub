@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Host Dashboard - StayHub</title>
+    <title>Quản lý chỗ nghỉ - StayHub</title>
     <link th:href="@{/css/tailwind.css}" rel="stylesheet">
 </head>
 <body class="min-h-screen bg-bg-light text-text-900">
@@ -12,13 +12,13 @@
 <main class="mx-auto max-w-6xl px-5 py-10 lg:px-8">
     <div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-            <p class="mb-2 text-sm font-bold uppercase tracking-[0.18em] text-primary-500">Host workspace</p>
-            <h1 class="text-3xl font-bold tracking-tight">Your properties</h1>
-            <p class="mt-2 text-text-gray">Create drafts, manage photos, and publish listings when they are ready.</p>
+            <p class="mb-2 text-sm font-bold uppercase tracking-[0.18em] text-primary-500">Không gian chủ chỗ nghỉ</p>
+            <h1 class="text-3xl font-bold tracking-tight">Chỗ nghỉ của bạn</h1>
+            <p class="mt-2 text-text-gray">Tạo bản nháp, quản lý ảnh và đăng chỗ nghỉ khi đã sẵn sàng.</p>
         </div>
         <a th:href="@{/host/properties/new}"
            class="inline-flex items-center justify-center rounded-xl bg-primary-500 px-5 py-3 font-bold text-white transition hover:bg-primary-600">
-            Add property
+            Thêm chỗ nghỉ
         </a>
     </div>
 
@@ -27,19 +27,19 @@
 
     <section class="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div class="rounded-2xl border border-border bg-white p-5 shadow-sm">
-            <p class="text-sm text-text-gray">Total listings</p>
+            <p class="text-sm text-text-gray">Tổng chỗ nghỉ</p>
             <p class="mt-2 text-3xl font-black" th:text="${totalProperties}">0</p>
         </div>
         <div class="rounded-2xl border border-border bg-white p-5 shadow-sm">
-            <p class="text-sm text-text-gray">Active</p>
+            <p class="text-sm text-text-gray">Đang hoạt động</p>
             <p class="mt-2 text-3xl font-black text-success-500" th:text="${activeProperties}">0</p>
         </div>
         <div class="rounded-2xl border border-border bg-white p-5 shadow-sm">
-            <p class="text-sm text-text-gray">Drafts</p>
+            <p class="text-sm text-text-gray">Bản nháp</p>
             <p class="mt-2 text-3xl font-black text-warning-500" th:text="${draftProperties}">0</p>
         </div>
         <div class="rounded-2xl border border-border bg-white p-5 shadow-sm">
-            <p class="text-sm text-text-gray">Archived</p>
+            <p class="text-sm text-text-gray">Đã lưu trữ</p>
             <p class="mt-2 text-3xl font-black" th:text="${archivedProperties}">0</p>
         </div>
     </section>
@@ -47,40 +47,60 @@
     <section class="mb-8 rounded-2xl border border-border bg-white p-6 shadow-sm">
         <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div>
-                <h2 class="text-xl font-black">Booking requests</h2>
-                <p class="mt-1 text-sm text-text-gray">Review pending guest requests and respond before dates are blocked too long.</p>
+                <h2 class="text-xl font-black">Yêu cầu đặt phòng</h2>
+                <p class="mt-1 text-sm text-text-gray">Xem và phản hồi yêu cầu của khách để tránh giữ phòng quá lâu.</p>
             </div>
-            <span class="rounded-full bg-bg-light px-4 py-2 text-sm font-bold text-text-gray" th:text="|${pendingBookingRequests} pending|">0 pending</span>
+            <span class="rounded-full bg-bg-light px-4 py-2 text-sm font-bold text-text-gray" th:text="|${pendingBookingRequests} yêu cầu chờ xử lý|">0 yêu cầu chờ xử lý</span>
         </div>
         <div th:if="${#lists.isEmpty(bookingRequests)}" class="mt-5 rounded-2xl border border-dashed border-border p-5 text-sm text-text-gray">
-            No pending booking requests right now.
+            Hiện không có yêu cầu đặt phòng chờ xử lý.
         </div>
         <div th:unless="${#lists.isEmpty(bookingRequests)}" class="mt-5 space-y-4">
             <article th:each="booking : ${bookingRequests}" class="grid gap-4 rounded-2xl border border-border p-4 lg:grid-cols-[1fr_auto] lg:items-center">
                 <div>
                     <p class="text-sm font-bold text-primary-500" th:text="${booking.propertyTitle}">Property</p>
-                    <h3 class="mt-1 text-lg font-black" th:text="|${booking.guestName} · ${booking.guests} guests|">Guest</h3>
-                    <p class="mt-2 text-sm text-text-gray" th:text="|${booking.checkInDate} to ${booking.checkOutDate} · ${booking.nights} nights|">Dates</p>
-                    <p class="mt-2 text-sm"><strong th:text="${#numbers.formatDecimal(booking.totalPrice, 0, 'COMMA', 0, 'POINT')}">0</strong> total</p>
+                    <h3 class="mt-1 text-lg font-black" th:text="|${booking.guestName} · ${booking.guests} khách|">Khách</h3>
+                    <p class="mt-2 text-sm text-text-gray" th:text="|${booking.checkInDate} đến ${booking.checkOutDate} · ${booking.nights} đêm|">Ngày lưu trú</p>
+                    <p class="mt-2 text-sm"><strong th:text="${#numbers.formatDecimal(booking.totalPrice, 0, 'COMMA', 0, 'POINT')}">0</strong> tổng tiền</p>
                 </div>
                 <div class="flex gap-2 lg:justify-end">
-                    <a th:href="@{/host/bookings/{id}(id=${booking.id})}" class="rounded-xl border border-border px-4 py-2 text-sm font-bold hover:bg-bg-light">Details</a>
+                    <a th:href="@{/host/bookings/{id}(id=${booking.id})}" class="rounded-xl border border-border px-4 py-2 text-sm font-bold hover:bg-bg-light">Chi tiết</a>
                     <form th:action="@{/host/bookings/{id}/accept(id=${booking.id})}" method="post">
-                        <button class="rounded-xl bg-success-500 px-4 py-2 text-sm font-bold text-white hover:bg-green-600">Accept</button>
+                        <button class="rounded-xl bg-success-500 px-4 py-2 text-sm font-bold text-white hover:bg-green-600">Chấp nhận</button>
                     </form>
                     <form th:action="@{/host/bookings/{id}/reject(id=${booking.id})}" method="post">
-                        <button class="rounded-xl bg-red-600 px-4 py-2 text-sm font-bold text-white hover:bg-red-700">Reject</button>
+                        <button class="rounded-xl bg-red-600 px-4 py-2 text-sm font-bold text-white hover:bg-red-700">Từ chối</button>
                     </form>
                 </div>
             </article>
         </div>
     </section>
 
+    <section class="mb-8 rounded-2xl border border-border bg-white p-6 shadow-sm">
+        <h2 class="text-xl font-black">Đơn đặt phòng đã xác nhận</h2>
+        <p class="mt-1 text-sm text-text-gray">Tối đa 20 đơn đã xác nhận mới nhất. Không cần chấp nhận lại các đơn này.</p>
+        <p th:if="${#lists.isEmpty(confirmedBookings)}" class="mt-5 text-sm text-text-gray">Hiện không có đơn đặt phòng đã xác nhận.</p>
+        <div class="mt-5 space-y-4">
+            <article th:each="booking : ${confirmedBookings}" class="grid gap-4 rounded-2xl border border-border p-4 lg:grid-cols-[1fr_auto] lg:items-center">
+                <div>
+                    <p class="text-sm font-bold text-primary-500" th:text="|#${booking.id} · ${booking.propertyTitle}|">Chỗ nghỉ</p>
+                    <h3 class="mt-1 text-lg font-black" th:text="|${booking.guestName} · ${booking.guests} khách|">Khách</h3>
+                    <p class="mt-2 text-sm text-text-gray" th:text="|${booking.checkInDate} đến ${booking.checkOutDate} · ${booking.nights} đêm|">Ngày lưu trú</p>
+                    <p class="mt-2 text-sm">Trạng thái: <strong>Đã xác nhận</strong> · Thanh toán:
+                        <span th:text="${booking.paymentStatus == null ? 'Chưa có thông tin' : (booking.paymentStatus.name() == 'SUCCESS' ? 'Đã thanh toán' : booking.paymentStatus)}">Thanh toán</span>
+                    </p>
+                    <p class="mt-2 text-sm"><strong th:text="${#numbers.formatDecimal(booking.totalPrice, 0, 'COMMA', 0, 'POINT')}">0</strong> VND tổng tiền</p>
+                </div>
+                <a th:href="@{/host/bookings/{id}(id=${booking.id})}" class="rounded-xl border border-border px-4 py-2 text-sm font-bold hover:bg-bg-light">Chi tiết</a>
+            </article>
+        </div>
+    </section>
+
     <section th:if="${#lists.isEmpty(properties)}"
              class="rounded-2xl border border-dashed border-border bg-white px-6 py-16 text-center">
-        <h2 class="text-xl font-bold">No properties yet</h2>
-        <p class="mx-auto mt-2 max-w-md text-text-gray">Start with the basics. Your first listing remains private until you add a cover image and publish it.</p>
-        <a th:href="@{/host/properties/new}" class="mt-6 inline-block font-bold text-primary-500 hover:text-primary-600">Create your first property</a>
+        <h2 class="text-xl font-bold">Chưa có chỗ nghỉ</h2>
+        <p class="mx-auto mt-2 max-w-md text-text-gray">Bắt đầu với thông tin cơ bản. Chỗ nghỉ chỉ hiển thị công khai sau khi bạn thêm ảnh bìa và đăng.</p>
+        <a th:href="@{/host/properties/new}" class="mt-6 inline-block font-bold text-primary-500 hover:text-primary-600">Tạo chỗ nghỉ đầu tiên</a>
     </section>
 
     <section th:unless="${#lists.isEmpty(properties)}" class="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
@@ -89,26 +109,26 @@
                 <img th:if="${property.coverImageUrl}" th:src="${property.coverImageUrl}" th:alt="${property.title}"
                      class="h-full w-full object-cover">
                 <div th:unless="${property.coverImageUrl}" class="flex h-full items-center justify-center text-sm font-semibold text-text-gray">
-                    Add a cover image
+                    Thêm ảnh bìa
                 </div>
             </div>
             <div class="p-5">
                 <div class="mb-3 flex items-start justify-between gap-3">
-                    <div>
+                    <div class="min-w-0 flex-1">
                         <h2 class="line-clamp-1 text-lg font-bold" th:text="${property.title}">Property</h2>
                         <p class="mt-1 text-sm text-text-gray" th:text="${property.city}">City</p>
                     </div>
-                    <span class="rounded-full px-3 py-1 text-xs font-bold"
-                          th:classappend="${property.status.name() == 'ACTIVE'} ? ' bg-green-100 text-green-700' : (${property.status.name() == 'DRAFT'} ? ' bg-amber-100 text-amber-700' : ' bg-slate-100 text-slate-600')"
-                          th:text="${property.status}">DRAFT</span>
+                    <span class="mt-2 h-3 w-3 shrink-0 rounded-full" role="img"
+                          th:classappend="${property.status.name() == 'ACTIVE'} ? ' bg-green-500' : ' bg-red-500'"
+                          th:title="${property.status}" th:attr="aria-label=${property.status}"></span>
                 </div>
-                <p class="text-sm"><strong th:text="${#numbers.formatDecimal(property.pricePerNight, 0, 'COMMA', 0, 'POINT')}">0</strong> / night</p>
+                <p class="text-sm"><strong th:text="${#numbers.formatDecimal(property.pricePerNight, 0, 'COMMA', 0, 'POINT')}">0</strong> / đêm</p>
                 <div class="mt-5 flex items-center gap-4 border-t border-border pt-4 text-sm font-bold">
-                    <a th:href="@{/host/properties/{id}/edit(id=${property.id})}" class="text-primary-500 hover:text-primary-600">Edit</a>
-                    <a th:href="@{/host/properties/{id}/inventory(id=${property.id})}" class="text-primary-700 hover:text-primary-900">Rooms &amp; calendar</a>
-                    <a th:if="${property.status.name() == 'ACTIVE'}" th:href="@{/properties/{id}(id=${property.id})}" class="text-text-gray hover:text-text-900">View</a>
+                    <a th:href="@{/host/properties/{id}/edit(id=${property.id})}" class="text-primary-500 hover:text-primary-600">Chỉnh sửa</a>
+                    <a th:href="@{/host/properties/{id}/inventory(id=${property.id})}" class="text-primary-700 hover:text-primary-900">Phòng &amp; lịch</a>
+                    <a th:if="${property.status.name() == 'ACTIVE'}" th:href="@{/properties/{id}(id=${property.id})}" class="text-text-gray hover:text-text-900">Xem</a>
                     <form th:if="${property.status.name() != 'INACTIVE'}" th:action="@{/host/properties/{id}/archive(id=${property.id})}" method="post" class="ml-auto">
-                        <button type="submit" class="text-red-600 hover:text-red-700" onclick="return confirm('Archive this property?')">Archive</button>
+                        <button type="submit" class="text-red-600 hover:text-red-700" onclick="return confirm('Lưu trữ chỗ nghỉ này?')">Lưu trữ</button>
                     </form>
                 </div>
             </div>

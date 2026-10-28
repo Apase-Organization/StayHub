@@ -10,25 +10,25 @@ import lombok.Data;
 @Data
 public class RegisterRequest {
 
-    @NotBlank(message = "Full name is required")
-    @Size(max = 150, message = "Full name must not exceed 150 characters")
+    @NotBlank(message = "Vui lòng nhập họ và tên")
+    @Size(max = 150, message = "Họ và tên không được quá 150 ký tự")
     private String fullName;
 
-    @NotBlank(message = "Username is required")
-    @Size(min = 3, max = 50, message = "Username must be between 3 and 50 characters")
-    @Pattern(regexp = "^[a-zA-Z0-9._-]+$", message = "Username can only contain letters, numbers, dots, underscores and hyphens")
+    @NotBlank(message = "Vui lòng nhập tên đăng nhập")
+    @Size(min = 3, max = 50, message = "Tên đăng nhập phải có từ 3 đến 50 ký tự")
+    @Pattern(regexp = "^[a-zA-Z0-9._-]+$", message = "Tên đăng nhập chỉ gồm chữ cái không dấu, chữ số, dấu chấm, gạch dưới và gạch nối")
     private String username;
      
-    @NotBlank(message = "Email is required")
-    @Email(message = "Invalid email format")
-    @Size(max = 255, message = "Email must not exceed 255 characters")
+    @NotBlank(message = "Vui lòng nhập email")
+    @Email(message = "Định dạng email không hợp lệ")
+    @Size(max = 255, message = "Email không được quá 255 ký tự")
     private String email;
 
-    @NotBlank(message = "Password is required")
-    @Size(min = 8, max = 72, message = "Password must be between 8 and 72 characters")
+    @NotBlank(message = "Vui lòng nhập mật khẩu")
+    @Size(min = 8, max = 72, message = "Mật khẩu phải có từ 8 đến 72 ký tự")
     private String password;
 
-    @NotBlank(message = "Confirm password is required")
+    @NotBlank(message = "Vui lòng xác nhận mật khẩu")
     private String confirmPassword;
 
     public void setEmail(String email) {

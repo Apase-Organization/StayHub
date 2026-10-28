@@ -168,6 +168,24 @@ class SearchAvailabilityIntegrationTest extends PostgreSqlIntegrationTest {
     }
 
     @Test
+    void locationSearchMatchesVietnameseDiacriticsAndEnglishEquivalent() {
+        availableProperty.setCity("Đà Nẵng");
+        propertyRepository.save(availableProperty);
+
+        SearchCriteria vietnameseCriteria = new SearchCriteria();
+        vietnameseCriteria.setLocation("Đà Nẵng");
+        SearchCriteria englishCriteria = new SearchCriteria();
+        englishCriteria.setLocation("Da Nang");
+
+        assertThat(searchService.search(vietnameseCriteria, PageRequest.of(0, 10)).getContent())
+                .extracting(PropertySummary::getId)
+                .contains(availableProperty.getId());
+        assertThat(searchService.search(englishCriteria, PageRequest.of(0, 10)).getContent())
+                .extracting(PropertySummary::getId)
+                .contains(availableProperty.getId());
+    }
+
+    @Test
     void searchWithPastDatesThrowsInvalidDates() {
         SearchCriteria criteria = new SearchCriteria();
         criteria.setCheckIn(today.minusDays(1));

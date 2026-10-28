@@ -26,14 +26,14 @@ public class ReviewController {
                                @AuthenticationPrincipal UserPrincipal principal,
                                RedirectAttributes redirectAttributes) {
         if (bindingResult.hasErrors()) {
-            redirectAttributes.addFlashAttribute("reviewError", "Please choose a rating from 1 to 5.");
+            redirectAttributes.addFlashAttribute("reviewError", "Vui lòng chọn điểm đánh giá từ 1 đến 5.");
             return "redirect:/bookings/" + id;
         }
         try {
             reviewService.createReview(principal.getId(), id, request);
-            redirectAttributes.addFlashAttribute("message", "Review submitted successfully.");
+            redirectAttributes.addFlashAttribute("message", "Đã gửi đánh giá.");
         } catch (BusinessException exception) {
-            redirectAttributes.addFlashAttribute("reviewError", exception.getMessage());
+            redirectAttributes.addFlashAttribute("reviewError", com.stayhub.common.exception.MvcExceptionHandler.displayMessage(exception.getMessage()));
         }
         return "redirect:/bookings/" + id;
     }

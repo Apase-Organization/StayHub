@@ -36,11 +36,12 @@ class ArrivalEligibilitySmokeTest extends PostgreSqlIntegrationTest {
     @Autowired BookingService bookingService;
     @Autowired BookingRepository bookings;
     @Autowired ReviewService reviews;
+    @Autowired com.stayhub.property.PropertyService propertyService;
     long host,guest,admin,booking,item;
     long checker;
     Instant actual;
 
-    @BeforeEach void fixture() {
+    @BeforeEach void fixture(org.junit.jupiter.api.TestInfo testInfo) {
         String nonce=UUID.randomUUID().toString();
         var h=users.save(User.builder().email("arrival-host-"+nonce+"@test.invalid").fullName("Host")
                 .passwordHash("test").role(UserRole.HOST).status(UserStatus.ACTIVE).build());
@@ -56,7 +57,9 @@ class ArrivalEligibilitySmokeTest extends PostgreSqlIntegrationTest {
                 .cleaningFee(BigDecimal.ZERO).maxGuests(1).bedrooms(1).beds(1).bathrooms(1)
                 .ratingAvg(BigDecimal.ZERO).propertyType(PropertyType.VILLA).status(PropertyStatus.ACTIVE).build());
         jdbc.update("UPDATE properties SET sale_mode='ROOM_BASED' WHERE id=?",p.getId());
-        LocalDate in=LocalDate.now().minusDays(2),out=in.plusDays(1);
+        LocalDate in=testInfo.getTestMethod().orElseThrow().getName().equals("earlyCompletionRedirectsWithFlashAndLeavesBookingConfirmed")
+                ? LocalDate.now().plusDays(1) : LocalDate.now().minusDays(2);
+        LocalDate out=in.plusDays(1);
         booking=jdbc.queryForObject("""
                 INSERT INTO bookings(property_id,guest_id,check_in_date,check_out_date,guests,nightly_price,cleaning_fee,
                     service_fee,subtotal_price,discount_amount,total_price,status,cancelled_at,created_at,updated_at)
@@ -136,6 +139,35 @@ class ArrivalEligibilitySmokeTest extends PostgreSqlIntegrationTest {
         assertThatThrownBy(()->reviews.createReview(guest,booking,request))
                 .isInstanceOf(com.stayhub.common.exception.BusinessException.class)
                 .extracting("errorCode").isEqualTo("ERR_REVIEW_NOT_ALLOWED");
+    }
+
+    @Test void earlyCompletionRedirectsWithFlashAndLeavesBookingConfirmed() throws Exception {
+        var mvc=org.springframework.test.web.servlet.setup.MockMvcBuilders
+                .standaloneSetup(new com.stayhub.host.HostController(propertyService,bookingService))
+                .setCustomArgumentResolvers(new org.springframework.web.method.support.HandlerMethodArgumentResolver() {
+                    public boolean supportsParameter(org.springframework.core.MethodParameter parameter) {
+                        return parameter.getParameterType()==com.stayhub.auth.UserPrincipal.class;
+                    }
+                    public Object resolveArgument(org.springframework.core.MethodParameter parameter,
+                            org.springframework.web.method.support.ModelAndViewContainer container,
+                            org.springframework.web.context.request.NativeWebRequest request,
+                            org.springframework.web.bind.support.WebDataBinderFactory factory) {
+                        return com.stayhub.auth.UserPrincipal.create(users.findById(host).orElseThrow());
+                    }
+                }).build();
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post("/host/bookings/{id}/complete",booking))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl("/host/bookings/"+booking))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.flash().attribute("completionError",
+                        org.hamcrest.Matchers.containsString("11:00")));
+        assertThat(jdbc.queryForObject("SELECT status FROM bookings WHERE id=?",String.class,booking)).isEqualTo("CONFIRMED");
+    }
+
+    @Test void foreignHostCannotCompleteAndMissingEvidenceKeepsConfirmed() {
+        assertThatThrownBy(()->bookingService.completeBooking(guest,booking))
+                .isInstanceOf(com.stayhub.common.exception.ResourceNotFoundException.class);
+        assertThatThrownBy(()->bookingService.completeBooking(host,booking))
+                .isInstanceOf(PaymentPrimitiveException.class).extracting("errorCode").isEqualTo("ERR_ACTUAL_STAY_REQUIRED");
+        assertThat(jdbc.queryForObject("SELECT status FROM bookings WHERE id=?",String.class,booking)).isEqualTo("CONFIRMED");
     }
 
     @Test void adminNoShowFindingIsAuditedAndBlocksPayoutAndCompletion() {

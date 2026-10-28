@@ -1,50 +1,50 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard - StayHub</title>
+    <title>Bảng quản trị - StayHub</title>
     <link th:href="@{/css/tailwind.css}" rel="stylesheet">
 </head>
 <body class="flex min-h-screen bg-bg-light text-text-900 font-sans">
     <aside class="hidden w-64 flex-col border-r border-border bg-bg-white md:flex">
         <div class="flex h-16 items-center border-b border-border px-6">
-            <span class="text-xl font-bold text-primary-500">StayHub Admin</span>
+            <span class="text-xl font-bold text-primary-500">Quản trị StayHub</span>
         </div>
         <nav class="flex-1 space-y-2 p-4">
-            <a th:href="@{/admin/bookings}" class="block rounded-lg bg-primary-500 bg-opacity-10 px-4 py-3 font-semibold text-primary-600">Dashboard & Bookings</a>
-            <a th:href="@{/admin/users}" class="block rounded-lg px-4 py-3 text-text-gray transition hover:bg-bg-light hover:text-text-900">Manage Users</a>
-            <a th:href="@{/}" class="mt-auto block rounded-lg px-4 py-3 text-text-gray transition hover:bg-bg-light hover:text-text-900">Back to Website</a>
+            <a th:href="@{/admin/bookings}" class="block rounded-lg bg-primary-500 bg-opacity-10 px-4 py-3 font-semibold text-primary-600">Tổng quan & đặt phòng</a>
+            <a th:href="@{/admin/users}" class="block rounded-lg px-4 py-3 text-text-gray transition hover:bg-bg-light hover:text-text-900">Quản lý người dùng</a>
+            <a th:href="@{/}" class="mt-auto block rounded-lg px-4 py-3 text-text-gray transition hover:bg-bg-light hover:text-text-900">Về trang chủ</a>
         </nav>
     </aside>
 
     <main class="flex-1 p-5 md:p-8">
         <div class="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
             <div>
-                <p class="text-sm font-bold uppercase tracking-[0.18em] text-primary-500">Admin dashboard</p>
-                <h1 class="mt-2 text-3xl font-black">Platform Overview</h1>
+                <p class="text-sm font-bold uppercase tracking-[0.18em] text-primary-500">Bảng quản trị</p>
+                <h1 class="mt-2 text-3xl font-black">Tổng quan nền tảng</h1>
             </div>
-            <a th:href="@{/admin/users}" class="inline-flex rounded-xl bg-text-900 px-5 py-3 font-bold text-white">Manage accounts</a>
+            <a th:href="@{/admin/users}" class="inline-flex rounded-xl bg-text-900 px-5 py-3 font-bold text-white">Quản lý tài khoản</a>
         </div>
 
         <div class="mb-8 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
             <div class="rounded-2xl border border-border bg-bg-white p-6 shadow-sm">
-                <p class="mb-2 text-sm text-text-gray">Total Users</p>
+                <p class="mb-2 text-sm text-text-gray">Tổng người dùng</p>
                 <h3 class="text-3xl font-black" th:text="${stats.totalUsers}">0</h3>
             </div>
             <div class="rounded-2xl border border-border bg-bg-white p-6 shadow-sm">
-                <p class="mb-2 text-sm text-text-gray">Active Hosts</p>
+                <p class="mb-2 text-sm text-text-gray">Chủ chỗ nghỉ đang hoạt động</p>
                 <h3 class="text-3xl font-black" th:text="${stats.activeHosts}">0</h3>
             </div>
             <div class="rounded-2xl border border-border bg-bg-white p-6 shadow-sm">
-                <p class="mb-2 text-sm text-text-gray">Platform Revenue</p>
+                <p class="mb-2 text-sm text-text-gray">Doanh thu nền tảng</p>
                 <h3 class="text-3xl font-black text-success-500" th:text="${#numbers.formatDecimal(stats.platformRevenue, 0, 'COMMA', 0, 'POINT')}">0</h3>
-                <p class="mt-2 text-xs text-text-gray">Real payment data starts in Track C.</p>
+                <p class="mt-2 text-xs text-text-gray">Dữ liệu thanh toán thực tế được triển khai trong giai đoạn C.</p>
             </div>
             <div class="rounded-2xl border border-border bg-bg-white p-6 shadow-sm">
-                <p class="mb-2 text-sm text-text-gray">Total Bookings</p>
+                <p class="mb-2 text-sm text-text-gray">Tổng đơn đặt phòng</p>
                 <h3 class="text-3xl font-black" th:text="${stats.totalBookings}">0</h3>
-                <p class="mt-2 text-xs text-text-gray">Booking table is pending Track C.</p>
+                <p class="mt-2 text-xs text-text-gray">Bảng đặt phòng đang chờ triển khai trong giai đoạn C.</p>
             </div>
         </div>
 
@@ -52,16 +52,16 @@
             <div class="border-b border-border p-6">
                 <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                     <div>
-                        <h2 class="text-xl font-black">System Bookings</h2>
-                        <p class="mt-1 text-sm text-text-gray">Search, status filter and pagination are wired for Track C booking data.</p>
+                        <h2 class="text-xl font-black">Đơn đặt phòng trên hệ thống</h2>
+                        <p class="mt-1 text-sm text-text-gray">Tìm kiếm, lọc trạng thái và phân trang dữ liệu đặt phòng.</p>
                     </div>
                     <form th:action="@{/admin/bookings}" method="get" class="grid gap-3 sm:grid-cols-[1fr_180px_auto]">
-                        <input name="keyword" th:value="${keyword}" placeholder="Guest, host, property..." class="rounded-xl border border-border px-4 py-3 outline-none focus:border-primary-500">
+                        <input name="keyword" th:value="${keyword}" placeholder="Khách, chủ chỗ nghỉ, chỗ nghỉ..." class="rounded-xl border border-border px-4 py-3 outline-none focus:border-primary-500">
                         <select name="status" class="rounded-xl border border-border px-4 py-3 outline-none focus:border-primary-500">
-                            <option value="">All statuses</option>
-                            <option th:each="bookingStatus : ${bookingStatuses}" th:value="${bookingStatus}" th:selected="${bookingStatus == status}" th:text="${bookingStatus}">PENDING</option>
+                            <option value="">Tất cả trạng thái</option>
+                            <option th:each="bookingStatus : ${bookingStatuses}" th:value="${bookingStatus}" th:selected="${bookingStatus == status}" th:text="${bookingStatus == 'CONFIRMED' ? 'Đã xác nhận' : (bookingStatus == 'COMPLETED' ? 'Đã hoàn tất' : (bookingStatus == 'CANCELLED' ? 'Đã hủy' : (bookingStatus == 'REJECTED' ? 'Đã từ chối' : (bookingStatus == 'PENDING_PAYMENT' ? 'Chờ thanh toán' : 'Chờ xác nhận'))))}">Chờ xác nhận</option>
                         </select>
-                        <button class="rounded-xl bg-primary-500 px-5 py-3 font-bold text-white hover:bg-primary-600">Filter</button>
+                        <button class="rounded-xl bg-primary-500 px-5 py-3 font-bold text-white hover:bg-primary-600">Lọc</button>
                     </form>
                 </div>
             </div>
@@ -70,19 +70,19 @@
                 <table class="w-full min-w-[860px] text-left">
                     <thead class="border-b border-border bg-bg-light text-sm">
                     <tr>
-                        <th class="px-6 py-4 font-bold">Booking ID</th>
-                        <th class="px-6 py-4 font-bold">Guest</th>
-                        <th class="px-6 py-4 font-bold">Property</th>
-                        <th class="px-6 py-4 font-bold">Dates</th>
-                        <th class="px-6 py-4 font-bold">Status</th>
-                        <th class="px-6 py-4 font-bold">Total</th>
+                        <th class="px-6 py-4 font-bold">Mã đặt phòng</th>
+                        <th class="px-6 py-4 font-bold">Khách</th>
+                        <th class="px-6 py-4 font-bold">Chỗ nghỉ</th>
+                        <th class="px-6 py-4 font-bold">Ngày lưu trú</th>
+                        <th class="px-6 py-4 font-bold">Trạng thái</th>
+                        <th class="px-6 py-4 font-bold">Tổng tiền</th>
                     </tr>
                     </thead>
                     <tbody>
                     <tr th:if="${bookingPage.empty}">
                         <td colspan="6" class="px-6 py-12 text-center">
-                            <h3 class="text-lg font-black">No booking records found</h3>
-                            <p class="mt-2 text-text-gray">No bookings match the selected criteria.</p>
+                            <h3 class="text-lg font-black">Không tìm thấy đơn đặt phòng</h3>
+                            <p class="mt-2 text-text-gray">Không có đơn đặt phòng phù hợp với tiêu chí đã chọn.</p>
                         </td>
                     </tr>
                     <tr th:unless="${bookingPage.empty}" th:each="b : ${bookingPage.content}" class="border-b border-border hover:bg-bg-light/60 transition">
@@ -99,7 +99,7 @@
                         <td class="px-6 py-4">
                             <span class="inline-flex rounded-full px-3 py-1 text-xs font-bold"
                                   th:classappend="${b.status.name() == 'CONFIRMED' || b.status.name() == 'COMPLETED'} ? ' bg-green-100 text-green-700' : (${b.status.name() == 'PENDING' || b.status.name() == 'PENDING_PAYMENT'} ? ' bg-amber-100 text-amber-800' : ' bg-slate-100 text-slate-700')"
-                                  th:text="${b.status}">CONFIRMED</span>
+                                  th:text="${b.status.displayName}">Đã xác nhận</span>
                         </td>
                         <td class="px-6 py-4 font-bold" th:text="|${#numbers.formatDecimal(b.totalPrice, 0, 'COMMA', 0, 'POINT')} VND|">0 VND</td>
                     </tr>
@@ -108,15 +108,15 @@
             </div>
 
             <nav class="flex items-center justify-between border-t border-border px-6 py-4 text-sm">
-                <span class="text-text-gray" th:text="|${bookingPage.totalElements} bookings|">0 bookings</span>
+                <span class="text-text-gray" th:text="|${bookingPage.totalElements} đơn đặt phòng|">0 đơn đặt phòng</span>
                 <div class="flex items-center gap-2">
                     <a th:href="@{/admin/bookings(page=${bookingPage.number - 1},size=${bookingPage.size},keyword=${keyword},status=${status})}"
                        th:classappend="${bookingPage.first} ? 'pointer-events-none opacity-50' : ''"
-                       class="rounded-lg border border-border px-3 py-2 font-bold">Previous</a>
-                    <span class="rounded-lg bg-bg-light px-3 py-2 font-bold" th:text="|Page ${bookingPage.number + 1}|">Page 1</span>
+                       class="rounded-lg border border-border px-3 py-2 font-bold">Trước</a>
+                    <span class="rounded-lg bg-bg-light px-3 py-2 font-bold" th:text="|Trang ${bookingPage.number + 1}|">Trang 1</span>
                     <a th:href="@{/admin/bookings(page=${bookingPage.number + 1},size=${bookingPage.size},keyword=${keyword},status=${status})}"
                        th:classappend="${bookingPage.last} ? 'pointer-events-none opacity-50' : ''"
-                       class="rounded-lg border border-border px-3 py-2 font-bold">Next</a>
+                       class="rounded-lg border border-border px-3 py-2 font-bold">Sau</a>
                 </div>
             </nav>
         </section>

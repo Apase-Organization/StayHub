@@ -57,6 +57,8 @@ class BookingWebIntegrationTest extends PostgreSqlIntegrationTest {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired private org.springframework.jdbc.core.JdbcTemplate jdbc;
+
     private User guest;
     private User host;
     private Property property;
@@ -88,6 +90,34 @@ class BookingWebIntegrationTest extends PostgreSqlIntegrationTest {
         bookingRepository.deleteAll();
         propertyRepository.deleteAll();
         userRepository.deleteAll();
+    }
+
+    @Test
+    void detailRendersEnumPaymentStatusesAndHasNoManualEvidenceControls() throws Exception {
+        var booking=createExistingBooking(LocalDate.now().plusDays(3),LocalDate.now().plusDays(5));
+        jdbc.update("INSERT INTO payments(booking_id,amount,payment_method,status,transaction_id,provider,currency,paid_at) VALUES (?,?,'VNPAY','SUCCESS','PAID-TXN','VNPAY','VND',clock_timestamp())",
+                booking.getId(),booking.getTotalPrice());
+        var payment=paymentRepository.findByBookingId(booking.getId()).orElseThrow();
+        String[][] cases={{"SUCCESS","Thành công"},{"FAILED","Thất bại"},{"EXPIRED","Hết hạn"},{"CANCELLED","Đã hủy"},{"PENDING","Chờ thanh toán"}};
+        for(String[] entry:cases) {
+            payment.setStatus(com.stayhub.payment.PaymentStatus.valueOf(entry[0]));
+            payment.setPaidAt(entry[0].equals("SUCCESS") ? java.time.Instant.now() : null);
+            paymentRepository.save(payment);
+            String html=mockMvc.perform(get("/bookings/{id}",booking.getId()).with(authentication(authentication)))
+                    .andExpect(status().isOk()).andReturn().getResponse().getContentAsString(java.nio.charset.StandardCharsets.UTF_8);
+            org.assertj.core.api.Assertions.assertThat(html).contains("Trạng thái thanh toán",entry[1],"PAID-TXN")
+                    .doesNotContain("SHA-256","direct-receipt-form","data-arrival-form","arrivalEligibility","Chưa đủ điều kiện giải ngân","Trạng thái thanh toán trực tuyến");
+        }
+    }
+
+    @Test
+    void completionErrorsHaveFriendlyVietnameseCopy() {
+        org.assertj.core.api.Assertions.assertThat(
+                com.stayhub.common.exception.MvcExceptionHandler.displayMessage("ERR_COMPLETION_TOO_EARLY"))
+                .contains("11:00", "trả phòng");
+        org.assertj.core.api.Assertions.assertThat(
+                com.stayhub.common.exception.MvcExceptionHandler.displayMessage("ERR_ACTUAL_STAY_REQUIRED"))
+                .contains("lưu trú");
     }
 
     @Test
@@ -155,7 +185,7 @@ class BookingWebIntegrationTest extends PostgreSqlIntegrationTest {
                         .with(authentication(authentication)))
                 .andExpect(status().isOk())
                 .andExpect(view().name("booking/my-bookings"))
-                .andExpect(model().attribute("tab", "pending"))
+                .andExpect(model().attribute("tab", "upcoming"))
                 .andExpect(model().attributeExists("bookings"));
 
         mockMvc.perform(get("/bookings/{id}/payment", booking.getId())
@@ -169,6 +199,7 @@ class BookingWebIntegrationTest extends PostgreSqlIntegrationTest {
                         .with(authentication(authentication)))
                 .andExpect(status().isOk())
                 .andExpect(view().name("booking/my-bookings"))
+                .andExpect(model().attribute("tab", "pending"))
                 .andExpect(model().attributeExists("bookings"));
 
         mockMvc.perform(get("/bookings/{id}", booking.getId())

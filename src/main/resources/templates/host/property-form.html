@@ -1,22 +1,22 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title th:text="${editing} ? 'Edit Property - StayHub' : 'New Property - StayHub'">Property - StayHub</title>
+    <title th:text="${editing} ? 'Chỉnh sửa chỗ nghỉ - StayHub' : 'Chỗ nghỉ mới - StayHub'">Chỗ nghỉ - StayHub</title>
     <link th:href="@{/css/tailwind.css}" rel="stylesheet">
 </head>
 <body class="min-h-screen bg-bg-light text-text-900">
 <div th:replace="~{fragments/navbar :: navbar}"></div>
 
 <main class="mx-auto max-w-5xl px-5 py-10 lg:px-8">
-    <a th:href="@{/host/dashboard}" class="text-sm font-bold text-text-gray hover:text-text-900">Back to properties</a>
+    <a th:href="@{/host/dashboard}" class="text-sm font-bold text-text-gray hover:text-text-900">Về danh sách chỗ nghỉ</a>
     <div class="mt-4 mb-8">
-        <p class="mb-2 text-sm font-bold uppercase tracking-[0.18em] text-primary-500" th:text="${editing} ? 'Listing editor' : 'New listing'">Listing editor</p>
-        <h1 class="text-3xl font-bold" th:text="${editing} ? 'Edit your property' : 'Create a property'">Edit your property</h1>
-        <p class="mt-2 text-text-gray" th:unless="${editing}">New properties are saved as drafts. Add a cover image before publishing.</p>
+        <p class="mb-2 text-sm font-bold uppercase tracking-[0.18em] text-primary-500" th:text="${editing} ? 'Chỉnh sửa thông tin' : 'Chỗ nghỉ mới'">Chỉnh sửa thông tin</p>
+        <h1 class="text-3xl font-bold" th:text="${editing} ? 'Chỉnh sửa chỗ nghỉ của bạn' : 'Tạo chỗ nghỉ'">Chỉnh sửa chỗ nghỉ của bạn</h1>
+        <p class="mt-2 text-text-gray" th:unless="${editing}">Chỗ nghỉ mới được lưu dưới dạng bản nháp. Hãy thêm ảnh bìa trước khi đăng.</p>
         <a th:if="${editing}" th:href="@{/host/properties/{id}/inventory(id=${propertyId})}"
-           class="mt-4 inline-flex rounded-xl bg-slate-900 px-4 py-3 text-sm font-bold text-white">Manage room types, rates &amp; calendar</a>
+           class="mt-4 inline-flex rounded-xl bg-slate-900 px-4 py-3 text-sm font-bold text-white">Quản lý hạng phòng, giá &amp; lịch</a>
     </div>
 
     <div th:if="${message}" class="mb-6 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm font-semibold text-green-800"
@@ -26,111 +26,111 @@
           th:object="${propertyRequest}" method="post" enctype="multipart/form-data"
           class="rounded-2xl border border-border bg-white p-6 shadow-sm lg:p-8">
         <div th:if="${#fields.hasAnyErrors()}" class="mb-6 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">
-            Please correct the highlighted fields.
+            Vui lòng sửa các trường được đánh dấu.
         </div>
 
         <div class="grid gap-6 md:grid-cols-2">
             <label class="md:col-span-2">
-                <span class="mb-2 block text-sm font-bold">Title</span>
+                <span class="mb-2 block text-sm font-bold">Tên chỗ nghỉ</span>
                 <input th:field="*{title}" maxlength="255" required class="w-full rounded-xl border border-border px-4 py-3 focus:border-primary-500 focus:outline-none">
-                <span th:errors="*{title}" class="mt-1 block text-sm text-red-600"></span>
+                <span th:if="${#fields.hasErrors('title')}" class="mt-1 block text-sm text-red-600">Vui lòng nhập tên chỗ nghỉ, tối đa 255 ký tự.</span>
             </label>
             <label class="md:col-span-2">
-                <span class="mb-2 block text-sm font-bold">Description</span>
+                <span class="mb-2 block text-sm font-bold">Mô tả</span>
                 <textarea th:field="*{description}" rows="6" required class="w-full rounded-xl border border-border px-4 py-3 focus:border-primary-500 focus:outline-none"></textarea>
-                <span th:errors="*{description}" class="mt-1 block text-sm text-red-600"></span>
+                <span th:if="${#fields.hasErrors('description')}" class="mt-1 block text-sm text-red-600">Vui lòng nhập mô tả hợp lệ.</span>
             </label>
             <label>
-                <span class="mb-2 block text-sm font-bold">Address</span>
+                <span class="mb-2 block text-sm font-bold">Địa chỉ</span>
                 <input th:field="*{address}" maxlength="500" required class="w-full rounded-xl border border-border px-4 py-3 focus:border-primary-500 focus:outline-none">
-                <span th:errors="*{address}" class="mt-1 block text-sm text-red-600"></span>
+                <span th:if="${#fields.hasErrors('address')}" class="mt-1 block text-sm text-red-600">Vui lòng nhập địa chỉ, tối đa 500 ký tự.</span>
             </label>
             <label>
-                <span class="mb-2 block text-sm font-bold">City</span>
+                <span class="mb-2 block text-sm font-bold">Thành phố</span>
                 <input th:field="*{city}" maxlength="100" required class="w-full rounded-xl border border-border px-4 py-3 focus:border-primary-500 focus:outline-none">
-                <span th:errors="*{city}" class="mt-1 block text-sm text-red-600"></span>
+                <span th:if="${#fields.hasErrors('city')}" class="mt-1 block text-sm text-red-600">Vui lòng nhập thành phố, tối đa 100 ký tự.</span>
             </label>
             <label>
-                <span class="mb-2 block text-sm font-bold">Property type</span>
+                <span class="mb-2 block text-sm font-bold">Loại chỗ nghỉ</span>
                 <select th:field="*{propertyType}" required class="w-full rounded-xl border border-border bg-white px-4 py-3">
-                    <option value="">Select a type</option>
-                    <option th:each="type : ${propertyTypes}" th:value="${type}" th:text="${#strings.replace(type.name(), '_', ' ')}"></option>
+                    <option value="">Chọn loại chỗ nghỉ</option>
+                    <option th:each="type : ${propertyTypes}" th:value="${type}" th:text="${type.name() == 'APARTMENT' ? 'Căn hộ' : (type.name() == 'HOUSE' ? 'Nhà nguyên căn' : (type.name() == 'VILLA' ? 'Biệt thự' : (type.name() == 'HOTEL_ROOM' ? 'Phòng khách sạn' : (type.name() == 'RESORT' ? 'Khu nghỉ dưỡng' : 'Homestay'))))}"></option>
                 </select>
-                <span th:errors="*{propertyType}" class="mt-1 block text-sm text-red-600"></span>
+                <span th:if="${#fields.hasErrors('propertyType')}" class="mt-1 block text-sm text-red-600">Vui lòng chọn loại chỗ nghỉ hợp lệ.</span>
             </label>
             <label th:if="${editing}">
-                <span class="mb-2 block text-sm font-bold">Status</span>
+                <span class="mb-2 block text-sm font-bold">Trạng thái</span>
                 <select th:field="*{status}" class="w-full rounded-xl border border-border bg-white px-4 py-3">
-                    <option value="DRAFT">Draft</option>
-                    <option value="ACTIVE">Active</option>
-                    <option value="INACTIVE">Inactive</option>
+                    <option value="DRAFT">Bản nháp</option>
+                    <option value="ACTIVE">Đang hoạt động</option>
+                    <option value="INACTIVE">Ngừng hoạt động</option>
                 </select>
-                <span th:errors="*{status}" class="mt-1 block text-sm text-red-600"></span>
+                <span th:if="${#fields.hasErrors('status')}" class="mt-1 block text-sm text-red-600">Vui lòng chọn trạng thái hợp lệ.</span>
             </label>
             <label>
-                <span class="mb-2 block text-sm font-bold">Price per night</span>
+                <span class="mb-2 block text-sm font-bold">Giá mỗi đêm</span>
                 <input type="number" min="0.01" step="0.01" th:field="*{pricePerNight}" required class="w-full rounded-xl border border-border px-4 py-3">
-                <span th:errors="*{pricePerNight}" class="mt-1 block text-sm text-red-600"></span>
+                <span th:if="${#fields.hasErrors('pricePerNight')}" class="mt-1 block text-sm text-red-600">Vui lòng nhập giá mỗi đêm lớn hơn 0.</span>
             </label>
             <label>
-                <span class="mb-2 block text-sm font-bold">Cleaning fee</span>
+                <span class="mb-2 block text-sm font-bold">Phí vệ sinh</span>
                 <input type="number" min="0" step="0.01" th:field="*{cleaningFee}" required class="w-full rounded-xl border border-border px-4 py-3">
-                <span th:errors="*{cleaningFee}" class="mt-1 block text-sm text-red-600"></span>
+                <span th:if="${#fields.hasErrors('cleaningFee')}" class="mt-1 block text-sm text-red-600">Vui lòng nhập phí vệ sinh không âm.</span>
             </label>
             <label th:each="field : ${ {'maxGuests', 'bedrooms', 'beds', 'bathrooms'} }">
-                <span class="mb-2 block text-sm font-bold" th:text="${#strings.capitalize(#strings.replace(field, 'Guests', ' guests'))}">Count</span>
+                <span class="mb-2 block text-sm font-bold" th:text="${field == 'maxGuests' ? 'Số khách tối đa' : (field == 'bedrooms' ? 'Phòng ngủ' : (field == 'beds' ? 'Giường' : 'Phòng tắm'))}">Số lượng</span>
                 <input type="number" th:field="*{__${field}__}" th:min="${field == 'maxGuests'} ? 1 : 0" required class="w-full rounded-xl border border-border px-4 py-3">
             </label>
         </div>
 
         <fieldset class="mt-8 border-t border-border pt-6">
-            <legend class="mb-4 text-lg font-bold">Amenities</legend>
+            <legend class="mb-4 text-lg font-bold">Tiện nghi</legend>
             <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                 <label th:each="amenity : ${amenities}" class="flex items-center gap-3 rounded-xl border border-border px-4 py-3 hover:bg-bg-light">
                     <input type="checkbox" th:field="*{amenityIds}" th:value="${amenity.id}" class="h-4 w-4 accent-primary-500">
-                    <span class="text-sm font-semibold" th:text="${amenity.name}">Wi-Fi</span>
+                    <span class="text-sm font-semibold" th:text="${amenity.name == 'Air conditioning' ? 'Điều hòa' : (amenity.name == 'Kitchen' ? 'Bếp' : (amenity.name == 'Parking' ? 'Chỗ đỗ xe' : (amenity.name == 'Pool' ? 'Hồ bơi' : (amenity.name == 'Washer' ? 'Máy giặt' : (amenity.name == 'Workspace' ? 'Không gian làm việc' : amenity.name)))))}">Wi-Fi</span>
                 </label>
             </div>
         </fieldset>
 
         <label th:unless="${editing}" class="mt-8 block border-t border-border pt-6">
-            <span class="mb-2 block text-lg font-bold">Initial photos</span>
-            <span class="mb-3 block text-sm text-text-gray">JPEG or PNG. The first image becomes the cover.</span>
+            <span class="mb-2 block text-lg font-bold">Ảnh ban đầu</span>
+            <span class="mb-3 block text-sm text-text-gray">Định dạng JPEG hoặc PNG. Ảnh đầu tiên sẽ làm ảnh bìa.</span>
             <input type="file" name="images" accept="image/jpeg,image/png" multiple class="block w-full rounded-xl border border-border px-4 py-3">
         </label>
 
         <div class="mt-8 flex justify-end gap-3 border-t border-border pt-6">
-            <a th:href="@{/host/dashboard}" class="rounded-xl border border-border px-5 py-3 font-bold hover:bg-bg-light">Cancel</a>
+            <a th:href="@{/host/dashboard}" class="rounded-xl border border-border px-5 py-3 font-bold hover:bg-bg-light">Hủy</a>
             <button type="submit" class="rounded-xl bg-primary-500 px-6 py-3 font-bold text-white hover:bg-primary-600"
-                    th:text="${editing} ? 'Save changes' : 'Create draft'">Save</button>
+                    th:text="${editing} ? 'Lưu thay đổi' : 'Tạo bản nháp'">Lưu</button>
         </div>
     </form>
 
     <section th:if="${editing}" class="mt-8 rounded-2xl border border-border bg-white p-6 shadow-sm lg:p-8">
         <div class="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <div>
-                <h2 class="text-xl font-bold">Property photos</h2>
-                <p class="mt-1 text-sm text-text-gray">The cover is used on cards and appears first on the public page.</p>
+                <h2 class="text-xl font-bold">Ảnh chỗ nghỉ</h2>
+                <p class="mt-1 text-sm text-text-gray">Ảnh bìa hiển thị trên thẻ chỗ nghỉ và ở đầu trang công khai.</p>
             </div>
             <form th:action="@{/host/properties/{id}/images(id=${propertyId})}" method="post" enctype="multipart/form-data" class="flex flex-col gap-2 sm:flex-row">
                 <input type="file" name="images" accept="image/jpeg,image/png" multiple required class="max-w-xs rounded-lg border border-border px-3 py-2 text-sm">
-                <button class="rounded-lg bg-text-900 px-4 py-2 text-sm font-bold text-white">Upload</button>
+                <button class="rounded-lg bg-text-900 px-4 py-2 text-sm font-bold text-white">Tải lên</button>
             </form>
         </div>
 
-        <div th:if="${#lists.isEmpty(property.images)}" class="rounded-xl border border-dashed border-border py-10 text-center text-text-gray">No photos uploaded.</div>
+        <div th:if="${#lists.isEmpty(property.images)}" class="rounded-xl border border-dashed border-border py-10 text-center text-text-gray">Chưa tải ảnh lên.</div>
         <div th:unless="${#lists.isEmpty(property.images)}" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <article th:each="image : ${property.images}" class="overflow-hidden rounded-xl border border-border">
                 <div class="relative aspect-[4/3]">
-                    <img th:src="${image.imageUrl}" alt="Property photo" class="h-full w-full object-cover">
-                    <span th:if="${image.cover}" class="absolute left-3 top-3 rounded-full bg-text-900 px-3 py-1 text-xs font-bold text-white">Cover</span>
+                    <img th:src="${image.imageUrl}" alt="Ảnh chỗ nghỉ" class="h-full w-full object-cover">
+                    <span th:if="${image.cover}" class="absolute left-3 top-3 rounded-full bg-text-900 px-3 py-1 text-xs font-bold text-white">Ảnh bìa</span>
                 </div>
                 <div class="flex gap-3 p-3 text-sm font-bold">
                     <form th:unless="${image.cover}" th:action="@{/host/properties/{propertyId}/images/{imageId}/cover(propertyId=${propertyId},imageId=${image.id})}" method="post">
-                        <button class="text-primary-500">Make cover</button>
+                        <button class="text-primary-500">Đặt làm ảnh bìa</button>
                     </form>
                     <form th:action="@{/host/properties/{propertyId}/images/{imageId}/delete(propertyId=${propertyId},imageId=${image.id})}" method="post" class="ml-auto">
-                        <button class="text-red-600" onclick="return confirm('Delete this image?')">Delete</button>
+                        <button class="text-red-600" onclick="return confirm('Xóa ảnh này?')">Xóa</button>
                     </form>
                 </div>
             </article>

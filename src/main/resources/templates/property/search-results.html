@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Search stays - StayHub</title>
+    <title>Tìm chỗ nghỉ - StayHub</title>
     <link th:href="@{/css/tailwind.css}" rel="stylesheet">
 </head>
 <body class="min-h-screen bg-bg-white text-text-900">
@@ -12,44 +12,44 @@
 <main class="mx-auto max-w-7xl px-5 py-8 lg:px-10">
     <form th:action="@{/properties}" method="get" class="grid gap-3 rounded-3xl border border-border bg-white p-4 shadow-sm lg:grid-cols-[1.2fr_1fr_1fr_0.7fr_0.7fr_auto] lg:items-end">
         <label>
-            <span class="text-xs font-bold uppercase tracking-wide text-text-gray">Where</span>
-            <input name="location" th:value="${criteria.location}" placeholder="City, address or title" class="mt-2 w-full rounded-2xl border border-border px-4 py-3 outline-none focus:border-primary-500">
+            <span class="text-xs font-bold uppercase tracking-wide text-text-gray">Điểm đến</span>
+            <input name="location" th:value="${criteria.location}" placeholder="Thành phố, địa chỉ hoặc tên chỗ nghỉ" class="mt-2 w-full rounded-2xl border border-border px-4 py-3 outline-none focus:border-primary-500">
         </label>
         <label>
-            <span class="text-xs font-bold uppercase tracking-wide text-text-gray">Check-in</span>
+            <span class="text-xs font-bold uppercase tracking-wide text-text-gray">Nhận phòng</span>
             <input name="checkIn" type="date" th:value="${criteria.checkIn}" class="mt-2 w-full rounded-2xl border border-border px-4 py-3 outline-none focus:border-primary-500">
         </label>
         <label>
-            <span class="text-xs font-bold uppercase tracking-wide text-text-gray">Check-out</span>
+            <span class="text-xs font-bold uppercase tracking-wide text-text-gray">Trả phòng</span>
             <input name="checkOut" type="date" th:value="${criteria.checkOut}" class="mt-2 w-full rounded-2xl border border-border px-4 py-3 outline-none focus:border-primary-500">
         </label>
         <label>
-            <span class="text-xs font-bold uppercase tracking-wide text-text-gray">Guests</span>
+            <span class="text-xs font-bold uppercase tracking-wide text-text-gray">Khách</span>
             <input name="guests" type="number" min="1" th:value="${criteria.guests}" class="mt-2 w-full rounded-2xl border border-border px-4 py-3 outline-none focus:border-primary-500">
         </label>
         <label>
-            <span class="text-xs font-bold uppercase tracking-wide text-text-gray">Rooms</span>
+            <span class="text-xs font-bold uppercase tracking-wide text-text-gray">Phòng</span>
             <input name="rooms" type="number" min="1" th:value="${criteria.rooms}" placeholder="1" class="mt-2 w-full rounded-2xl border border-border px-4 py-3 outline-none focus:border-primary-500">
         </label>
-        <button class="rounded-2xl bg-primary-500 px-6 py-4 font-bold text-white hover:bg-primary-600">Search</button>
+        <button class="rounded-2xl bg-primary-500 px-6 py-4 font-bold text-white hover:bg-primary-600">Tìm kiếm</button>
     </form>
 
     <div class="mt-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
-            <p class="text-sm font-bold uppercase tracking-[0.18em] text-primary-500">Search results</p>
-            <h1 class="mt-2 text-3xl font-black" th:text="|${properties.totalElements} stays found|">0 stays found</h1>
+            <p class="text-sm font-bold uppercase tracking-[0.18em] text-primary-500">Kết quả tìm kiếm</p>
+            <h1 class="mt-2 text-3xl font-black" th:text="|Tìm thấy ${properties.totalElements} chỗ nghỉ|">Tìm thấy 0 chỗ nghỉ</h1>
         </div>
         <form th:action="@{/properties}" method="get" class="flex items-center gap-3">
             <input type="hidden" name="location" th:value="${criteria.location}">
             <input type="hidden" name="checkIn" th:value="${criteria.checkIn}">
             <input type="hidden" name="checkOut" th:value="${criteria.checkOut}">
             <input type="hidden" name="guests" th:value="${criteria.guests}">
-            <label for="sort" class="text-sm font-bold text-text-gray">Sort</label>
+            <label for="sort" class="text-sm font-bold text-text-gray">Sắp xếp</label>
             <select id="sort" name="sort" onchange="this.form.submit()" class="rounded-2xl border border-border px-4 py-3 font-semibold outline-none focus:border-primary-500">
-                <option value="createdAt,desc">Newest</option>
-                <option value="pricePerNight,asc">Price: low to high</option>
-                <option value="pricePerNight,desc">Price: high to low</option>
-                <option value="ratingAvg,desc">Top rated</option>
+                <option value="createdAt,desc">Mới nhất</option>
+                <option value="pricePerNight,asc">Giá: thấp đến cao</option>
+                <option value="pricePerNight,desc">Giá: cao đến thấp</option>
+                <option value="ratingAvg,desc">Đánh giá cao nhất</option>
             </select>
         </form>
     </div>
@@ -57,7 +57,7 @@
     <div class="mt-8 grid gap-8 lg:grid-cols-[300px_1fr]">
         <aside>
             <details class="rounded-3xl border border-border bg-bg-light p-5 lg:open" open>
-                <summary class="cursor-pointer text-lg font-black">Filters</summary>
+                <summary class="cursor-pointer text-lg font-black">Bộ lọc</summary>
                 <form th:action="@{/properties}" method="get" class="mt-5 space-y-6">
                     <input type="hidden" name="location" th:value="${criteria.location}">
                     <input type="hidden" name="checkIn" th:value="${criteria.checkIn}">
@@ -65,87 +65,87 @@
                     <input type="hidden" name="guests" th:value="${criteria.guests}">
 
                     <section>
-                        <h2 class="font-bold">Price range</h2>
+                        <h2 class="font-bold">Khoảng giá</h2>
                         <div class="mt-3 grid grid-cols-2 gap-3">
-                            <input name="minPrice" type="number" min="0" placeholder="Min" th:value="${criteria.minPrice}" class="w-full rounded-xl border border-border px-3 py-3">
-                            <input name="maxPrice" type="number" min="0" placeholder="Max" th:value="${criteria.maxPrice}" class="w-full rounded-xl border border-border px-3 py-3">
+                            <input name="minPrice" type="number" min="0" placeholder="Thấp nhất" aria-label="Giá thấp nhất" th:value="${criteria.minPrice}" class="w-full rounded-xl border border-border px-3 py-3">
+                            <input name="maxPrice" type="number" min="0" placeholder="Cao nhất" aria-label="Giá cao nhất" th:value="${criteria.maxPrice}" class="w-full rounded-xl border border-border px-3 py-3">
                         </div>
                     </section>
 
                     <section>
-                        <h2 class="font-bold">Property type</h2>
+                        <h2 class="font-bold">Loại chỗ nghỉ</h2>
                         <div class="mt-3 space-y-2">
                             <label th:each="propertyType : ${propertyTypes}" class="flex items-center gap-3 text-sm">
                                 <input type="checkbox" name="type" th:value="${propertyType.name()}" th:checked="${criteria.type != null and #lists.contains(criteria.type, propertyType)}" class="h-4 w-4 rounded border-border text-primary-500">
-                                <span th:text="${#strings.replace(propertyType.name(), '_', ' ')}">Type</span>
+                                <span th:text="${propertyType.name() == 'APARTMENT' ? 'Căn hộ' : (propertyType.name() == 'HOUSE' ? 'Nhà ở' : (propertyType.name() == 'VILLA' ? 'Biệt thự' : (propertyType.name() == 'HOTEL_ROOM' ? 'Phòng khách sạn' : (propertyType.name() == 'RESORT' ? 'Khu nghỉ dưỡng' : 'Homestay'))))}">Loại chỗ nghỉ</span>
                             </label>
                         </div>
                     </section>
 
                     <section class="grid grid-cols-3 gap-3">
-                        <label><span class="text-sm font-bold">Bedrooms</span><input name="bedrooms" type="number" min="0" th:value="${criteria.bedrooms}" class="mt-2 w-full rounded-xl border border-border px-3 py-3"></label>
-                        <label><span class="text-sm font-bold">Beds</span><input name="beds" type="number" min="0" th:value="${criteria.beds}" class="mt-2 w-full rounded-xl border border-border px-3 py-3"></label>
-                        <label><span class="text-sm font-bold">Baths</span><input name="bathrooms" type="number" min="0" th:value="${criteria.bathrooms}" class="mt-2 w-full rounded-xl border border-border px-3 py-3"></label>
+                        <label><span class="text-sm font-bold">Phòng ngủ</span><input name="bedrooms" type="number" min="0" th:value="${criteria.bedrooms}" class="mt-2 w-full rounded-xl border border-border px-3 py-3"></label>
+                        <label><span class="text-sm font-bold">Giường</span><input name="beds" type="number" min="0" th:value="${criteria.beds}" class="mt-2 w-full rounded-xl border border-border px-3 py-3"></label>
+                        <label><span class="text-sm font-bold">Phòng tắm</span><input name="bathrooms" type="number" min="0" th:value="${criteria.bathrooms}" class="mt-2 w-full rounded-xl border border-border px-3 py-3"></label>
                     </section>
 
                     <section>
-                        <h2 class="font-bold">Amenities</h2>
+                        <h2 class="font-bold">Tiện nghi</h2>
                         <div class="mt-3 max-h-44 space-y-2 overflow-y-auto pr-1">
                             <label th:each="amenity : ${amenities}" class="flex items-center gap-3 text-sm">
                                 <input type="checkbox" name="amenities" th:value="${amenity.id}" th:checked="${criteria.amenities != null and #lists.contains(criteria.amenities, amenity.id)}" class="h-4 w-4 rounded border-border text-primary-500">
-                                <span th:text="${amenity.name}">Amenity</span>
+                                <span th:text="${amenity.name == 'Air conditioning' ? 'Điều hòa' : (amenity.name == 'Kitchen' ? 'Bếp' : (amenity.name == 'Parking' ? 'Chỗ đỗ xe' : (amenity.name == 'Pool' ? 'Hồ bơi' : (amenity.name == 'Washer' ? 'Máy giặt' : (amenity.name == 'Workspace' ? 'Không gian làm việc' : amenity.name)))))}">Tiện nghi</span>
                             </label>
-                            <p th:if="${#lists.isEmpty(amenities)}" class="text-sm text-text-gray">No amenities configured yet.</p>
+                            <p th:if="${#lists.isEmpty(amenities)}" class="text-sm text-text-gray">Chưa có tiện nghi nào được thiết lập.</p>
                         </div>
                     </section>
 
                     <section>
-                        <h2 class="font-bold">Rating</h2>
+                        <h2 class="font-bold">Điểm đánh giá</h2>
                         <select name="rating" class="mt-3 w-full rounded-xl border border-border px-3 py-3">
-                            <option value="">Any rating</option>
+                            <option value="">Tất cả điểm đánh giá</option>
                             <option value="4.5" th:selected="${criteria.rating != null and criteria.rating.toString() == '4.5'}">4.5+</option>
                             <option value="4.0" th:selected="${criteria.rating != null and criteria.rating.toString() == '4.0'}">4.0+</option>
                             <option value="3.5" th:selected="${criteria.rating != null and criteria.rating.toString() == '3.5'}">3.5+</option>
                         </select>
                     </section>
 
-                    <button class="w-full rounded-2xl bg-text-900 px-5 py-3 font-bold text-white">Apply filters</button>
-                    <a th:href="@{/properties}" class="block text-center text-sm font-bold text-text-gray hover:text-text-900">Clear all</a>
+                    <button class="w-full rounded-2xl bg-text-900 px-5 py-3 font-bold text-white">Áp dụng bộ lọc</button>
+                    <a th:href="@{/properties}" class="block text-center text-sm font-bold text-text-gray hover:text-text-900">Xóa tất cả</a>
                 </form>
             </details>
         </aside>
 
         <section>
             <div th:if="${properties.empty}" class="rounded-3xl border border-dashed border-border p-10 text-center">
-                <h2 class="text-2xl font-black">No stays match these filters</h2>
-                <p class="mt-3 text-text-gray">Try another city, price range or fewer amenities.</p>
-                <a th:href="@{/properties}" class="mt-6 inline-flex rounded-2xl bg-primary-500 px-6 py-3 font-bold text-white">Reset search</a>
+                <h2 class="text-2xl font-black">Không có chỗ nghỉ phù hợp với bộ lọc</h2>
+                <p class="mt-3 text-text-gray">Hãy thử thành phố khác, đổi khoảng giá hoặc giảm số tiện nghi.</p>
+                <a th:href="@{/properties}" class="mt-6 inline-flex rounded-2xl bg-primary-500 px-6 py-3 font-bold text-white">Đặt lại tìm kiếm</a>
             </div>
 
             <div th:unless="${properties.empty}" class="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
                 <a th:each="property : ${properties.content}" th:href="@{/properties/{id}(id=${property.id})}" class="group overflow-hidden rounded-3xl border border-border bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl">
                     <div class="aspect-[4/3] bg-bg-light">
                         <img th:if="${property.coverImageUrl != null}" th:src="${property.coverImageUrl}" th:alt="${property.title}" class="h-full w-full object-cover transition group-hover:scale-105">
-                        <div th:unless="${property.coverImageUrl != null}" class="flex h-full items-center justify-center text-text-gray">Photo coming soon</div>
+                        <div th:unless="${property.coverImageUrl != null}" class="flex h-full items-center justify-center text-text-gray">Ảnh sẽ sớm được cập nhật</div>
                     </div>
                     <div class="p-5">
                         <div class="flex items-start justify-between gap-3">
-                            <h2 class="font-black" th:text="${property.title}">Property title</h2>
+                            <h2 class="font-black" th:text="${property.title}">Tên chỗ nghỉ</h2>
                             <span class="shrink-0 text-sm font-bold"><span class="text-rating-500">&#9733;</span> <span th:text="${property.ratingAvg}">0.0</span></span>
                         </div>
-                        <p class="mt-2 text-sm text-text-gray" th:text="|${property.city} · ${#strings.replace(property.propertyType.name(), '_', ' ')}|">City</p>
+                        <p class="mt-2 text-sm text-text-gray" th:text="|${property.city} · ${property.propertyType.name() == 'APARTMENT' ? 'Căn hộ' : (property.propertyType.name() == 'HOUSE' ? 'Nhà ở' : (property.propertyType.name() == 'VILLA' ? 'Biệt thự' : (property.propertyType.name() == 'HOTEL_ROOM' ? 'Phòng khách sạn' : (property.propertyType.name() == 'RESORT' ? 'Khu nghỉ dưỡng' : 'Homestay'))))}|">Thành phố</p>
                          <div class="mt-4">
-                             <span class="text-sm font-bold text-primary-700">View eligible room types and rate plans</span>
-                             <span class="block text-xs text-text-gray">Live availability and total stay appear after per-room occupancy is selected.</span>
+                             <span class="text-sm font-bold text-primary-700">Xem hạng phòng và gói giá phù hợp</span>
+                             <span class="block text-xs text-text-gray">Chọn số khách cho từng phòng để xem tình trạng phòng và tổng giá lưu trú.</span>
                          </div>
                     </div>
                 </a>
             </div>
 
             <nav th:if="${properties.totalPages > 1}" class="mt-10 flex flex-wrap items-center justify-center gap-2">
-                <a th:if="${properties.hasPrevious()}" th:href="@{/properties(page=${properties.number - 1},size=${properties.size})}" class="rounded-full border border-border px-4 py-2 font-bold">Previous</a>
-                <span class="rounded-full bg-bg-light px-4 py-2 font-bold" th:text="|Page ${properties.number + 1} of ${properties.totalPages}|">Page 1 of 1</span>
-                <a th:if="${properties.hasNext()}" th:href="@{/properties(page=${properties.number + 1},size=${properties.size})}" class="rounded-full border border-border px-4 py-2 font-bold">Next</a>
+                <a th:if="${properties.hasPrevious()}" th:href="@{/properties(page=${properties.number - 1},size=${properties.size})}" class="rounded-full border border-border px-4 py-2 font-bold">Trước</a>
+                <span class="rounded-full bg-bg-light px-4 py-2 font-bold" th:text="|Trang ${properties.number + 1} / ${properties.totalPages}|">Trang 1 / 1</span>
+                <a th:if="${properties.hasNext()}" th:href="@{/properties(page=${properties.number + 1},size=${properties.size})}" class="rounded-full border border-border px-4 py-2 font-bold">Sau</a>
             </nav>
         </section>
     </div>
