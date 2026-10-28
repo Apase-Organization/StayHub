@@ -32,3 +32,8 @@ graph.json
 .opencode/
 .superpower/
 .ponytail/
+.openarms/
+
+# OpenArms runtime logs
+.openarms/logs/
+.openarms/.handoff-lock
