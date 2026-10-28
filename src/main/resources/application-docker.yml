@@ -7,3 +7,8 @@ spring:
 
   thymeleaf:
     cache: false
+
+# Demo profile only; production/base remains disabled.
+app:
+  payment:
+    demo-return-verification-enabled: ${APP_PAYMENT_DEMO_RETURN_VERIFICATION_ENABLED:true}

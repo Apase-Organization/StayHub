@@ -5,6 +5,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 
@@ -126,7 +127,9 @@ class PaymentReturnWebTest extends PostgreSqlIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(view().name("payment/vnpay-return"))
                 .andExpect(model().attribute("txnRef", payment.getProviderTxnRef()))
-                .andExpect(model().attribute("responseCode", "00"));
+                .andExpect(model().attribute("responseCode", "00"))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Kiểm tra lại trạng thái")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Không thanh toán lần hai")));
 
         // Verify database entity is still PENDING (no financial mutation on browser redirect)
         Payment fresh = paymentRepository.findById(payment.getId()).orElseThrow();

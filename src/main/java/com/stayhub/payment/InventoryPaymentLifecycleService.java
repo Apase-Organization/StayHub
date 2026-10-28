@@ -33,6 +33,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 /** Verified IPN composition for V16/V15 inventory bookings; legacy callbacks remain unchanged. */
 @Service
 public class InventoryPaymentLifecycleService {
+    private static final org.slf4j.Logger log=org.slf4j.LoggerFactory.getLogger(InventoryPaymentLifecycleService.class);
     private static final DateTimeFormatter PAY_DATE = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
     private static final JsonMapper CANONICAL = JsonMapper.builder().enable(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY)
             .enable(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS).build();
@@ -68,12 +69,20 @@ public class InventoryPaymentLifecycleService {
         if(attempts.isEmpty()) return null;
         AttemptContext attempt=attempts.getFirst();
         if(!vnpay.verifySecureHash(params) || !attempt.merchant().equals(params.get("vnp_TmnCode"))
-                || !attempt.merchant().equals(properties.getTmnCode()))
+                || !attempt.merchant().equals(properties.getTmnCode())) {
+            log.warn("Inventory IPN rejected: verification; reference={}",reference);
             return new VnpayIpnResponse("97","Invalid provider verification");
-        if(!"2.1.0".equals(params.get("vnp_Version")) || !"pay".equals(params.get("vnp_Command"))
+        }
+        if((params.containsKey("vnp_Version") && !"2.1.0".equals(params.get("vnp_Version")))
+                || (params.containsKey("vnp_Command") && !"pay".equals(params.get("vnp_Command")))
                 || params.get("vnp_ResponseCode")==null || !params.get("vnp_ResponseCode").matches("[0-9]{2}")
-                || params.get("vnp_TransactionStatus")==null || !params.get("vnp_TransactionStatus").matches("[0-9]{2}"))
+                || params.get("vnp_TransactionStatus")==null || !params.get("vnp_TransactionStatus").matches("[0-9]{2}")) {
+            log.warn("Inventory IPN rejected: envelope; reference={}",reference);
             return new VnpayIpnResponse("97","Invalid provider envelope");
+        }
+        // PAY callbacks omit currency. Derive it only from the authenticated server-owned attempt;
+        // an explicit unsupported currency must never fall back to VND.
+        String currency=params.getOrDefault("vnp_CurrCode",attempt.currency());
 
         String transactionNo=params.get("vnp_TransactionNo");
         Map<String,String> signed=new TreeMap<>(params);
@@ -100,7 +109,7 @@ public class InventoryPaymentLifecycleService {
         BigDecimal actualAmount=parseWireAmount(params.get("vnp_Amount"));
         boolean exactAttemptAmount=actualAmount!=null
                 && actualAmount.compareTo(attempt.expectedAmount().multiply(BigDecimal.valueOf(100)))==0
-                && "VND".equals(params.get("vnp_CurrCode"));
+                && "VND".equals(attempt.currency()) && "VND".equals(currency);
         if(!success) {
             // Only a well-formed failure for the exact server-owned attempt amount
             // is terminal. An unexpected amount/currency must remain in the
@@ -109,12 +118,11 @@ public class InventoryPaymentLifecycleService {
             return new VnpayIpnResponse("00","Confirm success");
         }
 
-        String currency=params.get("vnp_CurrCode");
         Instant occurred=parsePaidAt(params.get("vnp_PayDate"));
-        boolean exact=actualAmount!=null && actualAmount.compareTo(attempt.expectedAmount().multiply(BigDecimal.valueOf(100)))==0
-                && "VND".equals(currency) && transactionNo!=null && !transactionNo.isBlank()
+        boolean exact=exactAttemptAmount && transactionNo!=null && !transactionNo.isBlank()
                 && occurred!=null && !occurred.isAfter(Instant.now());
         if(!exact) {
+            log.warn("Inventory IPN reconciliation: amount/currency/receipt; reference={}",reference);
             recordReconciliation(attempt,transactionNo,eventKey,bodyHash,actualAmount,currency,occurred);
             finish(eventId,"RECONCILE");
             return new VnpayIpnResponse("00","Receipt recorded for reconciliation");

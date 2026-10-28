@@ -26,6 +26,7 @@ server:
 # Local manual-test quote window. Production defaults remain fail-closed unless configured.
 app:
   payment:
+    demo-return-verification-enabled: ${APP_PAYMENT_DEMO_RETURN_VERIFICATION_ENABLED:true}
     quote-validity-seconds: ${QUOTE_VALIDITY_SECONDS:300}
     vnpay:
       config-version: ${VNPAY_CONFIG_VERSION:sandbox-local-v1}
