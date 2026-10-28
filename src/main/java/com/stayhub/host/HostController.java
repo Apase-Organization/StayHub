@@ -42,6 +42,7 @@ public class HostController {
         var bookingRequests = bookingService.getBookingRequestsByHost(principal.getId());
         model.addAttribute("bookingRequests", bookingRequests);
         model.addAttribute("pendingBookingRequests", bookingRequests.size());
+        model.addAttribute("confirmedBookings", bookingService.getRecentConfirmedBookingsByHost(principal.getId()));
         return "host/dashboard";
     }
 
@@ -50,7 +51,7 @@ public class HostController {
                                 @PathVariable Long id,
                                 RedirectAttributes redirectAttributes) {
         bookingService.acceptBooking(principal.getId(), id);
-        redirectAttributes.addFlashAttribute("message", "Booking request accepted.");
+        redirectAttributes.addFlashAttribute("message", "Đã chấp nhận yêu cầu đặt phòng.");
         return "redirect:/host/dashboard";
     }
 
@@ -59,7 +60,7 @@ public class HostController {
                                 @PathVariable Long id,
                                 RedirectAttributes redirectAttributes) {
         bookingService.rejectBooking(principal.getId(), id);
-        redirectAttributes.addFlashAttribute("message", "Booking request rejected.");
+        redirectAttributes.addFlashAttribute("message", "Đã từ chối yêu cầu đặt phòng.");
         return "redirect:/host/dashboard";
     }
 
@@ -67,8 +68,17 @@ public class HostController {
     public String completeBooking(@AuthenticationPrincipal UserPrincipal principal,
                                   @PathVariable Long id,
                                   RedirectAttributes redirectAttributes) {
-        bookingService.completeBooking(principal.getId(), id);
-        redirectAttributes.addFlashAttribute("message", "Booking marked as completed.");
+        try {
+            bookingService.completeBooking(principal.getId(), id);
+            redirectAttributes.addFlashAttribute("message", "Đã đánh dấu đặt phòng hoàn tất.");
+        } catch (com.stayhub.payment.ledger.PaymentPrimitiveException exception) {
+            switch (exception.errorCode()) {
+                case "ERR_COMPLETION_TOO_EARLY", "ERR_ACTUAL_STAY_REQUIRED", "ERR_UNRESOLVED_STAY_CASE" ->
+                    redirectAttributes.addFlashAttribute("completionError",
+                            com.stayhub.common.exception.MvcExceptionHandler.displayMessage(exception.errorCode()));
+                default -> throw exception;
+            }
+        }
         return "redirect:/host/bookings/" + id;
     }
 
@@ -96,7 +106,7 @@ public class HostController {
         }
 
         var property = propertyService.createProperty(principal.getId(), request, images);
-        redirectAttributes.addFlashAttribute("message", "Property created as a draft.");
+        redirectAttributes.addFlashAttribute("message", "Đã tạo bản nháp chỗ nghỉ.");
         return "redirect:/host/properties/" + property.getId() + "/edit";
     }
 
@@ -129,7 +139,7 @@ public class HostController {
             return "host/property-form";
         }
         propertyService.updateProperty(principal.getId(), id, request);
-        redirectAttributes.addFlashAttribute("message", "Property updated successfully.");
+        redirectAttributes.addFlashAttribute("message", "Đã cập nhật chỗ nghỉ.");
         return "redirect:/host/properties/" + id + "/edit";
     }
 
@@ -138,7 +148,7 @@ public class HostController {
                                   @PathVariable Long id,
                                   RedirectAttributes redirectAttributes) {
         propertyService.archiveProperty(principal.getId(), id);
-        redirectAttributes.addFlashAttribute("message", "Property archived successfully.");
+        redirectAttributes.addFlashAttribute("message", "Đã lưu trữ chỗ nghỉ.");
         return "redirect:/host/dashboard";
     }
 
@@ -148,7 +158,7 @@ public class HostController {
                                @RequestParam("images") List<MultipartFile> images,
                                RedirectAttributes redirectAttributes) {
         propertyService.uploadImages(principal.getId(), id, images);
-        redirectAttributes.addFlashAttribute("message", "Images uploaded successfully.");
+        redirectAttributes.addFlashAttribute("message", "Đã tải ảnh lên.");
         return "redirect:/host/properties/" + id + "/edit";
     }
 

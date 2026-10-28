@@ -25,6 +25,8 @@ public interface BookingService {
 
     List<BookingResponse> getBookingRequestsByHost(Long hostId);
 
+    List<BookingResponse> getRecentConfirmedBookingsByHost(Long hostId);
+
     BookingResponse acceptBooking(Long hostId, Long bookingId);
 
     BookingResponse rejectBooking(Long hostId, Long bookingId);

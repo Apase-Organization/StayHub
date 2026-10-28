@@ -145,5 +145,67 @@ class HostInventoryDashboardIntegrationTest extends PostgreSqlIntegrationTest {
                 .andExpect(status().isNotFound());
     }
 
+    @Test
+    void propertyDotPreservesExactStatusAndInventoryKeepsOtherAlerts() throws Exception {
+        for (PropertyStatus state : new PropertyStatus[]{PropertyStatus.ACTIVE, PropertyStatus.DRAFT, PropertyStatus.INACTIVE}) {
+            property.setStatus(state);
+            properties.saveAndFlush(property);
+            String html = mvc.perform(get("/host/dashboard").with(user(UserPrincipal.create(host))))
+                    .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+            assertThat(html).contains("title=\""+state.name()+"\"", "aria-label=\""+state.name()+"\"",
+                    state == PropertyStatus.ACTIVE ? "bg-green-500" : "bg-red-500", "min-w-0 flex-1");
+        }
+        mvc.perform(get("/host/properties/{id}/inventory",property.getId()).with(user(UserPrincipal.create(host))))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString("Tồn kho được quản lý theo"))))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("inventory-message")));
+    }
+
+    @Test
+    void centralDashboardShowsPaidConfirmedNewestFirstAndKeepsPendingActions() throws Exception {
+        jdbc.update("""
+                INSERT INTO payments(booking_id,amount,payment_method,status,transaction_id,paid_at)
+                VALUES (?,2100000,'VNPAY','SUCCESS',?,clock_timestamp())
+                """, bookingId, "dashboard-"+UUID.randomUUID());
+        long newer = copyBooking("CONFIRMED", checkIn.plusDays(10));
+        long pending = copyBooking("PENDING", checkIn.plusDays(20));
+        var result=mvc.perform(get("/host/dashboard").with(user(UserPrincipal.create(host))))
+                .andExpect(status().isOk()).andExpect(model().attribute("pendingBookingRequests",1))
+                .andReturn();
+        @SuppressWarnings("unchecked")
+        var confirmed=(java.util.List<com.stayhub.booking.dto.BookingResponse>)result.getModelAndView().getModel().get("confirmedBookings");
+        assertThat(confirmed).isNotNull();
+        assertThat(confirmed).extracting(com.stayhub.booking.dto.BookingResponse::getId).containsExactly(newer,bookingId);
+        assertThat(confirmed.getLast().getPaymentStatus().name()).isEqualTo("SUCCESS");
+        String html=result.getResponse().getContentAsString();
+        assertThat(html).contains("Đơn đặt phòng đã xác nhận", "/host/bookings/"+bookingId,
+                "/host/bookings/"+pending+"/accept", "/host/bookings/"+pending+"/reject")
+                .doesNotContain("/host/bookings/"+bookingId+"/accept", "/host/bookings/"+newer+"/reject");
+        assertThat(html.indexOf("Yêu cầu đặt phòng")).isLessThan(html.indexOf("Đơn đặt phòng đã xác nhận"));
+    }
+
+    @Test
+    void centralDashboardLimitsConfirmedToTwentyAndExcludesOtherHosts() throws Exception {
+        for(int i=0;i<22;i++) copyBooking("CONFIRMED",checkIn.plusDays(10+i*3));
+        var result=mvc.perform(get("/host/dashboard").with(user(UserPrincipal.create(host))))
+                .andExpect(status().isOk()).andReturn();
+        assertThat((java.util.List<?>)result.getModelAndView().getModel().get("confirmedBookings")).hasSize(20);
+        var stranger=users.save(User.builder().email("dashboard-stranger-"+UUID.randomUUID()+"@test.invalid")
+                .fullName("Stranger").passwordHash("test").role(UserRole.HOST).status(UserStatus.ACTIVE).build());
+        mvc.perform(get("/host/dashboard").with(user(UserPrincipal.create(stranger))))
+                .andExpect(status().isOk()).andExpect(model().attribute("confirmedBookings",org.hamcrest.Matchers.empty()))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Chưa có chỗ nghỉ")))
+                .andExpect(content().string(org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString("Room inventory overview"))));
+    }
+
+    private long copyBooking(String status, LocalDate date) {
+        return jdbc.queryForObject("""
+                INSERT INTO bookings(property_id,guest_id,check_in_date,check_out_date,guests,nightly_price,cleaning_fee,
+                    service_fee,subtotal_price,total_price,status,created_at,updated_at)
+                VALUES (?,?,?, ?,2,1000000,100000,0,2100000,2100000,?,
+                    (SELECT created_at FROM bookings WHERE id=?),clock_timestamp()) RETURNING id
+                """,Long.class,property.getId(),guest.getId(),date,date.plusDays(2),status,bookingId);
+    }
+
     private record InstantCreated(java.time.Instant value) {}
 }

@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My bookings - StayHub</title>
+    <title>Đặt phòng của tôi - StayHub</title>
     <link th:href="@{/css/tailwind.css}" rel="stylesheet">
 </head>
 <body class="min-h-screen bg-bg-light text-text-900">
@@ -12,51 +12,51 @@
 <main class="mx-auto max-w-6xl px-5 py-10 lg:px-10">
     <div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-            <p class="text-sm font-bold uppercase tracking-[0.18em] text-primary-500">Trips</p>
-            <h1 class="mt-2 text-3xl font-black tracking-tight md:text-4xl">My bookings</h1>
-            <p class="mt-2 text-text-gray">Track pending requests, upcoming stays, completed trips and cancelled bookings.</p>
+            <p class="text-sm font-bold uppercase tracking-[0.18em] text-primary-500">Chuyến đi</p>
+            <h1 class="mt-2 text-3xl font-black tracking-tight md:text-4xl">Đặt phòng của tôi</h1>
+            <p class="mt-2 text-text-gray">Theo dõi yêu cầu đang chờ, kỳ lưu trú sắp tới, chuyến đi đã hoàn tất và đơn đã hủy.</p>
         </div>
-        <a th:href="@{/properties}" class="rounded-2xl bg-primary-500 px-5 py-3 text-center font-bold text-white hover:bg-primary-600">Find another stay</a>
+        <a th:href="@{/properties}" class="rounded-2xl bg-primary-500 px-5 py-3 text-center font-bold text-white hover:bg-primary-600">Tìm chỗ nghỉ khác</a>
     </div>
 
     <div th:if="${message}" class="mb-6 rounded-2xl border border-green-200 bg-green-50 px-4 py-3 text-sm font-semibold text-green-800" th:text="${message}">Message</div>
 
     <nav class="mb-8 flex gap-2 overflow-x-auto rounded-3xl bg-white p-2 shadow-sm">
         <a th:href="@{/bookings(tab='upcoming')}" class="whitespace-nowrap rounded-2xl px-4 py-3 text-sm font-black"
-           th:classappend="${tab == 'upcoming'} ? ' bg-text-900 text-white' : ' text-text-gray hover:bg-bg-light'" th:text="|Upcoming (${upcomingCount})|">Upcoming</a>
+           th:classappend="${tab == 'upcoming'} ? ' bg-text-900 text-white' : ' text-text-gray hover:bg-bg-light'" th:text="|Sắp tới (${upcomingCount})|">Sắp tới</a>
         <a th:href="@{/bookings(tab='pending')}" class="whitespace-nowrap rounded-2xl px-4 py-3 text-sm font-black"
-           th:classappend="${tab == 'pending'} ? ' bg-text-900 text-white' : ' text-text-gray hover:bg-bg-light'" th:text="|Pending (${pendingCount})|">Pending</a>
+           th:classappend="${tab == 'pending'} ? ' bg-text-900 text-white' : ' text-text-gray hover:bg-bg-light'" th:text="|Đang chờ (${pendingCount})|">Đang chờ</a>
         <a th:href="@{/bookings(tab='completed')}" class="whitespace-nowrap rounded-2xl px-4 py-3 text-sm font-black"
-           th:classappend="${tab == 'completed'} ? ' bg-text-900 text-white' : ' text-text-gray hover:bg-bg-light'" th:text="|Completed (${completedCount})|">Completed</a>
+           th:classappend="${tab == 'completed'} ? ' bg-text-900 text-white' : ' text-text-gray hover:bg-bg-light'" th:text="|Đã hoàn tất (${completedCount})|">Đã hoàn tất</a>
         <a th:href="@{/bookings(tab='cancelled')}" class="whitespace-nowrap rounded-2xl px-4 py-3 text-sm font-black"
-           th:classappend="${tab == 'cancelled'} ? ' bg-text-900 text-white' : ' text-text-gray hover:bg-bg-light'" th:text="|Cancelled (${cancelledCount})|">Cancelled</a>
+           th:classappend="${tab == 'cancelled'} ? ' bg-text-900 text-white' : ' text-text-gray hover:bg-bg-light'" th:text="|Đã hủy (${cancelledCount})|">Đã hủy</a>
     </nav>
 
     <section th:if="${#lists.isEmpty(bookings)}" class="rounded-[2rem] border border-dashed border-border bg-white p-10 text-center">
-        <h2 class="text-2xl font-black">No bookings in this tab</h2>
-        <p class="mt-3 text-text-gray">When bookings reach this state, they will appear here.</p>
+        <h2 class="text-2xl font-black">Chưa có đơn đặt phòng trong mục này</h2>
+        <p class="mt-3 text-text-gray">Các đơn có trạng thái tương ứng sẽ xuất hiện tại đây.</p>
     </section>
 
     <section th:unless="${#lists.isEmpty(bookings)}" class="grid gap-5">
         <article th:each="booking : ${bookings}" class="overflow-hidden rounded-[2rem] border border-border bg-white shadow-sm md:grid md:grid-cols-[240px_1fr]">
             <div class="aspect-[4/3] bg-bg-light md:aspect-auto">
                 <img th:if="${booking.propertyImageUrl != null}" th:src="${booking.propertyImageUrl}" th:alt="${booking.propertyTitle}" class="h-full w-full object-cover">
-                <div th:unless="${booking.propertyImageUrl != null}" class="flex h-full min-h-44 items-center justify-center text-sm font-semibold text-text-gray">Photo coming soon</div>
+                <div th:unless="${booking.propertyImageUrl != null}" class="flex h-full min-h-44 items-center justify-center text-sm font-semibold text-text-gray">Ảnh sẽ sớm được cập nhật</div>
             </div>
             <div class="p-5 md:p-6">
                 <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div>
                         <p class="text-sm font-bold text-primary-500" th:text="${booking.propertyCity}">City</p>
                         <h2 class="mt-1 text-xl font-black" th:text="${booking.propertyTitle}">Property title</h2>
-                        <p class="mt-2 text-sm text-text-gray" th:text="|${booking.checkInDate} to ${booking.checkOutDate} · ${booking.nights} nights · ${booking.guests} guests|">Dates</p>
+                        <p class="mt-2 text-sm text-text-gray" th:text="|${booking.checkInDate} đến ${booking.checkOutDate} · ${booking.nights} đêm · ${booking.guests} khách|">Ngày lưu trú</p>
                     </div>
                     <span class="inline-flex self-start rounded-full px-3 py-1 text-xs font-black"
                           th:classappend="${booking.status.name() == 'CONFIRMED'} ? ' bg-green-100 text-green-700' : (${booking.status.name() == 'PENDING' || booking.status.name() == 'PENDING_PAYMENT'} ? ' bg-amber-100 text-amber-800' : (${booking.status.name() == 'CANCELLED' || booking.status.name() == 'REJECTED'} ? ' bg-red-100 text-red-700' : ' bg-slate-100 text-slate-700'))"
-                          th:text="${booking.status}">PENDING</span>
+                          th:text="${booking.status.name() == 'CONFIRMED' ? 'Đã xác nhận' : (booking.status.name() == 'COMPLETED' ? 'Đã hoàn tất' : (booking.status.name() == 'CANCELLED' ? 'Đã hủy' : (booking.status.name() == 'REJECTED' ? 'Đã từ chối' : (booking.status.name() == 'PENDING_PAYMENT' ? 'Chờ thanh toán' : 'Đang chờ'))))}">Đang chờ</span>
                 </div>
                 <div class="mt-5 flex flex-col gap-3 border-t border-border pt-5 sm:flex-row sm:items-center sm:justify-between">
-                    <p><strong th:text="${#numbers.formatDecimal(booking.totalPrice, 0, 'COMMA', 0, 'POINT')}">0</strong> VND total</p>
-                    <a th:href="@{/bookings/{id}(id=${booking.id})}" class="rounded-2xl border border-text-900 px-5 py-3 text-center text-sm font-bold hover:bg-text-900 hover:text-white">View details</a>
+                    <p>Tổng cộng: <strong th:text="${#numbers.formatDecimal(booking.totalPrice, 0, 'COMMA', 0, 'POINT')}">0</strong> VND</p>
+                    <a th:href="@{/bookings/{id}(id=${booking.id})}" class="rounded-2xl border border-text-900 px-5 py-3 text-center text-sm font-bold hover:bg-text-900 hover:text-white">Xem chi tiết</a>
                 </div>
             </div>
         </article>
