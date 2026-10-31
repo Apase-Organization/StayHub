@@ -78,7 +78,12 @@
                 <div id="selection-summary" class="mt-5 hidden rounded-2xl border border-primary-200 bg-primary-50 p-4">
                     <h3 class="font-black">Phòng đã chọn</h3><ul id="selected-offers" class="mt-2 list-disc space-y-1 pl-5 text-sm"></ul>
                     <p class="mt-3 text-xs text-text-gray">Lựa chọn chỉ mang tính tham khảo. Hệ thống sẽ kiểm tra lại ngày, phòng trống, hình thức thanh toán và giá trước khi thanh toán.</p>
-                    <button id="request-quote" type="button" th:disabled="${!canBookProperty}" class="mt-4 rounded-xl bg-text-900 px-4 py-3 font-bold text-white disabled:cursor-not-allowed disabled:bg-slate-300">Xem báo giá hệ thống</button>
+                    <div class="mt-4 flex flex-wrap items-end gap-3">
+                        <label class="block"><span class="text-sm font-bold">Mã giảm giá</span><input id="discount-code" type="text" maxlength="50" autocomplete="off" aria-describedby="discount-status" class="mt-2 w-full rounded-xl border border-border px-4 py-3" placeholder="Nhập mã giảm giá"></label>
+                        <button id="apply-discount" type="button" th:disabled="${!canBookProperty}" class="rounded-xl border border-border px-4 py-3 font-bold">Áp dụng</button>
+                        <button id="request-quote" type="button" th:disabled="${!canBookProperty}" class="rounded-xl bg-text-900 px-4 py-3 font-bold text-white disabled:cursor-not-allowed disabled:bg-slate-300">Xem báo giá hệ thống</button>
+                    </div>
+                    <p id="discount-status" role="status" aria-live="polite" class="mt-2 text-sm">Chưa áp dụng mã giảm giá.</p>
                     <p id="quote-access-note" th:unless="${canBookProperty}" class="mt-2 text-xs font-semibold text-amber-800">
                         <span th:if="${selfBookingBlocked}">Bạn không thể đặt chỗ nghỉ do chính mình quản lý.</span>
                         <span th:if="${viewerRole == 'ADMIN'}">Tài khoản quản trị viên không được phép đặt phòng. Hãy dùng tài khoản khách hoặc chủ chỗ nghỉ.</span>
@@ -145,9 +150,36 @@
     const selectedOffers = [];
     let acceptedQuote = null;
     let checkoutKey = null;
+    let quoteRevision = 0;
+    function invalidateQuote() {
+        quoteRevision++;
+        acceptedQuote = null;
+        checkoutKey = null;
+        document.getElementById('quote-panel').classList.add('hidden');
+        document.getElementById('quote-consent').checked = false;
+        document.getElementById('confirm-quote').disabled = true;
+        document.getElementById('discount-status').textContent = document.getElementById('discount-code').value.trim()
+            ? 'Mã đang nhập chưa được áp dụng. Hãy cập nhật báo giá.' : 'Chưa áp dụng mã giảm giá.';
+    }
     const formatVnd = value => Number(value).toLocaleString('en-US', {maximumFractionDigits: 0});
+    const vietnamDateTime = new Intl.DateTimeFormat('vi-VN', {
+        timeZone: 'Asia/Ho_Chi_Minh', day: '2-digit', month: '2-digit', year: 'numeric',
+        hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23'
+    });
+    function formatQuoteExpiry(value) {
+        if (!value) return 'Chưa có thông tin thời gian hết hạn';
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return 'Chưa có thông tin thời gian hết hạn';
+        const parts = Object.fromEntries(vietnamDateTime.formatToParts(date).map(part => [part.type, part.value]));
+        return `${parts.hour}:${parts.minute}:${parts.second} ngày ${parts.day}/${parts.month}/${parts.year}`;
+    }
     function apiError(payload, fallback) {
         switch(payload?.errorCode) {
+            case 'ERR_DISCOUNT_INVALID': return 'Mã không hợp lệ, hết hạn hoặc chưa đủ giá trị đặt phòng tối thiểu.';
+            case 'ERR_DISCOUNT_QUOTA_EXHAUSTED': return 'Mã giảm giá đã hết lượt sử dụng.';
+            case 'ERR_DISCOUNT_USER_LIMIT': return 'Bạn đã sử dụng mã giảm giá này.';
+            case 'ERR_DISCOUNT_FUNDING': return 'Mã vượt mức tài trợ cho lựa chọn này. Hãy xóa mã hoặc chọn phòng khác.';
+            case 'ERR_DISCOUNT_CONFIG': return 'Mã giảm giá chưa được cấu hình hợp lệ.';
             case 'ERR_SELF_BOOKING': return 'Bạn không thể tự đặt chỗ nghỉ do mình quản lý. Hãy chọn chỗ nghỉ khác hoặc dùng tài khoản khách.';
             case 'ERR_PAYMENT_CONFIG':
             case 'ERR_VNPAY_CONFIG': return 'Báo giá đã sẵn sàng nhưng chưa cấu hình thanh toán. Hãy cấu hình mã đơn vị và khóa bí mật VNPay thử nghiệm trong .env, rồi khởi động lại StayHub.';
@@ -170,6 +202,7 @@
         invalidateOffers();
     }
     function invalidateOffers() {
+        invalidateQuote();
         offerResults.replaceChildren();
         selectedOffers.length = 0;
         acceptedQuote = null;
@@ -192,6 +225,7 @@
         });
     }
     function addOffer(offer, selections) {
+        invalidateQuote();
         const alreadySelected = selectedOffers.filter(item => item.offer.roomTypeId === offer.roomTypeId)
             .reduce((sum, item) => sum + item.roomOccupancies.length, 0);
         if (alreadySelected + selections.length > offer.availableQuantity) {
@@ -225,6 +259,7 @@
     document.getElementById('offer-search').addEventListener('submit', async event => {
         event.preventDefault();
         invalidateOffers();
+        const searchRevision = quoteRevision;
         let roomOccupancies;
         try { roomOccupancies = getOccupancies(); }
         catch (error) { offerStatus.textContent = error.message; return; }
@@ -238,6 +273,7 @@
                 body: JSON.stringify({checkIn, checkOut, currency: 'VND', paymentMode: document.getElementById('offer-payment-mode').value, roomOccupancies})
             });
             const payload = await response.json();
+            if (searchRevision !== quoteRevision) return;
             if (!response.ok || !payload.success) throw new Error(response.status === 409 ? `409: ${payload.message}` : (payload.message || 'Không thể tải danh sách phòng. Hãy tìm lại.'));
             const data = payload.data;
             if (!data.offers.length) { offerStatus.textContent = 'Không có phòng phù hợp với số khách và hình thức thanh toán này.'; return; }
@@ -289,6 +325,7 @@
                 offerResults.append(card);
             });
         } catch (error) {
+            if (searchRevision !== quoteRevision) return;
             offerStatus.textContent = error.message.includes('409') ? 'Số phòng trống đã thay đổi. Hãy tìm lại và xem thông tin mới.' : error.message;
         }
     });
@@ -298,9 +335,14 @@
     document.getElementById('quote-consent').addEventListener('change', event => {
         document.getElementById('confirm-quote').disabled = !event.target.checked || !acceptedQuote;
     });
+    document.getElementById('discount-code').addEventListener('input', invalidateQuote);
+    document.getElementById('apply-discount').addEventListener('click', () => document.getElementById('request-quote').click());
     document.getElementById('request-quote').addEventListener('click', async () => {
         if(!canBookProperty) return;
         if (!selectedOffers.length) return;
+        invalidateQuote();
+        const revision = quoteRevision;
+        const discountCode = document.getElementById('discount-code').value.trim();
         const items=selectedOffers.map(selection=>({roomTypeId:selection.offer.roomTypeId,
             ratePlanId:selection.offer.ratePlanId,quantity:selection.roomOccupancies.length,
             roomAllocations:selection.roomOccupancies.map(({index,...room})=>room)}));
@@ -312,6 +354,7 @@
             paymentMode: document.getElementById('offer-payment-mode').value,
             rooms: occupancies.length, adults: occupancies.reduce((sum, room) => sum + room.adults, 0),
             childrenAges,
+            discountCode: discountCode || null,
             items
         };
         if(!quoteRequest.checkIn||!quoteRequest.checkOut) {
@@ -323,11 +366,13 @@
             const response = await fetch('/api/v1/booking-quotes', {method:'POST',
                 headers:{'Content-Type':'application/json',[csrfHeader]:csrfToken}, body:JSON.stringify(quoteRequest)});
             const payload = await response.json();
+            if (revision !== quoteRevision) return;
             if (!response.ok || !payload.success) throw new Error(apiError(payload,'Không thể tạo báo giá.'));
             acceptedQuote = payload.data;
             checkoutKey = crypto.randomUUID();
             document.getElementById('quote-summary').textContent =
-                `Tổng ${formatVnd(acceptedQuote.totalStay)} VND · Trả trực tuyến ${formatVnd(acceptedQuote.dueOnline)} VND · Trả chủ chỗ nghỉ ${formatVnd(acceptedQuote.balanceDueHost)} VND · hết hạn ${acceptedQuote.quoteExpiresAt}`;
+                `Tạm tính ${formatVnd(acceptedQuote.subtotal)} VND · Giảm giá ${formatVnd(acceptedQuote.discount)} VND · Tổng sau giảm ${formatVnd(acceptedQuote.totalStay)} VND · ${acceptedQuote.paymentMode === 'HYBRID_DEPOSIT' ? 'Đặt cọc trực tuyến 20% sau giảm' : 'Trả trực tuyến'} ${formatVnd(acceptedQuote.dueOnline)} VND · Còn trả chủ chỗ nghỉ ${formatVnd(acceptedQuote.balanceDueHost)} VND · Báo giá có hiệu lực đến ${formatQuoteExpiry(acceptedQuote.quoteExpiresAt)}`;
+            document.getElementById('discount-status').textContent = discountCode ? `Đã áp dụng mã ${discountCode} vào toàn bộ hóa đơn trước khi tính đặt cọc.` : 'Báo giá không áp dụng mã giảm giá.';
             document.getElementById('quote-panel').classList.remove('hidden');
             document.getElementById('quote-consent').checked = false;
             document.getElementById('confirm-quote').disabled = true;
@@ -335,7 +380,9 @@
                 `Xác nhận đặt phòng & trả trực tuyến ${formatVnd(acceptedQuote.dueOnline)} VND`;
             offerStatus.textContent = 'Kiểm tra tổng tiền và các khoản thanh toán, chấp nhận báo giá rồi xác nhận để thanh toán qua VNPay.';
         } catch (error) {
+            if (revision !== quoteRevision) return;
             acceptedQuote = null;
+            document.getElementById('discount-status').textContent = `Chưa áp dụng mã. ${error.message}`;
             offerStatus.textContent = error.message;
         }
     });
