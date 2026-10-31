@@ -32,6 +32,8 @@ import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -98,6 +100,68 @@ class InventoryCheckoutIntegrationTest {
                 """,Long.class,property,type);
         jdbc.update("INSERT INTO type_day_inventory(room_type_id,stay_date,total) VALUES (?, '2030-12-10',2)",type);
         principal=UserPrincipal.create(users.findById(guest).orElseThrow());
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "FULL_PREPAY,false,1100000,1100000,0",
+            "HYBRID_DEPOSIT,false,1100000,220000,880000",
+            "FULL_PREPAY,true,1075000,1075000,0",
+            "HYBRID_DEPOSIT,true,1075000,215000,860000"
+    })
+    void discountPaymentAmountsSurviveAcceptedCheckout(String mode, boolean discounted,
+                                                       int total, int online, int balance) throws Exception {
+        String code="QUOTE-"+java.util.UUID.randomUUID();
+        if(discounted) jdbc.update("""
+                INSERT INTO discount_codes(code,type,value,cap,minimum_amount,starts_at,ends_at,usage_limit,used_count,per_user_limit,active)
+                VALUES (?,'FIXED',25000,25000,200000,clock_timestamp()-interval '1 hour',clock_timestamp()+interval '1 day',10,0,1,true)
+                """,code);
+        String body="""
+                {"propertyId":%d,"checkIn":"2030-12-10","checkOut":"2030-12-11","currency":"VND",
+                 "paymentMode":"%s","rooms":1,"adults":2,"childrenAges":[],"discountCode":%s,
+                 "items":[{"roomTypeId":%d,"ratePlanId":%d,"quantity":1,
+                    "roomAllocations":[{"adults":2,"childrenAges":[]}]}]}
+                """.formatted(property,mode,discounted ? "\" "+code.toLowerCase(java.util.Locale.ROOT)+" \"" : "null",type,plan);
+        String response=mvc.perform(post("/api/v1/booking-quotes").with(user(principal)).with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.subtotal").value(1100000))
+                .andExpect(jsonPath("$.data.discount").value(discounted ? 25000 : 0))
+                .andExpect(jsonPath("$.data.totalStay").value(total))
+                .andExpect(jsonPath("$.data.dueOnline").value(online))
+                .andExpect(jsonPath("$.data.balanceDueHost").value(balance))
+                .andReturn().getResponse().getContentAsString();
+        JsonNode quote=mapper.readTree(response).path("data");
+        String consent=mapper.writeValueAsString(Map.of("quoteId",quote.path("quoteId").asText(),
+                "acceptedPolicyVersion",quote.path("policyVersion").asText(),
+                "acceptedFixtureVersion",quote.path("fixtureVersion").asText(),
+                "acceptedQuoteHash",quote.path("quoteHash").asText()));
+        String created=mvc.perform(post("/api/v1/bookings").with(user(principal)).with(csrf())
+                        .header("Idempotency-Key",code).contentType(MediaType.APPLICATION_JSON).content(consent))
+                .andExpect(status().isCreated()).andReturn().getResponse().getContentAsString();
+        long bookingId=mapper.readTree(created).path("data").path("id").asLong();
+        assertThat(mapper.readTree(created).path("data").path("checkoutUrl").asText())
+                .contains("vnp_Amount="+(online*100)+"&");
+        assertThat(jdbc.queryForObject("SELECT total_price FROM bookings WHERE id=?",BigDecimal.class,bookingId))
+                .isEqualByComparingTo(BigDecimal.valueOf(total));
+        assertThat(jdbc.queryForObject("SELECT discount_amount FROM bookings WHERE id=?",BigDecimal.class,bookingId))
+                .isEqualByComparingTo(discounted ? "25000" : "0");
+        mvc.perform(get("/api/v1/payments/bookings/{id}/status",bookingId).with(user(principal)))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.data.balanceDueHost").value(balance));
+    }
+
+    @Test void invalidDiscountCannotPersistAQuote() throws Exception {
+        int before=jdbc.queryForObject("SELECT count(*) FROM inventory_quotes WHERE actor_id=?",Integer.class,guest);
+        String body="""
+                {"propertyId":%d,"checkIn":"2030-12-10","checkOut":"2030-12-11","currency":"VND",
+                 "paymentMode":"HYBRID_DEPOSIT","rooms":1,"adults":2,"childrenAges":[],"discountCode":"MISSING-CODE",
+                 "items":[{"roomTypeId":%d,"ratePlanId":%d,"quantity":1,
+                    "roomAllocations":[{"adults":2,"childrenAges":[]}]}]}
+                """.formatted(property,type,plan);
+        mvc.perform(post("/api/v1/booking-quotes").with(user(principal)).with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().is4xxClientError()).andExpect(jsonPath("$.errorCode").value("ERR_DISCOUNT_INVALID"));
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM inventory_quotes WHERE actor_id=?",Integer.class,guest)).isEqualTo(before);
     }
 
     @Test void quoteConsentCreatesOneHybridHoldAndSameKeyReplays() throws Exception {
